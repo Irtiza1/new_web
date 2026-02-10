@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Customer CRM List - Luxe Leather Co.</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for table container */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Side Navigation -->
+<aside class="flex w-64 flex-col border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300">
+<div class="flex h-full flex-col justify-between p-4">
+<div class="flex flex-col gap-4">
+<!-- Brand -->
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shadow-sm" data-alt="Leather texture closeup logo background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAdP41uwbk5dpPGi7Gcw8r5fjJ2otFq1DpJhNcEwv2R62NxSUg71CWCZqOi9j-0R1X_wV93Pl7UoAp0fs8cnNAjuaQmGIDSUSFk5o5wI4dj6665jKZZcqSO6QcoAfJLL2k9VhpuZTl3rbmX_yTZgm-oBenE-NkBk2Vqy-K_IVKlQhOCubl9aeAwyq8nmWDpzJiqBetnq9WdK91yxgiSHPZtD9RIC-oLe_5yok1bSt5XKRc02bCyTfRLhwoCzizuURn0rTjqfCmSGU61");'></div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-normal">Luxe Leather Co.</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-normal leading-normal">Admin Panel</p>
+</div>
+</div>
+<!-- Nav Items -->
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400" href="#">
+<span class="material-symbols-outlined text-xl fill-1">group</span>
+<p class="text-sm font-medium leading-normal">Customers</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">shopping_bag</span>
+<p class="text-sm font-medium leading-normal">Orders</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">inventory_2</span>
+<p class="text-sm font-medium leading-normal">Inventory</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<!-- User Profile / Bottom Actions -->
+<div class="flex items-center gap-3 px-3 py-2 border-t border-slate-200 dark:border-slate-800 mt-auto pt-4">
+<div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+<img alt="Admin User Avatar" data-alt="Portrait of male admin user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFugRYtvsvGZ9gRcDnYs_9evv160smbsDYDZJwzUjhPQZv8wmR_2JojnhdatKPt3VLbS2oTn-jaX2Uu-w_MrUl_Qq4mMjIHKBg5jXY2SbK_MoM9lCFeS7-_mIVU4g8cGlKYXgyE7ukNQVxpMNK4q5gjdzn8gd1YEtOWOqQm0aAzTDb9PpsjXUxq2L0QYxyRe9nb5nhKgtTJlm1lS6sn8cfiOGi7XIuYwdJ3jcLKMOPkKKQtC8MphNLFLt_Cs2CDaT2hUkA4sP8zvay"/>
+</div>
+<div class="flex flex-col">
+<p class="text-sm font-medium text-slate-900 dark:text-white">Admin User</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">View Profile</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+<!-- Header Section -->
+<header class="w-full px-8 py-6 flex flex-col gap-6 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10">
+<!-- Breadcrumbs & Title Row -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary transition-colors" href="#">Home</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-900 dark:text-white font-medium">Customers</span>
+</div>
+<div class="flex justify-between items-end flex-wrap gap-4">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Customer Management</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Manage and view your customer database, track spending, and segment users.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 font-medium text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-lg">download</span>
+                                Export CSV
+                            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors shadow-sm shadow-blue-200 dark:shadow-none">
+<span class="material-symbols-outlined text-lg">add</span>
+                                Add Customer
+                            </button>
+</div>
+</div>
+</div>
+<!-- Filters & Search Row -->
+<div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+<!-- Search -->
+<div class="relative w-full lg:w-96 group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm transition-all" placeholder="Search by name, email, or order ID..." type="text"/>
+</div>
+<!-- Segment Pills -->
+<div class="flex gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 custom-scrollbar">
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium whitespace-nowrap transition-colors">
+<span class="material-symbols-outlined text-lg">group</span>
+                            All Customers
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">
+<span class="material-symbols-outlined text-lg text-yellow-500 fill-1">star</span>
+                            VIP
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">
+<span class="material-symbols-outlined text-lg text-primary">autorenew</span>
+                            Repeat Buyers
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">
+<span class="material-symbols-outlined text-lg text-purple-500">domain</span>
+                            Wholesale
+                        </button>
+</div>
+</div>
+</header>
+<!-- Table Section -->
+<div class="flex-1 overflow-auto px-8 py-6 custom-scrollbar">
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 group">
+<div class="flex items-center gap-1">Customer <span class="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100">arrow_downward</span></div>
+</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Location</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Orders</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Total Spent</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last Active</th>
+<th class="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Row 1 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="h-10 w-10 rounded-full bg-cover bg-center" data-alt="Portrait of Sophia Williams" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIWfJOXOgZ9woriHtxPIXCpxbiK2L_YtKMzfb2kPQ83TCSIm2P7sx5mJAuaEmMxroS7jQIZgtTe9htR9lEbnjGcQ_hH9rZcMaq7NiEcwFJILKJy_nvmr7MGh_uwAgRZ4h-ZODx3bXVLVcbNtdeBdaLmt1NN89U3Yfz15_CHkJizhTfB1fXGznMrJVQMTT3J_6pLUwOpEmtMhkeSW4ysirYOwXbNv-qIjkQRZ0KrxFnYfKhoIWN1G70Ksr72Ditou8PhLg4rjmIZvWJ')"></div>
+<div class="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5">
+<span class="material-symbols-outlined text-yellow-500 text-sm fill-1">star</span>
+</div>
+</div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Sophia Williams</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 mt-0.5">VIP</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:sophia.w@example.com">
+<span class="material-symbols-outlined text-[16px]">mail</span> sophia.w@example.com
+                                        </a>
+<div class="text-xs text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">call</span> +1 (555) 123-4567
+                                        </div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="United States" data-alt="US Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnlkRDbHnS1eJFr64g5pRBSBGt6RlCm9zE41RUyWeh3-dyHYo1Qewoz6R13TaULWLYjbYDvmL4zFPWgbrfUGLAoKqCmNqmaKejBIEy5itIT6j2_mSDPhJy2f9jSAvEokfYWOA9uNdq4zVOl2mspO9SpMGJr3wjRR6vDejbUKzixxMrRmdzeznGk9gLuU9XzBjQjrUc_ZNJ3OkkqbZkZcf30PMiHSJFauJokNYoUgohjst4gxdl-EQkDFZBHBl2XCe1wtIdkeXpL9ii" srcset="https://flagcdn.com/w40/us.png 2x" width="20"/>
+                                        New York, USA
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">24</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$3,450.00</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 24, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-sm">
+                                            LB
+                                        </div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Liam Brown</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 mt-0.5">Repeat Buyer</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:liam.b@example.com">
+<span class="material-symbols-outlined text-[16px]">mail</span> liam.b@example.com
+                                        </a>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="United Kingdom" data-alt="UK Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpdpzS7Pr1_tTJeKkugkSt8eW5fgnbOngZmpXlQAUCdbQ2i6rNEpIGnhgEC-aeV2ot-eAPm_JkMS6nmfTjXZk8bTVXLYlL-dQ1Pm6_jXLUGAxFy3IcyYXTrn-5wIpWETBZwFMhouqfoyt62M7W5nWjI6P2OCAUCKs7RXs8cdz3P3piBS8-X0_PtIGQrgz_svt-AYEzbhuUEp4bG9MqV9QZ1Mt8ddob5U5fMGoRe61us8Eri47I8zDw5Qk-_QXbeisZxS1nrteQNXjA" srcset="https://flagcdn.com/w40/gb.png 2x" width="20"/>
+                                        London, UK
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">8</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$890.50</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 22, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-cover bg-center" data-alt="Portrait of Marcus Johnson" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmiOd3-JtAU7dSOaE1WfldCM_6ZKWItl2qkkosYcqiipIRKcDWQGZe-yRQQv8VR7TV4O6wElrDmjZUzZgf6uM9lLrZMFXDhfSBVMYTYQEl9yOdKX7PErEuiGl1ODDFBaNXVRIAWcWJn1UaeNJzP1894erQqHcZ3c1LKtdmiEC9qShDUkEJhQ8ti0U_zGaKUdgrE56eHmfQWP5mvFqNZuhcCLoy3lND-26Y-Ql11cZTtZ-ACC_0eU3gZDWrbedepXWsbRwwY6HPvTtR')"></div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Fine Leathers Inc.</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 mt-0.5">Wholesale</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:purchasing@fineleathers.co">
+<span class="material-symbols-outlined text-[16px]">mail</span> purchasing@fine...
+                                        </a>
+<div class="text-xs text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">chat</span> Contact: Marcus
+                                        </div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="Canada" data-alt="Canada Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNtB5zkKPu3y_Eng6c-55t25hmkLWzfNHjdvApm7-5yCGHx5Gu3iN2DZ8_rjjdkMWU0Uu19LarLIV7rdVNepPBBNt_YCEj8CiYiEYSDZ4ee2icuuEyuBx5j_MQ8B-0FEwt4LfkZ96z7dxJEwl4JZ9yBHbE_xbRu5_1T1albDwGMUdqIx08Ngu2IUQulX9IjgyWnCN15EgTn_vrMy7kpfU2833HbShjA3hhhopqpHZORBTIZNuM4GOpQ7yc-Dw_Hv8tKrUo5HxRSM9n" srcset="https://flagcdn.com/w40/ca.png 2x" width="20"/>
+                                        Toronto, CA
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">3</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$12,450.00</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 20, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-cover bg-center" data-alt="Portrait of Emma Davis" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDNf7cHkF0nTgvFcqC37XdTRXmkmstQfXcIfOo3zQp1i4o7BrE8E0Pn1-jO7KK2u-VhePnyEScn9eNcPPYJe7GQjpQjSNY4aKf2sjNqRpnLChSrBuIlVz2MEvxPVRi60G5FL8iBFt7My5qz_ijx5XfbrOiYO6iCQ17Au89dE_XqljGw8kT3AqUilNBCCC1kCq6277zn4fytbfkQsF8wWJd2NH6ejDfRM5L70CUIm_tW9SJ54PcIR2iNQAIomxC0pn8Jg_JPeotAH3HF')"></div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Emma Davis</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:emma.d@example.com">
+<span class="material-symbols-outlined text-[16px]">mail</span> emma.d@example.com
+                                        </a>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="Australia" data-alt="Australia Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVr0V2wz60bIzRdy72uFDXQCMVCFDVrb38OnduKiBIdpVA2jFyF_GN7mcuvatNlhQfyJyURXpCqDdqhToF2UM6AMDBQaUDFdb1dptjudfjITeztNpmeaZZiId1O1T2sNa6LBQTIfvPsSV5RKv4kSPSh40qdQliJaY5H6S2q_2fOhO1gjUGOHpNlcda58333-3jVWANEoEjwsiW7XNbydEbEit646HNRvNZRqXqa8YYKJqQiSwul9BIwcNWXe32TsAH1vNXklrZPSCJ" srcset="https://flagcdn.com/w40/au.png 2x" width="20"/>
+                                        Sydney, AU
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">1</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$120.00</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 18, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-cover bg-center" data-alt="Portrait of Noah Wilson" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB13lPxCO2uOIBfcav__eZZ9elxsgOOgGB4yD-aDiDvPBL3y1p0RX0ZAfRbf8W2ogFPYJVce9i2EyglK56NrFwnfMsxcdfHZOBnzxbP8jgFjeCGq32EatIN_n-leF-AqC0zApYMxXA7GS_cUYK5nDi-DvnJY2lLxmivk_i4KsIyBA3PZcGdPyo4aCkpuhpxmVbLOgHyL8QQxLZEaTZDvwniAT65U2ysTaagNvODveXoccH1YNyCQQCRY4fUglVzG1zxeqR3esjc1aUL')"></div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Noah Wilson</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:noah.w@example.com">
+<span class="material-symbols-outlined text-[16px]">mail</span> noah.w@example.com
+                                        </a>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="Germany" data-alt="Germany Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7yCg7TKzo62pKqU_LVZ3wu2CYndaTkK_Ry7cifC-QEtMO565alV-nOJ_4gETnfzvDQvJ_KP8QcZcTPP4S9GWrgDVB7qr9SQQm3Qv1H9IOzHBN9oLmo5_8RQhH1lrdxBmUidP4b7AcqAoVkdw8ox5FsuzakeQPYi62-uZBUPRwiiBJCDMZ6xZJZaUwIFHo3sj86l18JPbs3OFGekXISodX3xNxTNRTULoum2Kw86gW-wot5mE4M58K_pxVE_tc0jpOIU9JmhuehsTN" srcset="https://flagcdn.com/w40/de.png 2x" width="20"/>
+                                        Berlin, DE
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">5</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$450.00</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 15, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<td class="py-4 px-6">
+<input class="rounded border-slate-300 text-primary focus:ring-primary bg-transparent" type="checkbox"/>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-cover bg-center" data-alt="Portrait of Olivia Martinez" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBSC85kdqiFnV-tRpejfvuTnc4R0wTzxPXQp04-Y9gW-X4JJBCGMl12xOlPTZUIGuAYb-mv9dlfzxrT-zqGKH1J7uxUT1Hezh1djEPvCggdsRQhwutjAvWYBktlNBkOL5cSCL0Au0RA5PqSvuBSnj5akTb6Go1Diidh-Z9McI6kzlwR1VjPNmHN0l3uwJTgVPwznBfBZC7Z85THKcyh0rxL6YTH5VPtu12YRkVq0-EsUIwG3I7YSvITAPNFxeDO58QuFSj--UW73LPA')"></div>
+<div>
+<p class="font-medium text-slate-900 dark:text-white text-sm">Olivia Martinez</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 mt-0.5">Repeat Buyer</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex flex-col gap-1">
+<a class="text-sm text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1" href="mailto:olivia.m@example.com">
+<span class="material-symbols-outlined text-[16px]">mail</span> olivia.m@example.com
+                                        </a>
+</div>
+</td>
+<td class="py-4 px-6">
+<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+<img alt="Spain" data-alt="Spain Flag" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIF26k7NcUa36VAu9RrqiC4ygA8cDGzOa8MF22MfBrrMoFLOlDBvkHFnvGBFVxVsRdcNsECjORk0Vyz3cOEql1RDDfhM44T-igX_CQuwn2dt2Km8dDBZpfqFLEajlI0XK1-5YP_1bsQrkeK3NTGTmZqoZ_Oph2EsWBDl0eFe4DrOxa5sNcRXGInjognkF77yrhX16eJ-yCckNuGA7YRlhSaSNQwbjkIFOg4nlrwBqlKy1GDFtYg_IsBsnnyTZw1_9ndUZGVsUsIiiw" srcset="https://flagcdn.com/w40/es.png 2x" width="20"/>
+                                        Madrid, ES
+                                    </div>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">12</span>
+</td>
+<td class="py-4 px-6 text-right">
+<span class="text-sm font-bold text-slate-900 dark:text-white">$1,120.00</span>
+</td>
+<td class="py-4 px-6">
+<span class="text-sm text-slate-500 dark:text-slate-400">Oct 12, 2023</span>
+</td>
+<td class="py-4 px-6 text-right">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination Footer inside table card -->
+<div class="bg-white dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<p class="text-sm text-slate-500 dark:text-slate-400">Showing <span class="font-medium text-slate-900 dark:text-white">1</span> to <span class="font-medium text-slate-900 dark:text-white">6</span> of <span class="font-medium text-slate-900 dark:text-white">1,234</span> results</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800" disabled="">Previous</button>
+<button class="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

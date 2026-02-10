@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/* Luxe Leather Co. Design System */
+@theme inline {
+  /* Colors - Unified Brand Palette */
+  --color-primary: #d41132;
+  --color-primary-hover: #b30f2a;
+
+  /* Background Colors */
+  --color-background-light: #FAFAF8;
+  --color-background-dark: #0d141b;
+
+  /* Surface/Card Colors */
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #1a2632;
+
+  /* Border Colors */
+  --color-border-light: #e5e7eb;
+  --color-border-dark: #2d3b4a;
+
+  /* Text Colors */
+  --color-text-primary-light: #0d141b;
+  --color-text-primary-dark: #f3f4f6;
+  --color-text-secondary-light: #4c739a;
+  --color-text-secondary-dark: #94a3b8;
+
+  /* Additional UI Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Spacing Scale (preserve Tailwind defaults) */
+  --spacing-xs: 0.5rem;
+  /* 8px */
+  --spacing-sm: 0.75rem;
+  /* 12px */
+  --spacing-md: 1rem;
+  /* 16px */
+  --spacing-lg: 1.5rem;
+  /* 24px */
+  --spacing-xl: 2rem;
+  /* 32px */
+  --spacing-2xl: 3rem;
+  /* 48px */
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  /* 4px */
+  --radius: 0.5rem;
+  /* 8px */
+  --radius-lg: 0.75rem;
+  /* 12px */
+  --radius-xl: 1rem;
+  /* 16px */
+  --radius-full: 9999px;
+
+  /* Typography - Inter font family */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Root Variables for Light Mode (default) */
+:root {
+  --background: var(--color-background-light);
+  --foreground: var(--color-text-primary-light);
+}
+
+/* Dark Mode Variables */
+:root.dark {
+  --background: var(--color-background-dark);
+  --foreground: var(--color-text-primary-dark);
+}
+
+/* Fallback for prefers-color-scheme (if user hasn't set preference) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: var(--color-background-dark);
+    --foreground: var(--color-text-primary-dark);
+  }
+}
+
+/* Global Base Styles */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Material Symbols Icons - Global Styles */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}

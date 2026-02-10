@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Platform Settings Manager - Luxe Leather Co.</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2632",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#2d3b4a",
+                        "text-main": "#0d141b",
+                        "text-secondary": "#4c739a",
+                        "text-dark-main": "#ffffff",
+                        "text-dark-secondary": "#94a3b8",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-text-dark-main antialiased min-h-screen flex flex-col">
+<!-- Main Container -->
+<div class="layout-container flex h-full grow flex-col">
+<!-- Header / Breadcrumbs Area -->
+<header class="w-full px-6 py-5 border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark sticky top-0 z-10 shadow-sm">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col gap-4">
+<!-- Breadcrumbs -->
+<div class="flex items-center gap-2 text-sm">
+<a class="text-text-secondary dark:text-text-dark-secondary font-medium hover:text-primary transition-colors" href="#">Home</a>
+<span class="text-text-secondary dark:text-text-dark-secondary font-medium">/</span>
+<span class="text-text-main dark:text-text-dark-main font-medium">Settings</span>
+</div>
+<!-- Title & Actions -->
+<div class="flex flex-wrap justify-between items-end gap-4">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl font-black tracking-tight text-text-main dark:text-white">Platform Settings</h1>
+<p class="text-text-secondary dark:text-text-dark-secondary">Manage your store identity, shipping configurations, and SEO preferences.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-sm font-bold text-text-secondary dark:text-text-dark-secondary bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+<button class="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg shadow-md transition-colors">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                                Save Changes
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="flex-1 w-full max-w-7xl mx-auto p-6 md:p-8">
+<div class="flex flex-col lg:flex-row gap-8">
+<!-- Left Sidebar Navigation (Tabs) -->
+<aside class="w-full lg:w-64 flex-shrink-0">
+<nav class="sticky top-40 flex flex-row lg:flex-col gap-1 lg:gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-bold border-l-4 border-primary lg:border-l-4 lg:border-b-0" href="#general">
+<span class="material-symbols-outlined">store</span>
+                            General
+                        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-text-secondary dark:text-text-dark-secondary hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main dark:hover:text-white font-medium transition-colors border-l-4 border-transparent" href="#shipping">
+<span class="material-symbols-outlined">local_shipping</span>
+                            Shipping
+                        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-text-secondary dark:text-text-dark-secondary hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main dark:hover:text-white font-medium transition-colors border-l-4 border-transparent" href="#seo">
+<span class="material-symbols-outlined">search</span>
+                            SEO
+                        </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-text-secondary dark:text-text-dark-secondary hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-text-main dark:hover:text-white font-medium transition-colors border-l-4 border-transparent" href="#notifications">
+<span class="material-symbols-outlined">notifications</span>
+                            Notifications
+                        </a>
+</nav>
+</aside>
+<!-- Right Content Area -->
+<div class="flex-1 flex flex-col gap-8">
+<!-- Section: General -->
+<section class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden" id="general">
+<div class="px-6 py-5 border-b border-border-light dark:border-border-dark">
+<h2 class="text-xl font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">storefront</span>
+                                Store Identity
+                            </h2>
+</div>
+<div class="p-6 flex flex-col gap-8">
+<!-- Logo Upload -->
+<div class="flex flex-col sm:flex-row gap-6 items-start">
+<div class="w-32 h-32 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:border-primary transition-colors">
+<div class="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-40" data-alt="Minimalist abstract leather texture representing brand logo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDzVtW9Ol2-uO0-QLJN-j_MlADZdaYddto_fzADtkoYWCBfYsLDeQZcgCNKbF82C4vvEVnHwnMCs9OmkbN0jcm2MN2n2GAPd60W0yeDuLQIMty1qUzKrFFeOqZMDxTaa2SwXKiyoGAukZIQEvkxWPURXnqm4UGlDV96fIJQzD6pIE8MrxB01mV1O-TfhjG8y-uwkyhT-2fTyig1bFe9o9hH-oxBm8-nTJ-8AQ7SwKVxJI12o9jtRdQRRUyk8MxxhEGTf1bht5quyly2');"></div>
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500 z-10 text-3xl group-hover:scale-110 transition-transform">cloud_upload</span>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="text-base font-bold text-text-main dark:text-white">Company Logo</h3>
+<p class="text-sm text-text-secondary dark:text-text-dark-secondary max-w-md">
+                                        This logo will appear on your store header and checkout pages. Recommended size: 512x512px. Formats: JPG, PNG, SVG.
+                                    </p>
+<div class="flex gap-3 mt-1">
+<button class="text-sm font-semibold text-primary hover:text-blue-600">Upload New</button>
+<button class="text-sm font-semibold text-red-500 hover:text-red-600">Remove</button>
+</div>
+</div>
+</div>
+<hr class="border-border-light dark:border-border-dark"/>
+<!-- Contact Info -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-text-main dark:text-white">Support Email</label>
+<div class="relative">
+<span class="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">mail</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" type="email" value="support@luxeleather.co"/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-text-main dark:text-white">WhatsApp Number</label>
+<div class="relative">
+<span class="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">chat</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+<p class="text-xs text-text-secondary dark:text-text-dark-secondary">Format: +(Country Code) Number</p>
+</div>
+</div>
+<!-- Bank Details -->
+<div class="bg-gray-50 dark:bg-[#15202b] rounded-xl p-5 border border-border-light dark:border-border-dark">
+<h3 class="text-base font-bold text-text-main dark:text-white mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-500">account_balance</span>
+                                    Banking &amp; Financials
+                                </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="col-span-1 md:col-span-2">
+<label class="block text-xs font-semibold uppercase text-text-secondary dark:text-text-dark-secondary mb-1">Bank Name</label>
+<input class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none" placeholder="e.g. Chase Bank" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-semibold uppercase text-text-secondary dark:text-text-dark-secondary mb-1">Account Holder Name</label>
+<input class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none" placeholder="Luxe Leather LLC" type="text"/>
+</div>
+<div>
+<label class="block text-xs font-semibold uppercase text-text-secondary dark:text-text-dark-secondary mb-1">IBAN / Account Number</label>
+<input class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none font-mono" placeholder="**** **** **** 1234" type="text"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Shipping -->
+<section class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden" id="shipping">
+<div class="px-6 py-5 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+<h2 class="text-xl font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">local_shipping</span>
+                                Shipping Configuration
+                            </h2>
+<button class="text-sm text-primary font-bold hover:underline">+ Add Zone</button>
+</div>
+<div class="p-6 flex flex-col gap-6">
+<!-- Toggles Row -->
+<div class="flex flex-col sm:flex-row gap-8 pb-4 border-b border-border-light dark:border-border-dark">
+<div class="flex items-center justify-between gap-4 w-full sm:w-auto">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-text-main dark:text-white">Free Shipping</span>
+<span class="text-xs text-text-secondary dark:text-text-dark-secondary">Enable free shipping over $200</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between gap-4 w-full sm:w-auto">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-text-main dark:text-white">Express Delivery</span>
+<span class="text-xs text-text-secondary dark:text-text-dark-secondary">Offer 2-day delivery option</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Zones Table -->
+<div>
+<h3 class="text-sm font-bold text-text-main dark:text-white mb-3">Active Shipping Zones</h3>
+<div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+<table class="w-full text-sm text-left">
+<thead class="text-xs text-text-secondary dark:text-text-dark-secondary uppercase bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+<tr>
+<th class="px-6 py-3 font-semibold" scope="col">Zone Name</th>
+<th class="px-6 py-3 font-semibold" scope="col">Regions</th>
+<th class="px-6 py-3 font-semibold" scope="col">Standard Rate</th>
+<th class="px-6 py-3 font-semibold text-right" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+<tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="px-6 py-4 font-medium text-text-main dark:text-white">Domestic (US)</td>
+<td class="px-6 py-4 text-text-secondary dark:text-text-dark-secondary">50 States</td>
+<td class="px-6 py-4">
+<div class="flex items-center">
+<span class="text-gray-500 mr-1">$</span>
+<input class="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-transparent dark:text-white" type="number" value="12.00"/>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 font-medium">Edit</button>
+</td>
+</tr>
+<tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+<td class="px-6 py-4 font-medium text-text-main dark:text-white">Europe</td>
+<td class="px-6 py-4 text-text-secondary dark:text-text-dark-secondary">UK, France, Germany...</td>
+<td class="px-6 py-4">
+<div class="flex items-center">
+<span class="text-gray-500 mr-1">$</span>
+<input class="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-transparent dark:text-white" type="number" value="35.00"/>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 font-medium">Edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: SEO -->
+<section class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden" id="seo">
+<div class="px-6 py-5 border-b border-border-light dark:border-border-dark">
+<h2 class="text-xl font-bold text-text-main dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">search</span>
+                                SEO Settings
+                            </h2>
+</div>
+<div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- SEO Inputs -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div>
+<label class="block text-sm font-bold text-text-main dark:text-white mb-2">Meta Title</label>
+<input class="w-full px-4 py-2 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none" type="text" value="Luxe Leather Co. | Handcrafted Premium Goods"/>
+<div class="flex justify-between mt-1">
+<span class="text-xs text-text-secondary dark:text-text-dark-secondary">Recommended: 60 chars</span>
+<span class="text-xs text-green-600 font-medium">42/60</span>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-text-main dark:text-white mb-2">Meta Description</label>
+<textarea class="w-full px-4 py-2 rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-600 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none" rows="4">Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.</textarea>
+<div class="flex justify-between mt-1">
+<span class="text-xs text-text-secondary dark:text-text-dark-secondary">Recommended: 160 chars</span>
+<span class="text-xs text-green-600 font-medium">138/160</span>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-text-main dark:text-white mb-2">Social Sharing Image</label>
+<div class="flex items-center gap-3">
+<div class="h-12 w-20 bg-cover bg-center rounded border border-gray-300 dark:border-gray-600" data-alt="Leather texture sample for social preview" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBDcirtU3MkTxCjbSqy_qRF6FfQT6P8aM_4dvs0y85urgBQfAti0RSbblhj5LQib8JIaQBPJiKhXGOmIgd-88o5TLQhbPRXdVPaUUwzwNw_tO01NttdiULa7FOUXqvIRhkkOEkPKEZiz10Vpsrviccg8t9Vzzub9zN9_oG5Lhl8p7Br-yg5geCNJ_AGLJWYtSBorAt73FQNk2hnPBZDaP5kYBZk6MFonwuwAhnmiRUV-ZXPGmEdV9zMv31NMsSDZv7Woz2PdLIkwoVy');"></div>
+<button class="px-3 py-1.5 text-xs font-bold border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-text-main dark:text-white">Change Image</button>
+</div>
+</div>
+</div>
+<!-- SEO Preview Card -->
+<div class="lg:col-span-1">
+<label class="block text-sm font-bold text-text-main dark:text-white mb-3">Search Preview</label>
+<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+<div class="flex items-center gap-2 mb-1">
+<div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+<img alt="Favicon placeholder" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzInKns-l5CjXtDRsJ2pnCnPIfOmUPeUbr39WIvWWRR8YVQ08jUPrxPq0LwStvHykAxWpXrZB1qOFGzWJimeDYOYXgxhf1gkHkpYae4WKKAqsHWau4hXqkXkwt9kMOEFuenjjSW_VoRBm6mxrzaUFIE80fQKkBocxx8fHPpnVKZst2_kwhVV36ipFrZdM2Hd_yZkqBZ-AVBjg_R9VGoB0x7ZxWL0QBj3PQKN0SKO1Hhndt4fVI5TmNDcl_owmXSoiYsxWVWu_8c2mF"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs text-gray-800 leading-none">Luxe Leather Co.</span>
+<span class="text-[10px] text-gray-500 leading-none">https://www.luxeleather.co</span>
+</div>
+</div>
+<div class="mb-1">
+<a class="text-[#1a0dab] text-lg leading-tight hover:underline" href="#">Luxe Leather Co. | Handcrafted Premium Goods</a>
+</div>
+<p class="text-sm text-[#4d5156] leading-snug">
+                                        Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.
+                                    </p>
+</div>
+<div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs rounded border border-blue-100 dark:border-blue-800/30">
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-sm">info</span>
+<p>This is a preview. Actual results may vary based on user location and search history.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+</body></html>
