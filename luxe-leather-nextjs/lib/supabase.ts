@@ -5,19 +5,21 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Types for our database tables
+// Types for our database tables — must match actual Supabase column names
 export type Product = {
     id: string;
     name: string;
-    description: string;
+    description: string | null;
     price: number;
+    image: string;
     category: string;
-    image_url: string;
     stock: number;
-    colors?: string[];
     sizes?: string[];
-    created_at: string;
-    updated_at: string;
+    badge?: string | null;
+    rating?: number;
+    reviews?: number;
+    createdAt: string;
+    updatedAt: string;
 };
 
 export type Customer = {
@@ -25,20 +27,21 @@ export type Customer = {
     name: string;
     email: string;
     phone?: string;
-    address?: string;
-    city?: string;
-    country?: string;
-    created_at: string;
+    address?: string | null;
+    city?: string | null;
+    country?: string | null;
+    createdAt: string;
+    updatedAt: string;
 };
 
 export type Order = {
     id: string;
-    customer_id: string;
+    customerId: string;
     status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
     total: number;
-    items: OrderItem[];
-    created_at: string;
-    updated_at: string;
+    items?: OrderItem[];
+    createdAt: string;
+    updatedAt?: string;
 };
 
 export type OrderItem = {
@@ -51,13 +54,47 @@ export type OrderItem = {
 
 export type CustomRequest = {
     id: string;
-    customer_name: string;
-    customer_email: string;
-    request_type: string;
+    customerId?: string | null;
+    name: string;
+    email: string;
+    phone?: string | null;
+    itemType: string;
+    budget?: string | null;
+    deadline?: string | null;
     description: string;
-    budget_min: number;
-    budget_max: number;
-    deadline?: string;
+    inspiration?: string | null;
     status: 'new' | 'quoted' | 'in_progress' | 'completed';
-    created_at: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type ContactMessage = {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    inquiry_type: string;
+    message: string;
+    status: 'new' | 'read' | 'replied';
+    createdAt: string;
+};
+
+export type MediaFile = {
+    id: string;
+    filename: string;
+    url: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    content_type?: string;
+    folder?: string;
+    alt_text?: string;
+    createdAt: string;
+};
+
+export type SiteSetting = {
+    id: string;
+    key: string;
+    value: string | null;
+    updatedAt: string;
 };

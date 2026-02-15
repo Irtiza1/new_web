@@ -7,7 +7,8 @@
   --color-primary-hover: #b30f2a;
 
   /* Background Colors */
-  --color-background-light: #FAFAF8;
+  --color-background-light: #ffffff;
+  /* User requested white background */
   --color-background-dark: #0d141b;
 
   /* Surface/Card Colors */

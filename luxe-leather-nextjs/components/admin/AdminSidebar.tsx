@@ -10,6 +10,7 @@ export default function AdminSidebar() {
 
     const navItems = [
         { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
+        { name: 'Products', path: '/admin/products', icon: 'inventory_2' },
         { name: 'Orders', path: '/admin/orders', icon: 'shopping_bag' },
         { name: 'Customers', path: '/admin/customers', icon: 'group' },
         { name: 'Custom Requests', path: '/admin/requests', icon: 'inbox' },
@@ -40,8 +41,8 @@ export default function AdminSidebar() {
                                 key={item.path}
                                 href={item.path}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive(item.path)
-                                        ? 'bg-[#d41132]/10 text-[#d41132] dark:bg-[#d41132]/20 dark:text-red-400 font-medium'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    ? 'bg-[#d41132]/10 text-[#d41132] dark:bg-[#d41132]/20 dark:text-red-400 font-medium'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                             >
                                 <span className="material-symbols-outlined text-xl" style={isActive(item.path) ? { fontVariationSettings: "'FILL' 1" } : {}}>{item.icon}</span>

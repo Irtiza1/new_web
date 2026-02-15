@@ -1,4 +1,5 @@
 import { supabase, type Product } from '../supabase';
+export type { Product };
 
 // ============================================
 // PRODUCTS CRUD
@@ -9,9 +10,9 @@ import { supabase, type Product } from '../supabase';
  */
 export async function getAllProducts() {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Product[];
@@ -22,10 +23,10 @@ export async function getAllProducts() {
  */
 export async function getProductsByCategory(category: string) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .select('*')
         .eq('category', category)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Product[];
@@ -36,7 +37,7 @@ export async function getProductsByCategory(category: string) {
  */
 export async function getProductById(id: string) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .select('*')
         .eq('id', id)
         .single();
@@ -50,10 +51,10 @@ export async function getProductById(id: string) {
  */
 export async function searchProducts(query: string) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .select('*')
         .ilike('name', `%${query}%`)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Product[];
@@ -62,9 +63,9 @@ export async function searchProducts(query: string) {
 /**
  * Create new product
  */
-export async function createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
+export async function createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .insert([product])
         .select()
         .single();
@@ -78,7 +79,7 @@ export async function createProduct(product: Omit<Product, 'id' | 'created_at' |
  */
 export async function updateProduct(id: string, updates: Partial<Product>) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .update(updates)
         .eq('id', id)
         .select()
@@ -93,7 +94,7 @@ export async function updateProduct(id: string, updates: Partial<Product>) {
  */
 export async function deleteProduct(id: string) {
     const { error } = await supabase
-        .from('products')
+        .from('Product')
         .delete()
         .eq('id', id);
 
@@ -106,7 +107,7 @@ export async function deleteProduct(id: string) {
  */
 export async function updateProductStock(id: string, quantity: number) {
     const { data, error } = await supabase
-        .from('products')
+        .from('Product')
         .update({ stock: quantity })
         .eq('id', id)
         .select()

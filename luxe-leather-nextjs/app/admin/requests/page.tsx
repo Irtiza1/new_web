@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CustomRequest, getAllCustomRequests } from '@/lib/api/custom-requests';
+import { CustomRequest, getAllCustomRequests, updateCustomRequestStatus, deleteCustomRequest } from '@/lib/api/custom-requests';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export default function AdminRequestsPage() {
@@ -118,22 +118,22 @@ export default function AdminRequestsPage() {
                                                     <td className="py-4 px-6">
                                                         <div className="flex items-center gap-3">
                                                             <div className="size-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
-                                                                {req.customer_name?.split(' ').map(n => n[0]).join('')}
+                                                                {req.name?.split(' ').map((n: string) => n[0]).join('')}
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-900 dark:text-white">{req.customer_name}</span>
+                                                                <span className="text-sm font-medium text-slate-900 dark:text-white">{req.name}</span>
                                                                 <span className="text-xs text-slate-500">Customer</span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 font-medium">{req.request_type}</td>
-                                                    <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 tabular-nums">${req.budget_min} - ${req.budget_max}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 font-medium">{req.itemType}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{req.budget || 'N/A'}</td>
                                                     <td className="py-4 px-6">
                                                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${getStatusColor(req.status)}`}>
                                                             {req.status}
                                                         </span>
                                                     </td>
-                                                    <td className="py-4 px-6 text-sm text-slate-500 text-right tabular-nums">{new Date(req.created_at).toLocaleDateString()}</td>
+                                                    <td className="py-4 px-6 text-sm text-slate-500 text-right tabular-nums">{new Date(req.createdAt).toLocaleDateString()}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -159,7 +159,7 @@ export default function AdminRequestsPage() {
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                             <div className="flex flex-col">
                                 <span className="text-xs font-mono text-slate-500 mb-1">#REQ-{selectedRequest.id?.slice(0, 4)}</span>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedRequest.request_type}</h3>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedRequest.itemType}</h3>
                             </div>
                             <button onClick={() => setSelectedRequest(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                                 <span className="material-symbols-outlined">close</span>
@@ -170,11 +170,11 @@ export default function AdminRequestsPage() {
                             {/* Client Info Card */}
                             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-700">
                                 <div className="size-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg font-bold">
-                                    {selectedRequest.customer_name?.split(' ').map(n => n[0]).join('')}
+                                    {selectedRequest.name?.split(' ').map((n: string) => n[0]).join('')}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.customer_name}</p>
-                                    <p className="text-xs text-slate-500">{selectedRequest.customer_email}</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedRequest.name}</p>
+                                    <p className="text-xs text-slate-500">{selectedRequest.email}</p>
                                 </div>
                             </div>
                             {/* Request Details */}
@@ -191,7 +191,7 @@ export default function AdminRequestsPage() {
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                                 <div>
                                     <p className="text-xs text-slate-500">Target Budget</p>
-                                    <p className="text-sm font-medium text-slate-900 dark:text-white">${selectedRequest.budget_min} - ${selectedRequest.budget_max}</p>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">{selectedRequest.budget || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500">Deadline</p>
@@ -202,11 +202,26 @@ export default function AdminRequestsPage() {
                         {/* Drawer Actions */}
                         <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202b]">
                             <div className="flex flex-col gap-3">
-                                <button className="w-full flex items-center justify-center gap-2 bg-[#d41132] hover:bg-#b30f2a text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-md shadow-#d41132/20">
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await updateCustomRequestStatus(selectedRequest.id, 'quoted');
+                                            alert(`Quote sent to ${selectedRequest.email}!`);
+                                            await loadRequests();
+                                        } catch (err) {
+                                            console.error('Failed to update status:', err);
+                                            alert('Failed to update status');
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-md shadow-red-200 dark:shadow-none"
+                                >
                                     <span className="material-symbols-outlined text-[20px]">send</span>
                                     Send Quote
                                 </button>
-                                <button className="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-medium py-2.5 px-4 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all">
+                                <button
+                                    onClick={() => window.open(`https://wa.me/?text=Hi ${selectedRequest.name}, regarding your ${selectedRequest.itemType} request...`, '_blank')}
+                                    className="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-medium py-2.5 px-4 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
+                                >
                                     <span className="material-symbols-outlined text-[20px]">chat</span>
                                     Reply via WhatsApp
                                 </button>

@@ -3,14 +3,41 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { getOrderStats } from '@/lib/api/orders';
+import { getAllCustomers } from '@/lib/api/customers';
+import { getAllCustomRequests } from '@/lib/api/custom-requests';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({
-        totalRevenue: 124500,
-        totalOrders: 1240,
-        totalCustomers: 856,
-        pendingRequests: 23
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalCustomers: 0,
+        pendingRequests: 0
     });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                const [orderStats, customers, requests] = await Promise.all([
+                    getOrderStats(),
+                    getAllCustomers(),
+                    getAllCustomRequests()
+                ]);
+                setStats({
+                    totalRevenue: orderStats.totalRevenue,
+                    totalOrders: orderStats.totalOrders,
+                    totalCustomers: customers.length,
+                    pendingRequests: requests.filter(r => r.status === 'new').length
+                });
+            } catch (err) {
+                console.error('Failed to fetch dashboard stats:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchStats();
+    }, []);
 
     return (
         <div className="flex min-h-screen w-full bg-[#f6f7f8] dark:bg-[#0d141b] font-[family-name:var(--font-inter)]">

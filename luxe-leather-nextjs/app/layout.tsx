@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { CartProvider } from "@/contexts/CartContext";
+import GlobalCart from "@/components/storefront/GlobalCart";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +40,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${manrope.variable} antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <CartProvider>
+            {children}
+            <GlobalCart />
+          </CartProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

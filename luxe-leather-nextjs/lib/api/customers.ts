@@ -1,5 +1,7 @@
 import { supabase, type Customer } from '../supabase';
 
+export type { Customer };
+
 // ============================================
 // CUSTOMERS CRUD
 // ============================================
@@ -9,9 +11,9 @@ import { supabase, type Customer } from '../supabase';
  */
 export async function getAllCustomers() {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Customer[];
@@ -22,7 +24,7 @@ export async function getAllCustomers() {
  */
 export async function getCustomerById(id: string) {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .select('*')
         .eq('id', id)
         .single();
@@ -36,7 +38,7 @@ export async function getCustomerById(id: string) {
  */
 export async function getCustomerByEmail(email: string) {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .select('*')
         .eq('email', email)
         .single();
@@ -50,10 +52,10 @@ export async function getCustomerByEmail(email: string) {
  */
 export async function searchCustomers(query: string) {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .select('*')
         .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Customer[];
@@ -62,9 +64,9 @@ export async function searchCustomers(query: string) {
 /**
  * Create new customer
  */
-export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at'>) {
+export async function createCustomer(customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .insert([customer])
         .select()
         .single();
@@ -78,7 +80,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
  */
 export async function updateCustomer(id: string, updates: Partial<Customer>) {
     const { data, error } = await supabase
-        .from('customers')
+        .from('Customer')
         .update(updates)
         .eq('id', id)
         .select()
@@ -93,7 +95,7 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
  */
 export async function deleteCustomer(id: string) {
     const { error } = await supabase
-        .from('customers')
+        .from('Customer')
         .delete()
         .eq('id', id);
 

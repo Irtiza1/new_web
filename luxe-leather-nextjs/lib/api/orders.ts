@@ -9,9 +9,9 @@ import { supabase, type Order } from '../supabase';
  */
 export async function getAllOrders() {
     const { data, error } = await supabase
-        .from('orders')
-        .select('*, customers(name, email)')
-        .order('created_at', { ascending: false });
+        .from('Order')
+        .select('*, Customer(name, email)')
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data;
@@ -22,10 +22,10 @@ export async function getAllOrders() {
  */
 export async function getOrdersByCustomer(customerId: string) {
     const { data, error } = await supabase
-        .from('orders')
+        .from('Order')
         .select('*')
-        .eq('customer_id', customerId)
-        .order('created_at', { ascending: false });
+        .eq('customerId', customerId)
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as Order[];
@@ -36,10 +36,10 @@ export async function getOrdersByCustomer(customerId: string) {
  */
 export async function getOrdersByStatus(status: Order['status']) {
     const { data, error } = await supabase
-        .from('orders')
-        .select('*, customers(name, email)')
+        .from('Order')
+        .select('*, Customer(name, email)')
         .eq('status', status)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data;
@@ -50,8 +50,8 @@ export async function getOrdersByStatus(status: Order['status']) {
  */
 export async function getOrderById(id: string) {
     const { data, error } = await supabase
-        .from('orders')
-        .select('*, customers(name, email, phone)')
+        .from('Order')
+        .select('*, Customer(name, email, phone)')
         .eq('id', id)
         .single();
 
@@ -62,9 +62,9 @@ export async function getOrderById(id: string) {
 /**
  * Create new order
  */
-export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'updated_at'>) {
+export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>) {
     const { data, error } = await supabase
-        .from('orders')
+        .from('Order')
         .insert([order])
         .select()
         .single();
@@ -78,7 +78,7 @@ export async function createOrder(order: Omit<Order, 'id' | 'created_at' | 'upda
  */
 export async function updateOrderStatus(id: string, status: Order['status']) {
     const { data, error } = await supabase
-        .from('orders')
+        .from('Order')
         .update({ status })
         .eq('id', id)
         .select()
@@ -93,7 +93,7 @@ export async function updateOrderStatus(id: string, status: Order['status']) {
  */
 export async function updateOrder(id: string, updates: Partial<Order>) {
     const { data, error } = await supabase
-        .from('orders')
+        .from('Order')
         .update(updates)
         .eq('id', id)
         .select()
@@ -108,7 +108,7 @@ export async function updateOrder(id: string, updates: Partial<Order>) {
  */
 export async function deleteOrder(id: string) {
     const { error } = await supabase
-        .from('orders')
+        .from('Order')
         .delete()
         .eq('id', id);
 
@@ -122,14 +122,14 @@ export async function deleteOrder(id: string) {
 export async function getOrderStats() {
     // Get total revenue
     const { data: totalRevenue, error: revenueError } = await supabase
-        .from('orders')
+        .from('Order')
         .select('total');
 
     if (revenueError) throw revenueError;
 
     // Get order counts by status
     const { data: statusCounts, error: statusError } = await supabase
-        .from('orders')
+        .from('Order')
         .select('status');
 
     if (statusError) throw statusError;

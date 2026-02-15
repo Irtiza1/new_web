@@ -1,9 +1,35 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { getAnalyticsSummary, getTopProducts, getCustomersByCountry, type AnalyticsSummary, type TopProduct, type CustomerCountry } from '@/lib/api/analytics';
 
 export default function AdminAnalyticsPage() {
+    const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+    const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+    const [countries, setCountries] = useState<CustomerCountry[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                const [s, p, c] = await Promise.all([
+                    getAnalyticsSummary(),
+                    getTopProducts(),
+                    getCustomersByCountry()
+                ]);
+                setSummary(s);
+                setTopProducts(p);
+                setCountries(c);
+            } catch (err) {
+                console.error('Failed to load analytics:', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
             <AdminSidebar />
@@ -21,13 +47,19 @@ export default function AdminAnalyticsPage() {
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             {/* Date Range Picker */}
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#1a2632] border border-[#e7edf3] dark:border-[#2b3a4a] rounded-lg text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <button
+                                onClick={() => alert('Date range picker functionality coming soon!')}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#1a2632] border border-[#e7edf3] dark:border-[#2b3a4a] rounded-lg text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            >
                                 <span className="material-symbols-outlined text-lg">calendar_today</span>
                                 <span>Oct 24, 2023 - Nov 24, 2023</span>
                                 <span className="material-symbols-outlined text-lg text-[#4c739a] dark:text-[#9ca3af]">arrow_drop_down</span>
                             </button>
                             {/* Export Button */}
-                            <button className="flex items-center gap-2 px-4 py-2.5 bg-[#d41132] hover:bg-#b30f2a text-white rounded-lg text-sm font-bold shadow-sm shadow-blue-200 dark:shadow-none transition-all active:scale-95">
+                            <button
+                                onClick={() => alert('Generating PDF Report... This feature is simulated.')}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-[#d41132] hover:bg-[#b30f2a] text-white rounded-lg text-sm font-bold shadow-sm shadow-red-200 dark:shadow-none transition-all active:scale-95"
+                            >
                                 <span className="material-symbols-outlined text-lg">download</span>
                                 Export PDF
                             </button>
@@ -45,7 +77,7 @@ export default function AdminAnalyticsPage() {
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-2">
-                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">$124,500</h3>
+                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">${summary?.totalRevenue?.toLocaleString() ?? '0'}</h3>
                                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">+12%</span>
                             </div>
                             <p className="text-xs text-[#4c739a] dark:text-[#9ca3af] mt-1">Compared to last month</p>
@@ -59,7 +91,7 @@ export default function AdminAnalyticsPage() {
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-2">
-                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">1,240</h3>
+                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">{summary?.totalOrders?.toLocaleString() ?? '0'}</h3>
                                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">+5%</span>
                             </div>
                             <p className="text-xs text-[#4c739a] dark:text-[#9ca3af] mt-1">Compared to last month</p>
@@ -73,7 +105,7 @@ export default function AdminAnalyticsPage() {
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-2">
-                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">$185</h3>
+                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">${summary?.avgOrderValue ?? '0'}</h3>
                                 <span className="text-sm font-semibold text-#b30f2a dark:text-#e85273">+2%</span>
                             </div>
                             <p className="text-xs text-[#4c739a] dark:text-[#9ca3af] mt-1">Stable performance</p>
@@ -87,7 +119,7 @@ export default function AdminAnalyticsPage() {
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-2">
-                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">32</h3>
+                                <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">{summary?.totalReturns ?? '0'}</h3>
                                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">-1.5%</span>
                             </div>
                             <p className="text-xs text-[#4c739a] dark:text-[#9ca3af] mt-1">Improvement in quality</p>
@@ -122,46 +154,19 @@ export default function AdminAnalyticsPage() {
                         <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] rounded-xl border border-[#e7edf3] dark:border-[#2b3a4a] shadow-sm p-6">
                             <h3 className="text-lg font-bold text-[#0d141b] dark:text-[#f3f4f6] mb-6">Top Selling Products</h3>
                             <div className="space-y-6">
-                                {/* Product 1 */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span className="text-[#0d141b] dark:text-[#f3f4f6]">Classic Leather Tote</span>
-                                        <span className="text-[#4c739a] dark:text-[#9ca3af]">342 Sales</span>
+                                {topProducts.length > 0 ? topProducts.map((product, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <div className="flex justify-between text-sm font-medium">
+                                            <span className="text-[#0d141b] dark:text-[#f3f4f6]">{product.name}</span>
+                                            <span className="text-[#4c739a] dark:text-[#9ca3af]">{product.sales} Sales</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-[#f6f7f8] dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div className="h-full bg-[#d41132] rounded-full" style={{ width: `${product.percentage}%`, opacity: 1 - i * 0.15 }}></div>
+                                        </div>
                                     </div>
-                                    <div className="h-2 w-full bg-[#f6f7f8] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#d41132] rounded-full w-[85%]"></div>
-                                    </div>
-                                </div>
-                                {/* Product 2 */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span className="text-[#0d141b] dark:text-[#f3f4f6]">Slim Cardholder Wallet</span>
-                                        <span className="text-[#4c739a] dark:text-[#9ca3af]">285 Sales</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-[#f6f7f8] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#d41132]/80 rounded-full w-[70%]"></div>
-                                    </div>
-                                </div>
-                                {/* Product 3 */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span className="text-[#0d141b] dark:text-[#f3f4f6]">Weekend Duffel Bag</span>
-                                        <span className="text-[#4c739a] dark:text-[#9ca3af]">192 Sales</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-[#f6f7f8] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#d41132]/60 rounded-full w-[50%]"></div>
-                                    </div>
-                                </div>
-                                {/* Product 4 */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span className="text-[#0d141b] dark:text-[#f3f4f6]">Braided Leather Belt</span>
-                                        <span className="text-[#4c739a] dark:text-[#9ca3af]">154 Sales</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-[#f6f7f8] dark:bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#d41132]/40 rounded-full w-[38%]"></div>
-                                    </div>
-                                </div>
+                                )) : (
+                                    <p className="text-sm text-[#4c739a] dark:text-[#9ca3af]">No product data available</p>
+                                )}
                             </div>
                         </div>
 
@@ -211,41 +216,17 @@ export default function AdminAnalyticsPage() {
                             </div>
                             {/* Country List */}
                             <div className="w-full lg:w-80 flex flex-col justify-center gap-4">
-                                <div className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">🇺🇸</span>
-                                        <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">United States</span>
+                                {countries.length > 0 ? countries.map((c, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-lg">{c.flag}</span>
+                                            <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">{c.country}</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">{c.percentage}%</span>
                                     </div>
-                                    <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">45%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">🇬🇧</span>
-                                        <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">United Kingdom</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">20%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">🇨🇦</span>
-                                        <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">Canada</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">15%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">🇦🇺</span>
-                                        <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">Australia</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">12%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-lg">🇩🇪</span>
-                                        <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">Germany</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-[#0d141b] dark:text-[#f3f4f6]">8%</span>
-                                </div>
+                                )) : (
+                                    <p className="text-sm text-[#4c739a] dark:text-[#9ca3af] text-center">No customer data available</p>
+                                )}
                             </div>
                         </div>
                     </div>

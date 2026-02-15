@@ -8,6 +8,10 @@ import Footer from "@/components/storefront/Footer";
 export default function HomePage() {
   const categories = [
     {
+      image:
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuBCXlGxUlNVUPCAiWMd3IcYHCtTCaQvmlKE8ckXliTBTGO7kZ24DWxTydT7c4x1eeH35zHBO74SK-RKLOoM7RhMziyd1-Fu4iCqwhQ5L1bpLGdqI3WB04LpXr8J23V6k3-ilfx436cvf0BlQP6GByydrvlclk3UpR7ByQsvVPZyi6bhMx70GBeaG9FuU586DekhEOcxRgynzdU7etRxAR6HZGK8nZgiGwPtCNy-bvAm9g7Gy0wYB-PKF7Z4hw0avEYeHbeL3Zj4LU4p",
+    },
+    {
       name: "Jackets",
       image:
         "https://lh3.googleusercontent.com/aida-public/AB6AXuA3Mi_4x3U-7bVaej8P1FqcWGO1loc-UlDb3dKp8fBeepxCP4ba_zcJhpELxvqiZWSbycGJQ4_VYDkc7tCC2D7Ga4TJ07sn-9LkhAsh_EdSFpHNQTkVEukqmfG4SCgwKyUPTsjAG4CH7DvMrAZs2FFJQK8xycF0EY2a7f-LtuaUDjvLhGpmtAcy9g96yAVgwz_-hy_nvYkAS9uYOVBCFbdXWid_3Lm9keTylyHZSiAGzUSBN-6Nt1M_YVnZGph1Wfz61rIw1vTqtPlg",
@@ -89,7 +93,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-manrope)] bg-[#FAFAF8] dark:bg-[#221013] text-[#1A1A1A] dark:text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-[family-name:var(--font-manrope)] bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1A1A1A] dark:text-white overflow-x-hidden">
       <Header />
 
       <main className="flex-grow">
@@ -116,12 +120,12 @@ export default function HomePage() {
               techniques. Designed to last a lifetime.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <button className="bg-[#d41132] hover:bg-[#d41132]/90 text-white px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all transform hover:scale-105 shadow-lg shadow-[#d41132]/30">
+              <Link href="/shop" className="bg-[#d41132] hover:bg-[#d41132]/90 text-white px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all transform hover:scale-105 shadow-lg shadow-[#d41132]/30">
                 Shop Collection
-              </button>
-              <button className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
+              </Link>
+              <Link href="/bespoke" className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
                 Explore Custom
-              </button>
+              </Link>
             </div>
           </div>
         </section>
@@ -187,7 +191,7 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
               {products.map((product, index) => (
-                <div key={index} className="group relative">
+                <Link key={index} href="/shop" className="group relative block">
                   <div className="aspect-square w-full overflow-hidden rounded-xl bg-gray-100 relative mb-4">
                     <div
                       className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -215,7 +219,7 @@ export default function HomePage() {
                       ${product.price.toFixed(2)}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

@@ -10,9 +10,9 @@ export type { CustomRequest };
  */
 export async function getAllCustomRequests() {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as CustomRequest[];
@@ -23,10 +23,10 @@ export async function getAllCustomRequests() {
  */
 export async function getCustomRequestsByStatus(status: CustomRequest['status']) {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .select('*')
         .eq('status', status)
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data as CustomRequest[];
@@ -37,7 +37,7 @@ export async function getCustomRequestsByStatus(status: CustomRequest['status'])
  */
 export async function getCustomRequestById(id: string) {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .select('*')
         .eq('id', id)
         .single();
@@ -50,10 +50,10 @@ export async function getCustomRequestById(id: string) {
  * Create new custom request
  */
 export async function createCustomRequest(
-    request: Omit<CustomRequest, 'id' | 'created_at' | 'status'>
+    request: Omit<CustomRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>
 ) {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .insert([{ ...request, status: 'new' }])
         .select()
         .single();
@@ -70,7 +70,7 @@ export async function updateCustomRequestStatus(
     status: CustomRequest['status']
 ) {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .update({ status })
         .eq('id', id)
         .select()
@@ -88,7 +88,7 @@ export async function updateCustomRequest(
     updates: Partial<CustomRequest>
 ) {
     const { data, error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .update(updates)
         .eq('id', id)
         .select()
@@ -103,7 +103,7 @@ export async function updateCustomRequest(
  */
 export async function deleteCustomRequest(id: string) {
     const { error } = await supabase
-        .from('custom_requests')
+        .from('CustomRequest')
         .delete()
         .eq('id', id);
 

@@ -23,7 +23,7 @@ export default function ProductsPage() {
         description: "",
         price: 0,
         category: "",
-        image_url: "",
+        image: "",
         stock: 0,
     });
 
@@ -81,7 +81,7 @@ export default function ProductsPage() {
             description: "",
             price: 0,
             category: "",
-            image_url: "",
+            image: "",
             stock: 0,
         });
         setEditingProduct(null);
@@ -95,7 +95,7 @@ export default function ProductsPage() {
             description: product.description || "",
             price: product.price,
             category: product.category,
-            image_url: product.image_url || "",
+            image: product.image || "",
             stock: product.stock,
         });
         setIsModalOpen(true);
@@ -187,10 +187,10 @@ export default function ProductsPage() {
                                 {products.map((product) => (
                                     <Card key={product.id} variant="elevated" padding="none">
                                         {/* Product Image */}
-                                        {product.image_url && (
+                                        {product.image && (
                                             <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-t-xl overflow-hidden">
                                                 <img
-                                                    src={product.image_url}
+                                                    src={product.image}
                                                     alt={product.name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -312,9 +312,9 @@ export default function ProductsPage() {
                         />
                         <Input
                             label="Image URL"
-                            value={formData.image_url}
+                            value={formData.image}
                             onChange={(e) =>
-                                setFormData({ ...formData, image_url: e.target.value })
+                                setFormData({ ...formData, image: e.target.value })
                             }
                         />
 

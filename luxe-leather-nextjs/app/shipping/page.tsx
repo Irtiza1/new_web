@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Header from '@/components/storefront/Header';
 
 const shippingRates = [
     { region: 'North America', time: '3-5 Business Days', cost: 'Free', highlight: true },
@@ -22,39 +23,16 @@ export default function ShippingPage() {
     const [unit, setUnit] = useState<'inches' | 'cm'>('inches');
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col bg-[#FAFAF8] text-[#0d141b] font-[family-name:var(--font-inter)]">
-            {/* Header */}
-            <header className="flex items-center justify-between whitespace-nowrap border-b border-gray-200 px-6 md:px-10 py-5 bg-white">
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[24px]">checkroom</span>
-                        <h2 className="text-lg font-bold tracking-tight">LUXE LEATHER CO.</h2>
-                    </Link>
-                </div>
-                <div className="flex items-center gap-9">
-                    <div className="hidden md:flex items-center gap-9">
-                        <Link href="/shop" className="text-sm font-medium hover:text-[#1a73e8] transition-colors">Shop</Link>
-                        <Link href="/our-story" className="text-sm font-medium hover:text-[#1a73e8] transition-colors">About</Link>
-                        <Link href="#" className="text-sm font-medium hover:text-[#1a73e8] transition-colors">Support</Link>
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="flex size-10 cursor-pointer items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-                            <span className="material-symbols-outlined">shopping_cart</span>
-                        </button>
-                        <button className="flex size-10 cursor-pointer items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-                            <span className="material-symbols-outlined">search</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
+        <div className="relative flex min-h-screen w-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#0d141b] dark:text-white font-[family-name:var(--font-manrope)]">
+            <Header />
 
             <main className="flex h-full grow flex-col min-h-[calc(100vh-80px)]">
-                <div className="px-6 md:px-40 flex flex-1 justify-center py-10 md:py-16">
-                    <div className="flex flex-col max-w-[960px] flex-1 w-full">
+                <div className="w-full max-w-[1200px] mx-auto px-6 md:px-10 py-10 md:py-16">
+                    <div className="flex flex-col max-w-[960px] mx-auto w-full">
                         {/* Page Title */}
                         <div className="flex flex-col gap-6 text-center md:text-left mb-16">
                             <h1 className="text-5xl md:text-6xl font-black leading-tight tracking-[-0.033em]">Shipping &amp; Fit Guide</h1>
-                            <p className="text-[#4c739a] text-lg md:text-xl font-normal leading-relaxed max-w-2xl">
+                            <p className="text-[#4c739a] text-lg md:text-xl font-normal leading-relaxed">
                                 Detailed information on our global shipping policies and sizing to ensure the perfect fit for your new piece.
                             </p>
                         </div>
