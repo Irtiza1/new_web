@@ -2,10 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getOrderStats } from '@/lib/api/orders';
-import { getAllCustomers } from '@/lib/api/customers';
-import { getAllCustomRequests } from '@/lib/api/custom-requests';
+
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({
@@ -19,16 +16,21 @@ export default function AdminDashboard() {
     useEffect(() => {
         async function fetchStats() {
             try {
-                const [orderStats, customers, requests] = await Promise.all([
-                    getOrderStats(),
-                    getAllCustomers(),
-                    getAllCustomRequests()
+                const [analyticsRes, customersRes, requestsRes] = await Promise.all([
+                    fetch('/api/analytics?type=summary'),
+                    fetch('/api/customers?limit=1'),
+                    fetch('/api/requests?status=new&limit=1')
                 ]);
+
+                const analyticsData = await analyticsRes.json();
+                const customersData = await customersRes.json();
+                const requestsData = await requestsRes.json();
+
                 setStats({
-                    totalRevenue: orderStats.totalRevenue,
-                    totalOrders: orderStats.totalOrders,
-                    totalCustomers: customers.length,
-                    pendingRequests: requests.filter(r => r.status === 'new').length
+                    totalRevenue: analyticsData.success ? analyticsData.data.totalRevenue : 0,
+                    totalOrders: analyticsData.success ? analyticsData.data.totalOrders : 0,
+                    totalCustomers: customersData.success ? customersData.data.pagination.total : 0,
+                    pendingRequests: requestsData.success ? requestsData.data.pagination.total : 0
                 });
             } catch (err) {
                 console.error('Failed to fetch dashboard stats:', err);
@@ -41,7 +43,7 @@ export default function AdminDashboard() {
 
     return (
         <div className="flex min-h-screen w-full bg-[#f6f7f8] dark:bg-[#0d141b] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 {/* Header */}

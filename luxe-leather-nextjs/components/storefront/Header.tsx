@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
+import { STOREFRONT_NAV_ITEMS } from "@/lib/constants/navigation";
 
 export default function Header() {
     const { cartCount, openCart } = useCart();
@@ -37,42 +38,15 @@ export default function Header() {
 
                 {/* Links (Center) - Hide if search is open on mobile/small screens if needed, but for now keep plain */}
                 <nav className={`hidden md:flex items-center gap-8 ${isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-200`}>
-                    <Link
-                        href="/"
-                        className="text-sm font-bold text-[#1A1A1A] dark:text-white hover:text-[#d41132] transition-colors"
-                    >
-                        Home
-                    </Link>
-                    <Link
-                        href="/shop"
-                        className="text-sm font-bold text-[#1A1A1A] dark:text-white hover:text-[#d41132] transition-colors"
-                    >
-                        Shop
-                    </Link>
-                    <Link
-                        href="/shipping"
-                        className="text-sm font-medium text-[#1a73e8] hover:text-[#1557b0] transition-colors"
-                    >
-                        Shipping
-                    </Link>
-                    <Link
-                        href="/our-story"
-                        className="text-sm font-medium text-[#1A1A1A]/80 dark:text-white/80 hover:text-[#d41132] transition-colors"
-                    >
-                        Our Story
-                    </Link>
-                    <Link
-                        href="/bespoke"
-                        className="text-sm font-medium text-[#1A1A1A]/80 dark:text-white/80 hover:text-[#d41132] transition-colors"
-                    >
-                        Bespoke
-                    </Link>
-                    <Link
-                        href="/contact"
-                        className="text-sm font-medium text-[#1A1A1A]/80 dark:text-white/80 hover:text-[#d41132] transition-colors"
-                    >
-                        Contact
-                    </Link>
+                    {STOREFRONT_NAV_ITEMS.map((item) => (
+                        <Link
+                            key={item.path}
+                            href={item.path}
+                            className={`text-sm font-bold text-[#1A1A1A] dark:text-white hover:text-[#d41132] transition-colors ${item.name === 'Shipping' ? 'text-[#1a73e8] hover:text-[#1557b0]' : ''}`}
+                        >
+                            {item.name}
+                        </Link>
+                    ))}
                 </nav>
 
                 {/* Search Bar Overlay */}

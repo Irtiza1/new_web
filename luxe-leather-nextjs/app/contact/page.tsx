@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
-import { createContactMessage } from '@/lib/api/contact';
 
 export default function ContactPage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -15,13 +14,22 @@ export default function ContactPage() {
         try {
             const form = e.currentTarget;
             const data = new FormData(form);
-            await createContactMessage({
-                name: data.get('name') as string,
-                email: data.get('email') as string,
-                phone: (data.get('phone') as string) || undefined,
-                inquiry_type: data.get('inquiry_type') as string,
-                message: data.get('message') as string,
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: data.get('name') as string,
+                    email: data.get('email') as string,
+                    phone: (data.get('phone') as string) || undefined,
+                    inquiry_type: (data.get('inquiry_type') as string) || 'Other',
+                    message: data.get('message') as string,
+                }),
             });
+
+            const result = await res.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to send message');
+            }
             setFormStatus('success');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {

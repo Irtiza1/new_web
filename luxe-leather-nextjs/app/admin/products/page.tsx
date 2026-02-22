@@ -2,19 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getAllProducts, createProduct, updateProduct, deleteProduct, Product } from '@/lib/api/products';
+
+import { Product } from '@/lib/supabase';
+
+// Extend Product to handle potential array of images from legacy/API difference
+interface ExtendedProduct extends Product {
+    images?: string[];
+    sale_price?: number;
+}
+
 import ProductFormModal, { pProduct } from '@/components/admin/ProductFormModal';
 
 export default function AdminProductsPage() {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<ExtendedProduct[]>([]);
+    const [filteredProducts, setFilteredProducts] = useState<ExtendedProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
 
     // Fetch products on load
     useEffect(() => {
@@ -33,7 +40,7 @@ export default function AdminProductsPage() {
             const lowerTerm = searchTerm.toLowerCase();
             result = result.filter(p =>
                 p.name.toLowerCase().includes(lowerTerm) ||
-                p.description.toLowerCase().includes(lowerTerm)
+                (p.description && p.description.toLowerCase().includes(lowerTerm))
             );
         }
 
@@ -43,9 +50,12 @@ export default function AdminProductsPage() {
     const fetchProducts = async () => {
         setIsLoading(true);
         try {
-            const data = await getAllProducts();
-            setProducts(data);
-            setFilteredProducts(data);
+            const res = await fetch('/api/products');
+            const result = await res.json();
+            if (result.success) {
+                setProducts(result.data);
+                setFilteredProducts(result.data);
+            }
         } catch (error) {
             console.error('Error fetching products:', error);
         } finally {
@@ -55,7 +65,14 @@ export default function AdminProductsPage() {
 
     const handleCreateProduct = async (productData: pProduct) => {
         try {
-            await createProduct(productData);
+            const res = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productData),
+            });
+
+            if (!res.ok) throw new Error('Failed to create product');
+
             await fetchProducts();
             setIsModalOpen(false);
         } catch (error) {
@@ -67,7 +84,14 @@ export default function AdminProductsPage() {
     const handleUpdateProduct = async (productData: pProduct) => {
         if (!editingProduct) return;
         try {
-            await updateProduct(editingProduct.id, productData);
+            const res = await fetch(`/api/products/${editingProduct.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productData),
+            });
+
+            if (!res.ok) throw new Error('Failed to update product');
+
             await fetchProducts();
             setIsModalOpen(false);
             setEditingProduct(null);
@@ -81,7 +105,12 @@ export default function AdminProductsPage() {
         if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
 
         try {
-            await deleteProduct(id);
+            const res = await fetch(`/api/products/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) throw new Error('Failed to delete product');
+
             // Optimistic update
             setProducts(products.filter(p => p.id !== id));
         } catch (error) {
@@ -91,7 +120,7 @@ export default function AdminProductsPage() {
         }
     };
 
-    const openEditModal = (product: Product) => {
+    const openEditModal = (product: ExtendedProduct) => {
         setEditingProduct(product);
         setIsModalOpen(true);
     };
@@ -108,7 +137,7 @@ export default function AdminProductsPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 {/* Header */}
@@ -215,8 +244,8 @@ export default function AdminProductsPage() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-                                                            {product.images && product.images[0] ? (
-                                                                <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                                                            {(product.image || (product.images && product.images[0])) ? (
+                                                                <img src={product.image || (product.images && product.images[0])} alt={product.name} className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                                                                     <span className="material-symbols-outlined text-sm">image</span>

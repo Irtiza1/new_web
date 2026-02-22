@@ -1,8 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { createOrder } from "@/lib/api/orders";
-import { getCustomerByEmail, createCustomer } from "@/lib/api/customers";
 
 export interface CartItem {
     id: number;
@@ -103,19 +101,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // Find or create the customer
         let customerId: string;
         try {
-            const existingCustomer = await getCustomerByEmail(data.email);
-            customerId = existingCustomer.id;
-        } catch {
-            // Customer doesn't exist, create one
-            const newCustomer = await createCustomer({
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-                address: data.address,
-                city: data.city,
-                country: data.country,
-            });
-            customerId = newCustomer.id;
+            // Check if customer exists
+            const resFn = await fetch(`/api/customers?email=${encodeURIComponent(data.email)}`);
+            const resData = await resFn.json();
+
+            if (resData.success && resData.data && resData.data.length > 0) {
+                customerId = resData.data[0].id;
+            } else {
+                // Create new customer
+                const createRes = await fetch('/api/customers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone,
+                        location: [data.city, data.country].filter(Boolean).join(', '),
+                    }),
+                });
+                const createData = await createRes.json();
+
+                if (!createData.success) {
+                    throw new Error(createData.message || 'Failed to create customer');
+                }
+                customerId = createData.data.id;
+            }
+        } catch (error) {
+            console.error('Checkout error (Customer):', error);
+            alert('Failed to process customer information');
+            return;
         }
 
         // Create the order
@@ -127,17 +141,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
             color: item.variant?.match(/Color: (.+)/)?.[1],
         }));
 
-        await createOrder({
-            customerId: customerId,
-            status: 'pending',
-            total: cartTotal,
-            items: orderItems,
-        });
+        try {
+            const orderRes = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customerId: customerId,
+                    status: 'pending',
+                    total: cartTotal,
+                    items: orderItems,
+                }),
+            });
+            const orderData = await orderRes.json();
 
-        // Clear the cart
-        setCartItems([]);
-        localStorage.removeItem("luxeCart");
-        setIsOpen(false);
+            if (!orderData.success) {
+                throw new Error(orderData.message || 'Failed to create order');
+            }
+
+            // Clear the cart
+            setCartItems([]);
+            localStorage.removeItem("luxeCart");
+            setIsOpen(false);
+
+            // Redirect or show success
+            alert('Order placed successfully!');
+            window.location.href = '/shop'; // Or order success page
+
+        } catch (error) {
+            console.error('Checkout error (Order):', error);
+            alert('Failed to place order. Please try again.');
+        }
     };
 
     return (

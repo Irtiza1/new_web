@@ -73,13 +73,7 @@
   --foreground: var(--color-text-primary-dark);
 }
 
-/* Fallback for prefers-color-scheme (if user hasn't set preference) */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: var(--color-background-dark);
-    --foreground: var(--color-text-primary-dark);
-  }
-}
+/* Dark mode only activates when .dark class is explicitly set */
 
 /* Global Base Styles */
 body {

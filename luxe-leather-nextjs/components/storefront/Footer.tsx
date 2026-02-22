@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { STOREFRONT_NAV_ITEMS } from "@/lib/constants/navigation";
 
 export default function Footer() {
     return (
-        <footer className="bg-[#1A1A1A] text-white pt-16 pb-8">
+        <footer className="bg-white dark:bg-[#1A1A1A] text-slate-900 dark:text-white pt-16 pb-8 border-t border-gray-100 dark:border-none">
             <div className="max-w-[1440px] mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     {/* Brand Col */}
@@ -15,7 +16,7 @@ export default function Footer() {
                                 Luxe Leather
                             </span>
                         </div>
-                        <p className="text-gray-400 text-sm leading-relaxed">
+                        <p className="text-slate-600 dark:text-gray-400 text-sm leading-relaxed">
                             Crafting heritage quality leather goods for the modern world.
                             Guaranteed for life, designed for you.
                         </p>
@@ -24,26 +25,20 @@ export default function Footer() {
                     {/* Links Col 1 */}
                     <div>
                         <h4 className="font-bold text-lg mb-6">Shop</h4>
-                        <ul className="flex flex-col gap-3 text-sm text-gray-400">
+                        <ul className="flex flex-col gap-3 text-sm text-slate-600 dark:text-gray-400">
+                            {STOREFRONT_NAV_ITEMS.filter(item => item.path === '/shop').map(item => (
+                                <li key={item.name}>
+                                    <Link
+                                        href={item.path}
+                                        className="hover:text-[#d41132] transition-colors"
+                                    >
+                                        All Products
+                                    </Link>
+                                </li>
+                            ))}
                             <li>
                                 <Link
-                                    href="/shop"
-                                    className="hover:text-[#d41132] transition-colors"
-                                >
-                                    New Arrivals
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/shop"
-                                    className="hover:text-[#d41132] transition-colors"
-                                >
-                                    Best Sellers
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/shop"
+                                    href="/shop?category=Jackets"
                                     className="hover:text-[#d41132] transition-colors"
                                 >
                                     Jackets
@@ -51,7 +46,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href="/shop"
+                                    href="/shop?category=Accessories"
                                     className="hover:text-[#d41132] transition-colors"
                                 >
                                     Accessories
@@ -63,7 +58,7 @@ export default function Footer() {
                     {/* Links Col 2 */}
                     <div>
                         <h4 className="font-bold text-lg mb-6">Support</h4>
-                        <ul className="flex flex-col gap-3 text-sm text-gray-400">
+                        <ul className="flex flex-col gap-3 text-sm text-slate-600 dark:text-gray-400">
                             <li>
                                 <Link
                                     href="/contact"
@@ -102,12 +97,12 @@ export default function Footer() {
                     {/* Newsletter */}
                     <div>
                         <h4 className="font-bold text-lg mb-6">Stay in the Loop</h4>
-                        <p className="text-gray-400 text-sm mb-4">
+                        <p className="text-slate-600 dark:text-gray-400 text-sm mb-4">
                             Subscribe for exclusive offers and first access to new drops.
                         </p>
                         <div className="flex gap-2">
                             <input
-                                className="bg-white/10 border-none rounded text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-[#d41132] w-full h-10 px-3"
+                                className="bg-gray-100 dark:bg-white/10 border-none rounded text-sm text-slate-900 dark:text-white placeholder-gray-500 focus:ring-1 focus:ring-[#d41132] w-full h-10 px-3"
                                 placeholder="Your email address"
                                 type="email"
                             />
@@ -118,13 +113,13 @@ export default function Footer() {
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+                <div className="pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-gray-500">
                     <p>© 2024 Luxe Leather Co. All rights reserved.</p>
                     <div className="flex gap-6">
-                        <Link href="/contact" className="hover:text-white">
+                        <Link href="/contact" className="hover:text-[#d41132] dark:hover:text-white">
                             Privacy Policy
                         </Link>
-                        <Link href="/contact" className="hover:text-white">
+                        <Link href="/contact" className="hover:text-[#d41132] dark:hover:text-white">
                             Terms of Service
                         </Link>
                     </div>

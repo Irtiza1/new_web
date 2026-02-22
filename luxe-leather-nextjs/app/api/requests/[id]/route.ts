@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import * as requestService from '@/lib/services/requestService';
+import { apiHandler } from '@/lib/middleware/apiHandler';
+import { AppError } from '@/lib/utils/AppError';
+
+const updateSchema = z.object({
+    status: z.string().optional(),
+    budget: z.string().optional(),
+    deadline: z.string().optional(),
+    description: z.string().optional(),
+    // Add other updateable fields
+});
+
+export const GET = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const request = await requestService.getById(params.id);
+    if (!request) {
+        throw new AppError('Request not found', 404);
+    }
+    return NextResponse.json({ success: true, data: request });
+});
+
+export const PUT = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+    const body = await req.json();
+    const validatedData = updateSchema.parse(body);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatedRequest = await requestService.update(params.id, validatedData as any);
+
+    return NextResponse.json({ success: true, data: updatedRequest });
+});
+
+export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+    await requestService.remove(params.id);
+    return NextResponse.json({ success: true });
+});

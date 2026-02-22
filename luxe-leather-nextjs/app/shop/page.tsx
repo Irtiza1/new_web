@@ -7,7 +7,6 @@ import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 import ProductDetailModal, { type ShopProduct } from '@/components/storefront/ProductDetailModal';
 import { useCart } from '@/contexts/CartContext';
-import { getAllProducts } from '@/lib/api/products';
 
 const categories = ['All Products', 'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'];
 
@@ -29,8 +28,14 @@ function ShopContent() {
             try {
                 setLoading(true);
                 setError(null);
-                const data = await getAllProducts();
-                setProducts(data);
+                const res = await fetch('/api/products');
+                const result = await res.json();
+
+                if (result.success) {
+                    setProducts(result.data);
+                } else {
+                    throw new Error(result.message || 'Failed to fetch products');
+                }
             } catch (err) {
                 console.error('Failed to fetch products:', err);
                 setError('Failed to load products. Please try again later.');
@@ -66,7 +71,7 @@ function ShopContent() {
 
         // Filter by Category
         if (activeCategory === 'All Products') return true;
-        return product.category === activeCategory;
+        return (product.category || '').trim() === activeCategory;
     });
 
     const visibleProducts = filteredProducts.slice(0, visibleCount);

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getAllMedia, uploadMedia, deleteMedia, searchMedia, type MediaFile } from '@/lib/api/media';
+
+import type { MediaFile } from '@/lib/services/mediaService';
 
 export default function AdminMediaPage() {
     const [media, setMedia] = useState<MediaFile[]>([]);
@@ -18,9 +18,12 @@ export default function AdminMediaPage() {
 
     const loadMedia = async () => {
         try {
-            const data = await getAllMedia();
-            setMedia(data);
-            if (data.length > 0) setSelected(data[0]);
+            const res = await fetch('/api/media');
+            const result = await res.json();
+            if (result.success) {
+                setMedia(result.data);
+                if (result.data.length > 0 && !selected) setSelected(result.data[0]);
+            }
         } catch (err) {
             console.error('Failed to load media:', err);
         } finally {
@@ -31,9 +34,24 @@ export default function AdminMediaPage() {
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'products');
+
         try {
-            await uploadMedia(file, 'products');
-            await loadMedia();
+            const res = await fetch('/api/media', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                await loadMedia();
+                alert('Upload successful');
+            } else {
+                alert('Upload failed: ' + result.message);
+            }
         } catch (err) {
             console.error('Failed to upload:', err);
             alert('Upload failed');
@@ -43,9 +61,17 @@ export default function AdminMediaPage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this media file?')) return;
         try {
-            await deleteMedia(id);
-            setSelected(null);
-            await loadMedia();
+            const res = await fetch(`/api/media/${id}`, {
+                method: 'DELETE',
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                setSelected(null);
+                await loadMedia();
+            } else {
+                alert('Delete failed');
+            }
         } catch (err) {
             console.error('Failed to delete:', err);
         }
@@ -53,16 +79,24 @@ export default function AdminMediaPage() {
 
     const handleSearch = async (query: string) => {
         setSearchQuery(query);
-        if (query.trim()) {
-            const results = await searchMedia(query);
-            setMedia(results);
-        } else {
-            await loadMedia();
+        try {
+            const url = query.trim()
+                ? `/api/media?search=${encodeURIComponent(query)}`
+                : '/api/media';
+
+            const res = await fetch(url);
+            const result = await res.json();
+
+            if (result.success) {
+                setMedia(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to search:', err);
         }
     };
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f5f5f5] dark:bg-[#101622] text-slate-900 dark:text-slate-100 antialiased font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full min-w-0">

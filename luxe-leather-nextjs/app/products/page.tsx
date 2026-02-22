@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllProducts, createProduct, updateProduct, deleteProduct } from "@/lib/api/products";
 import type { Product } from "@/lib/supabase";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -32,8 +31,13 @@ export default function ProductsPage() {
         try {
             setLoading(true);
             setError(null);
-            const data = await getAllProducts();
-            setProducts(data);
+            const res = await fetch('/api/products');
+            const result = await res.json();
+            if (result.success) {
+                setProducts(result.data);
+            } else {
+                throw new Error(result.message || "Failed to load products");
+            }
         } catch (err: any) {
             setError(err.message || "Failed to load products");
             console.error("Error loading products:", err);
@@ -51,9 +55,21 @@ export default function ProductsPage() {
         e.preventDefault();
         try {
             if (editingProduct) {
-                await updateProduct(editingProduct.id, formData);
+                const res = await fetch(`/api/products/${editingProduct.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.message);
             } else {
-                await createProduct(formData as any);
+                const res = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData),
+                });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.message);
             }
             setIsModalOpen(false);
             resetForm();
@@ -67,7 +83,12 @@ export default function ProductsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this product?")) return;
         try {
-            await deleteProduct(id);
+            const res = await fetch(`/api/products/${id}`, {
+                method: 'DELETE',
+            });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+
             loadProducts();
         } catch (err: any) {
             alert("Error: " + err.message);

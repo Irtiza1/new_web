@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getAnalyticsSummary, getTopProducts, getCustomersByCountry, type AnalyticsSummary, type TopProduct, type CustomerCountry } from '@/lib/api/analytics';
+
+import type { AnalyticsSummary, TopProduct, CustomerCountry } from '@/lib/services/analyticsService';
 
 export default function AdminAnalyticsPage() {
     const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -14,14 +14,19 @@ export default function AdminAnalyticsPage() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const [s, p, c] = await Promise.all([
-                    getAnalyticsSummary(),
-                    getTopProducts(),
-                    getCustomersByCountry()
+                const [summaryRes, productsRes, countriesRes] = await Promise.all([
+                    fetch('/api/analytics?type=summary'),
+                    fetch('/api/analytics?type=top-products'),
+                    fetch('/api/analytics?type=customers-by-country')
                 ]);
-                setSummary(s);
-                setTopProducts(p);
-                setCountries(c);
+
+                const summaryData = await summaryRes.json();
+                const productsData = await productsRes.json();
+                const countriesData = await countriesRes.json();
+
+                if (summaryData.success) setSummary(summaryData.data);
+                if (productsData.success) setTopProducts(productsData.data);
+                if (countriesData.success) setCountries(countriesData.data);
             } catch (err) {
                 console.error('Failed to load analytics:', err);
             } finally {
@@ -30,15 +35,45 @@ export default function AdminAnalyticsPage() {
         }
         fetchData();
     }, []);
+
+    const handleDownloadPDF = async () => {
+        // Dynamic import to avoid SSR issues
+        const html2canvas = (await import('html2canvas')).default;
+        const jsPDF = (await import('jspdf')).default;
+
+        const element = document.getElementById('analytics-dashboard');
+        if (!element) return;
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save('analytics-report.pdf');
+        } catch (err) {
+            console.error('PDF Export failed:', err);
+            alert('Failed to generate PDF');
+        }
+    };
+
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+
 
             <div className="flex-1 flex flex-col h-screen overflow-auto">
 
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 md:p-8 max-w-[1600px] mx-auto w-full space-y-6">
+                <main id="analytics-dashboard" className="flex-1 p-4 md:p-8 max-w-[1600px] mx-auto w-full space-y-6 bg-[#f6f7f8] dark:bg-[#101922]">
                     {/* Page Header */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
@@ -57,7 +92,7 @@ export default function AdminAnalyticsPage() {
                             </button>
                             {/* Export Button */}
                             <button
-                                onClick={() => alert('Generating PDF Report... This feature is simulated.')}
+                                onClick={handleDownloadPDF}
                                 className="flex items-center gap-2 px-4 py-2.5 bg-[#d41132] hover:bg-[#b30f2a] text-white rounded-lg text-sm font-bold shadow-sm shadow-red-200 dark:shadow-none transition-all active:scale-95"
                             >
                                 <span className="material-symbols-outlined text-lg">download</span>

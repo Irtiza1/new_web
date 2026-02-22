@@ -107,7 +107,7 @@ export default function HomePage() {
                 "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD663YQ9A3yCTD5ey9kXXjD2nNHR8t7_sLSr9pizcD4Ai5LZfqqKiZz8zyYNLGjhITo-Z05zCLpeLUJwAbqCICLNGO_KilvL65Qu-FKP5cmYRl4JBFK7k-3CzTHAzUTXnx21a6yXnPEDhsFh8I1xbgex4o4t8SYYq9qpJraotJZhmiRNI_bnKTgiLqMPpnV3CxPjLoWJ6ma68eRBMqoaUlXn2Zy2B_fQo09l7vqGPJwsnOPAHIsSj7-eSGjKyVbu7bHY_I5SD-QBRgT')",
             }}
           >
-            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 bg-black/10 dark:bg-black/40"></div>
           </div>
 
           {/* Content */}

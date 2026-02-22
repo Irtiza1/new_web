@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Product } from '@/lib/api/products';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Product } from '@/lib/supabase';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -10,11 +11,20 @@ interface ProductFormModalProps {
     initialData?: Product | null;
 }
 
-// Partial product type for creation/editing since we don't always have ID/Dates
+// Partial product type for creation/editing
 export type pProduct = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
 
 export default function ProductFormModal({ isOpen, onClose, onSubmit, initialData }: ProductFormModalProps) {
+    const [mounted, setMounted] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [formData, setFormData] = useState<pProduct>({
         name: '',
         description: '',
@@ -24,7 +34,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         stock: 0,
     });
 
-    // Reset or populate form when modal opens/closes or initialData changes
+    // Reset or populate form
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
@@ -37,7 +47,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     stock: initialData.stock,
                 });
             } else {
-                // Reset for new product
                 setFormData({
                     name: '',
                     description: '',
@@ -64,13 +73,39 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         }
     };
 
-    // No longer needed — single image URL
-    // const handleImageChange = ...
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-    if (!isOpen) return null;
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            const res = await fetch('/api/media', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+
+            setFormData(prev => ({ ...prev, image: data.url }));
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Failed to upload image');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    if (!isOpen || !mounted) return null;
+
+    const container = typeof document !== 'undefined' ? document.body : null;
+    if (!container) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                     <h2 className="text-xl font-bold text-[#0d141b] dark:text-white">
@@ -95,7 +130,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
-                                placeholder="e.g. Classic leather Wallet"
+                                placeholder="e.g. Classic Leather Wallet"
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -110,6 +145,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 <option value="Wallets">Wallets</option>
                                 <option value="Jackets">Jackets</option>
                                 <option value="Travel">Travel</option>
+                                <option value="Shoes">Shoes</option>
+                                <option value="Full Coats">Full Coats</option>
+                                <option value="Bags & Satchels">Bags & Satchels</option>
                             </select>
                         </div>
                     </div>
@@ -142,14 +180,44 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
 
                     {/* Image */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Image URL</label>
-                        <input
-                            type="text"
-                            value={formData.image}
-                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
-                            placeholder="https://example.com/image.jpg"
-                        />
+                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Product Image</label>
+                        <div className="flex gap-4 items-center">
+                            {formData.image && (
+                                <img
+                                    src={formData.image}
+                                    alt="Preview"
+                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                                />
+                            )}
+                            <div className="flex-1 flex gap-2">
+                                <input
+                                    type="text"
+                                    value={formData.image}
+                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                    className="flex-1 px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
+                                    placeholder="https://example.com/image.jpg"
+                                />
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                    accept="image/*"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center justify-center"
+                                >
+                                    {isUploading ? (
+                                        <span className="material-symbols-outlined animate-spin">refresh</span>
+                                    ) : (
+                                        <span className="material-symbols-outlined">cloud_upload</span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Description */}
@@ -176,7 +244,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || isUploading}
                             className="px-6 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {isLoading && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
@@ -185,6 +253,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        container
     );
 }

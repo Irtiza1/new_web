@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getSettings, updateSettings } from '@/lib/api/settings';
+
 
 export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState('general');
@@ -13,8 +12,11 @@ export default function AdminSettingsPage() {
     useEffect(() => {
         async function load() {
             try {
-                const data = await getSettings();
-                setSettingsState(data);
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                if (data.success) {
+                    setSettingsState(data.data);
+                }
             } catch (err) {
                 console.error('Failed to load settings:', err);
             }
@@ -25,8 +27,18 @@ export default function AdminSettingsPage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await updateSettings(settings);
-            alert('Settings saved successfully!');
+            const res = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert('Settings saved successfully!');
+            } else {
+                alert('Failed to save settings');
+            }
         } catch (err) {
             console.error('Failed to save settings:', err);
             alert('Failed to save settings');
@@ -37,7 +49,7 @@ export default function AdminSettingsPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 {/* Header */}
@@ -188,8 +200,46 @@ export default function AdminSettingsPage() {
                                     Shipping Configuration
                                 </h2>
                             </div>
-                            <div className="p-6">
-                                <p className="text-[#4c739a] dark:text-[#94a3b8]">Configure your shipping zones, rates, and carrier integrations here.</p>
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Free Shipping Threshold ($)</label>
+                                    <p className="text-xs text-[#4c739a] dark:text-[#94a3b8] mb-1">Cart value to qualify for free shipping.</p>
+                                    <input
+                                        type="number"
+                                        className="px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
+                                        value={settings.shipping_free_threshold || ''}
+                                        onChange={(e) => setSettingsState({ ...settings, shipping_free_threshold: e.target.value })}
+                                        placeholder="150"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Standard Flat Rate ($)</label>
+                                    <p className="text-xs text-[#4c739a] dark:text-[#94a3b8] mb-1">Default shipping cost for orders below threshold.</p>
+                                    <input
+                                        type="number"
+                                        className="px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
+                                        value={settings.shipping_flat_rate || ''}
+                                        onChange={(e) => setSettingsState({ ...settings, shipping_flat_rate: e.target.value })}
+                                        placeholder="15"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2 md:col-span-2">
+                                    <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <div>
+                                            <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Enable International Shipping</label>
+                                            <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Allow orders from outside details zones.</p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={settings.shipping_international === 'true'}
+                                                onChange={(e) => setSettingsState({ ...settings, shipping_international: e.target.checked ? 'true' : 'false' })}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </section>
                     )}
@@ -203,8 +253,37 @@ export default function AdminSettingsPage() {
                                     SEO & Metadata
                                 </h2>
                             </div>
-                            <div className="p-6">
-                                <p className="text-[#4c739a] dark:text-[#94a3b8]">Manage your site's meta titles, descriptions, and social media previews.</p>
+                            <div className="p-6 flex flex-col gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Default Meta Title</label>
+                                    <input
+                                        type="text"
+                                        className="px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
+                                        value={settings.seo_title || ''}
+                                        onChange={(e) => setSettingsState({ ...settings, seo_title: e.target.value })}
+                                        placeholder="Luxe Leather Co. | Premium Handcrafted Leather Goods"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Default Meta Description</label>
+                                    <textarea
+                                        rows={3}
+                                        className="px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none transition-all resize-none"
+                                        value={settings.seo_description || ''}
+                                        onChange={(e) => setSettingsState({ ...settings, seo_description: e.target.value })}
+                                        placeholder="Discover our collection of premium handcrafted leather wallets, bags, and accessories."
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Keywords (Comma separated)</label>
+                                    <input
+                                        type="text"
+                                        className="px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
+                                        value={settings.seo_keywords || ''}
+                                        onChange={(e) => setSettingsState({ ...settings, seo_keywords: e.target.value })}
+                                        placeholder="leather, wallets, handcrafted, premium, accessories"
+                                    />
+                                </div>
                             </div>
                         </section>
                     )}
@@ -218,8 +297,37 @@ export default function AdminSettingsPage() {
                                     Notification Settings
                                 </h2>
                             </div>
-                            <div className="p-6">
-                                <p className="text-[#4c739a] dark:text-[#94a3b8]">Configure email notifications for orders, customer inquiries, and system alerts.</p>
+                            <div className="p-6 flex flex-col gap-4">
+                                <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div>
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Email on New Order</label>
+                                        <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Receive an email whenever a customer places a new order.</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={settings.notify_new_order === 'true'}
+                                            onChange={(e) => setSettingsState({ ...settings, notify_new_order: e.target.checked ? 'true' : 'false' })}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
+                                    </label>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div>
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Email on Low Stock</label>
+                                        <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Get notified when product stock drops below 5 units.</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={settings.notify_low_stock === 'true'}
+                                            onChange={(e) => setSettingsState({ ...settings, notify_low_stock: e.target.checked ? 'true' : 'false' })}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
+                                    </label>
+                                </div>
                             </div>
                         </section>
                     )}

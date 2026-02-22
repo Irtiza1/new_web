@@ -2,14 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Customer, getAllCustomers, searchCustomers, deleteCustomer } from '@/lib/api/customers';
-import AdminSidebar from '@/components/admin/AdminSidebar';
+import { Customer } from '@/lib/supabase';
+
+
+// Extended type matching API response
+interface CustomerWithStats extends Customer {
+    ordersCount: number;
+    totalSpent: number;
+}
+
+import AdminCustomerModal, { pCustomer } from '@/components/admin/AdminCustomerModal';
 
 export default function AdminCustomersPage() {
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSegment, setSelectedSegment] = useState('all');
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
     useEffect(() => {
         loadCustomers();
@@ -17,10 +29,17 @@ export default function AdminCustomersPage() {
 
     const loadCustomers = async () => {
         try {
-            const data = await getAllCustomers();
-            setCustomers(data);
+            // Fetching a large limit to support client-side filtering for now (Pilot Phase)
+            const res = await fetch('/api/customers?limit=1000');
+            const data = await res.json();
+
+            if (data.success) {
+                setCustomers(data.data);
+            } else {
+                console.error('Failed to load customers:', data.error);
+            }
         } catch (error) {
-            console.error('Failed to load customers:', error);
+            console.error('Failed to load customers data:', error);
         } finally {
             setLoading(false);
         }
@@ -28,13 +47,22 @@ export default function AdminCustomersPage() {
 
     const handleSearch = async (query: string) => {
         setSearchQuery(query);
-        if (query.trim()) {
-            const results = await searchCustomers(query);
-            setCustomers(results);
-        } else {
-            loadCustomers();
-        }
+        // Client-side filtering active
     };
+
+    const filteredCustomers = customers.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        if (selectedSegment === 'all') return true;
+        if (selectedSegment === 'vip') return c.totalSpent > 500;
+        if (selectedSegment === 'repeat') return c.ordersCount > 1;
+        if (selectedSegment === 'wholesale') return false; // Placeholder
+
+        return true;
+    });
 
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
@@ -75,11 +103,74 @@ export default function AdminCustomersPage() {
     const handleDelete = async (customerId: string) => {
         if (!confirm('Are you sure you want to delete this customer?')) return;
         try {
-            await deleteCustomer(customerId);
-            await loadCustomers();
+            const res = await fetch(`/api/customers/${customerId}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                await loadCustomers();
+            } else {
+                alert('Failed to delete customer: ' + data.error);
+            }
         } catch (err) {
             console.error('Failed to delete customer:', err);
+            alert('An error occurred while deleting.');
         }
+    };
+
+    const handleCreateCustomer = async (data: pCustomer) => {
+        try {
+            const res = await fetch('/api/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                await loadCustomers();
+                setIsModalOpen(false);
+            } else {
+                alert('Failed to create customer: ' + (result.error || result.message));
+            }
+        } catch (error) {
+            console.error('Error creating customer:', error);
+            alert('An error occurred while creating the customer.');
+        }
+    };
+
+    const handleUpdateCustomer = async (data: pCustomer) => {
+        if (!editingCustomer) return;
+        try {
+            const res = await fetch(`/api/customers/${editingCustomer.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                await loadCustomers();
+                setIsModalOpen(false);
+                setEditingCustomer(null);
+            } else {
+                alert('Failed to update customer: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error updating customer:', error);
+            alert('An error occurred while updating the customer.');
+        }
+    };
+
+    const openCreateModal = () => {
+        setEditingCustomer(null);
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (customer: Customer) => {
+        setEditingCustomer(customer);
+        setIsModalOpen(true);
     };
 
     const toggleMenu = (customerId: string, e: React.MouseEvent) => {
@@ -89,7 +180,7 @@ export default function AdminCustomersPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -115,7 +206,9 @@ export default function AdminCustomersPage() {
                                     <span className="material-symbols-outlined text-lg">download</span>
                                     Export CSV
                                 </button>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[#d41132] text-white rounded-lg font-medium text-sm hover:bg-[#b30f2a] transition-colors shadow-sm shadow-red-200 dark:shadow-none">
+                                <button
+                                    onClick={openCreateModal}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#d41132] text-white rounded-lg font-medium text-sm hover:bg-[#b30f2a] transition-colors shadow-sm shadow-red-200 dark:shadow-none">
                                     <span className="material-symbols-outlined text-lg">add</span>
                                     Add Customer
                                 </button>
@@ -153,11 +246,17 @@ export default function AdminCustomersPage() {
                                 <span className="material-symbols-outlined text-lg text-yellow-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                                 VIP
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">
+                            <button
+                                onClick={() => setSelectedSegment('repeat')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedSegment === 'repeat' ? 'bg-[#d41132] text-white shadow-md shadow-red-200 dark:shadow-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                            >
                                 <span className="material-symbols-outlined text-lg text-[#d41132]">autorenew</span>
                                 Repeat Buyers
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors">
+                            <button
+                                onClick={() => setSelectedSegment('wholesale')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${selectedSegment === 'wholesale' ? 'bg-[#d41132] text-white shadow-md shadow-red-200 dark:shadow-none' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                            >
                                 <span className="material-symbols-outlined text-lg text-purple-500">domain</span>
                                 Wholesale
                             </button>
@@ -193,7 +292,7 @@ export default function AdminCustomersPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {customers.map((customer) => (
+                                            {filteredCustomers.map((customer) => (
                                                 <tr key={customer.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                     <td className="py-4 px-6">
                                                         <input className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent" type="checkbox" />
@@ -226,10 +325,10 @@ export default function AdminCustomersPage() {
                                                         </div>
                                                     </td>
                                                     <td className="py-4 px-6 text-right">
-                                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">0</span>
+                                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{customer.ordersCount}</span>
                                                     </td>
                                                     <td className="py-4 px-6 text-right">
-                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">$0.00</span>
+                                                        <span className="text-sm font-bold text-slate-900 dark:text-white">${customer.totalSpent.toFixed(2)}</span>
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <span className="text-sm text-slate-500 dark:text-slate-400">{new Date(customer.createdAt).toLocaleDateString()}</span>
@@ -246,7 +345,7 @@ export default function AdminCustomersPage() {
                                                                 <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                                                     <span className="material-symbols-outlined text-lg">visibility</span> View Profile
                                                                 </button>
-                                                                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                                                <button onClick={() => { openEditModal(customer); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                                                     <span className="material-symbols-outlined text-lg">edit</span> Edit Customer
                                                                 </button>
                                                                 <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
@@ -276,6 +375,13 @@ export default function AdminCustomersPage() {
                     </div>
                 </div>
             </main>
+
+            <AdminCustomerModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={editingCustomer ? handleUpdateCustomer : handleCreateCustomer}
+                initialData={editingCustomer}
+            />
         </div>
     );
 }

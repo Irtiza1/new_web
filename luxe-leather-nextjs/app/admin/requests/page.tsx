@@ -2,23 +2,61 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CustomRequest, getAllCustomRequests, updateCustomRequestStatus, deleteCustomRequest } from '@/lib/api/custom-requests';
-import AdminSidebar from '@/components/admin/AdminSidebar';
+
+import type { CustomRequest } from '@/lib/services/requestService';
+import AdminRequestModal, { pRequest } from '@/components/admin/AdminRequestModal';
 
 export default function AdminRequestsPage() {
     const [requests, setRequests] = useState<CustomRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<CustomRequest | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+
+    // Stats for notifications (could be fetched separately or derived)
+    const [newRequestCount, setNewRequestCount] = useState(0);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         loadRequests();
-    }, []);
+    }, [statusFilter]); // Reload when status filter changes
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadRequests();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const loadRequests = async () => {
         try {
-            const data = await getAllCustomRequests();
-            setRequests(data);
-            if (data.length > 0) setSelectedRequest(data[0]);
+            setLoading(true);
+            const query = new URLSearchParams();
+            if (statusFilter !== 'all') query.append('status', statusFilter);
+            if (searchQuery) query.append('search', searchQuery);
+
+            const res = await fetch(`/api/requests?${query.toString()}`);
+            const data = await res.json();
+
+            if (data.success) {
+                setRequests(data.data);
+                // If we have data and no selection, select first? Or keep selection if exists?
+                // Logic: if selectedRequest is not in new data, maybe deselect?
+                // For now, simple:
+                if (!selectedRequest && data.data.length > 0) {
+                    setSelectedRequest(data.data[0]);
+                }
+
+                // Update new count - mostly for the notification badge
+                // In a real app we'd probably have a separate /stats endpoint call here
+                if (statusFilter === 'all' && !searchQuery) {
+                    const count = data.data.filter((r: CustomRequest) => r.status === 'new').length;
+                    setNewRequestCount(count);
+                }
+            }
         } catch (error) {
             console.error('Failed to load requests:', error);
         } finally {
@@ -26,19 +64,68 @@ export default function AdminRequestsPage() {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'new': return 'bg-blue-50 text-#a20e26 ring-#a20e26/10 dark:bg-blue-900/30 dark:text-#e85273';
-            case 'quoted': return 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/30 dark:text-orange-400';
-            case 'in_progress': return 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400';
-            case 'completed': return 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-400';
-            default: return 'bg-slate-50 text-slate-700 ring-slate-600/20 dark:bg-slate-900/30 dark:text-slate-400';
+    const handleStatusUpdate = async (id: string, newStatus: string) => {
+        try {
+            const res = await fetch(`/api/requests/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update local state
+                setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus as any } : r));
+                if (selectedRequest?.id === id) {
+                    setSelectedRequest({ ...selectedRequest, status: newStatus as any });
+                }
+                alert(`Status updated to ${newStatus}`);
+            }
+        } catch (error) {
+            console.error('Failed to update status:', error);
         }
+    };
+
+    const handleCreateRequest = async (requestData: pRequest) => {
+        try {
+            const res = await fetch('/api/requests', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData),
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                await loadRequests();
+                setIsModalOpen(false);
+            } else {
+                alert('Failed to create request: ' + (result.error || result.message));
+            }
+        } catch (error) {
+            console.error('Error creating request:', error);
+            alert('An error occurred while creating the request');
+        }
+    };
+
+    const StatusBadge = ({ status }: { status: string }) => {
+        const styles = {
+            new: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400',
+            quoted: 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/30 dark:text-orange-400',
+            in_progress: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400',
+            completed: 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
+        };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const style = (styles as any)[status.toLowerCase()] || styles.new;
+
+        return (
+            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>
+                {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </span>
+        );
     };
 
     return (
         <div className="bg-[#f6f7f8] dark:bg-[#101922] text-slate-900 dark:text-white h-screen flex overflow-hidden font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col min-w-0 relative">
@@ -50,14 +137,35 @@ export default function AdminRequestsPage() {
                             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-[#d41132] transition-colors">
                                 <span className="material-symbols-outlined">search</span>
                             </div>
-                            <input className="block w-full rounded-lg border-0 py-2 pl-10 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#d41132] sm:text-sm sm:leading-6 bg-slate-50 dark:bg-slate-800 dark:ring-slate-700 dark:text-white transition-all" placeholder="Search requests, clients, or items..." type="text" />
+                            <input
+                                className="block w-full rounded-lg border-0 py-2 pl-10 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#d41132] sm:text-sm sm:leading-6 bg-slate-50 dark:bg-slate-800 dark:ring-slate-700 dark:text-white transition-all"
+                                placeholder="Search requests, clients, or items..."
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </div>
                     {/* Right Actions */}
                     <div className="flex items-center gap-4 ml-6">
-                        <button className="relative p-2 text-slate-500 hover:text-[#d41132] transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="bg-[#d41132] hover:bg-[#b30f2a] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-colors flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            New Request
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter('new')}
+                            className="relative p-2 text-slate-500 hover:text-[#d41132] transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                            title="Show new requests"
+                        >
                             <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-[#15202b]"></span>
+                            {newRequestCount > 0 && (
+                                <span className="absolute top-1 right-1 size-4 bg-red-500 border border-white dark:border-[#15202b] text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                                    {newRequestCount}
+                                </span>
+                            )}
                         </button>
                     </div>
                 </header>
@@ -72,19 +180,21 @@ export default function AdminRequestsPage() {
                                 <p className="text-slate-500 dark:text-slate-400 mt-1">Manage and track incoming custom leatherwork inquiries.</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                                    <span className="material-symbols-outlined text-[20px]">filter_list</span>
-                                    Filter
-                                </button>
-                                <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                                    <span className="material-symbols-outlined text-[20px]">calendar_today</span>
-                                    <span>Last 30 Days</span>
-                                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
-                                </button>
-                                <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                                    <span>Status: All</span>
-                                    <span className="material-symbols-outlined text-[16px] text-slate-400">expand_more</span>
-                                </button>
+                                {/* Status Filter Buttons */}
+                                <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    {['all', 'new', 'quoted', 'in_progress', 'completed'].map((status) => (
+                                        <button
+                                            key={status}
+                                            onClick={() => setStatusFilter(status)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${statusFilter === status
+                                                ? 'bg-[#d41132] text-white shadow-sm'
+                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                                }`}
+                                        >
+                                            {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -129,9 +239,7 @@ export default function AdminRequestsPage() {
                                                     <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 font-medium">{req.itemType}</td>
                                                     <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 tabular-nums">{req.budget || 'N/A'}</td>
                                                     <td className="py-4 px-6">
-                                                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${getStatusColor(req.status)}`}>
-                                                            {req.status}
-                                                        </span>
+                                                        <StatusBadge status={req.status} />
                                                     </td>
                                                     <td className="py-4 px-6 text-sm text-slate-500 text-right tabular-nums">{new Date(req.createdAt).toLocaleDateString()}</td>
                                                 </tr>
@@ -142,7 +250,7 @@ export default function AdminRequestsPage() {
                             </div>
                             {/* Pagination */}
                             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <span className="text-sm text-slate-500">Showing 1 to {requests.length} of {requests.length} requests</span>
+                                <span className="text-sm text-slate-500">Showing {requests.length} results</span>
                                 <div className="flex gap-2">
                                     <button className="px-3 py-1 text-sm border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-50" disabled>Previous</button>
                                     <button className="px-3 py-1 text-sm border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">Next</button>
@@ -203,20 +311,11 @@ export default function AdminRequestsPage() {
                         <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15202b]">
                             <div className="flex flex-col gap-3">
                                 <button
-                                    onClick={async () => {
-                                        try {
-                                            await updateCustomRequestStatus(selectedRequest.id, 'quoted');
-                                            alert(`Quote sent to ${selectedRequest.email}!`);
-                                            await loadRequests();
-                                        } catch (err) {
-                                            console.error('Failed to update status:', err);
-                                            alert('Failed to update status');
-                                        }
-                                    }}
+                                    onClick={() => handleStatusUpdate(selectedRequest.id, 'quoted')}
                                     className="w-full flex items-center justify-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white font-medium py-2.5 px-4 rounded-lg transition-all shadow-md shadow-red-200 dark:shadow-none"
                                 >
                                     <span className="material-symbols-outlined text-[20px]">send</span>
-                                    Send Quote
+                                    Send Quote (Mark Quoted)
                                 </button>
                                 <button
                                     onClick={() => window.open(`https://wa.me/?text=Hi ${selectedRequest.name}, regarding your ${selectedRequest.itemType} request...`, '_blank')}
@@ -230,6 +329,12 @@ export default function AdminRequestsPage() {
                     </aside>
                 )}
             </main>
+
+            <AdminRequestModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleCreateRequest}
+            />
         </div>
     );
 }

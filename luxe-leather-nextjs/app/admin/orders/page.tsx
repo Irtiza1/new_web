@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import { getAllOrders, updateOrderStatus, deleteOrder } from '@/lib/api/orders';
+
 import type { Order } from '@/lib/supabase';
+import AdminOrderModal from '@/components/admin/AdminOrderModal';
 
 interface OrderRow {
     id: string;
@@ -22,25 +22,37 @@ export default function AdminOrdersPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     useEffect(() => {
         loadOrders();
-    }, []);
+    }, [statusFilter]); // Reload when filter changes if server-side filtering is preferred, but we will filter client side for search
 
     const loadOrders = async () => {
         try {
             setLoading(true);
-            const data = await getAllOrders();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const mapped: OrderRow[] = (data || []).map((o: any) => ({
-                id: o.id,
-                customer_name: o.Customer?.name || 'Unknown',
-                customer_email: o.Customer?.email || '',
-                total: Number(o.total),
-                status: o.status,
-                created_at: o.createdAt,
-                items_count: Array.isArray(o.items) ? o.items.length : 0
-            }));
-            setOrders(mapped);
+            const query = new URLSearchParams();
+            if (statusFilter !== 'all') query.append('status', statusFilter);
+
+            const res = await fetch(`/api/orders?${query.toString()}`);
+            const data = await res.json();
+
+            if (data.success) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const mapped: OrderRow[] = (data.data || []).map((o: any) => ({
+                    id: o.id,
+                    customer_name: o.Customer?.name || 'Unknown',
+                    customer_email: o.Customer?.email || '',
+                    total: Number(o.total),
+                    status: o.status,
+                    created_at: o.createdAt,
+                    items_count: Array.isArray(o.items) ? o.items.length : 0
+                }));
+                setOrders(mapped);
+            } else {
+                console.error('Failed to load orders:', data.error);
+            }
         } catch (error) {
             console.error('Failed to load orders:', error);
         } finally {
@@ -50,18 +62,54 @@ export default function AdminOrdersPage() {
 
     const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
         try {
-            await updateOrderStatus(orderId, newStatus);
-            await loadOrders();
+            const res = await fetch(`/api/orders/${orderId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                await loadOrders();
+            } else {
+                console.error('Failed to update order status:', data.error);
+            }
         } catch (err) {
             console.error('Failed to update order status:', err);
+        }
+    };
+
+    const handleCreateOrder = async (orderData: any) => {
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData),
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                await loadOrders();
+                setIsModalOpen(false);
+            } else {
+                alert('Failed to create order: ' + (result.error || result.message));
+            }
+        } catch (error) {
+            console.error('Error creating order:', error);
+            alert('An error occurred while creating/saving the order');
         }
     };
 
     const handleDelete = async (orderId: string) => {
         if (!confirm('Are you sure you want to delete this order?')) return;
         try {
-            await deleteOrder(orderId);
-            await loadOrders();
+            const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                await loadOrders();
+            } else {
+                console.error('Failed to delete order:', data.error);
+            }
         } catch (err) {
             console.error('Failed to delete order:', err);
         }
@@ -87,6 +135,8 @@ export default function AdminOrdersPage() {
         const matchesSearch = order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.id.includes(searchQuery);
+        // Status filtering is now handled by the API mostly, but if 'all' is fetched we can filter client side too
+        // However, since we reload on status change, this check is redundant but safe
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -135,7 +185,7 @@ export default function AdminOrdersPage() {
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
-            <AdminSidebar />
+            {/* <AdminSidebar /> removed for layout */}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -161,7 +211,9 @@ export default function AdminOrdersPage() {
                                     <span className="material-symbols-outlined text-lg">download</span>
                                     Export
                                 </button>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[#d41132] text-white rounded-lg font-medium text-sm hover:bg-[#b30f2a] transition-colors shadow-sm shadow-red-200 dark:shadow-none">
+                                <button
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#d41132] text-white rounded-lg font-medium text-sm hover:bg-[#b30f2a] transition-colors shadow-sm shadow-red-200 dark:shadow-none">
                                     <span className="material-symbols-outlined text-lg">add</span>
                                     New Order
                                 </button>
@@ -289,6 +341,12 @@ export default function AdminOrdersPage() {
                     </div>
                 </div>
             </main>
+
+            <AdminOrderModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleCreateOrder}
+            />
         </div>
     );
 }

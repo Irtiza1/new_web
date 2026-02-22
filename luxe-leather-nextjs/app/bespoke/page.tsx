@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
-import { createCustomRequest } from '@/lib/api/custom-requests';
 
 export default function BespokePage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -27,15 +26,23 @@ export default function BespokePage() {
         try {
             const form = e.currentTarget;
             const data = new FormData(form);
-            await createCustomRequest({
-                name: data.get('name') as string,
-                email: data.get('email') as string,
-                phone: (data.get('phone') as string) || undefined,
-                itemType: data.get('item_type') as string,
-                description: data.get('description') as string,
-                budget: (data.get('budget_min') as string) || undefined,
-                deadline: (data.get('deadline') as string) || undefined,
+            const res = await fetch('/api/requests', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: data.get('name') as string,
+                    email: data.get('email') as string,
+                    phone: (data.get('phone') as string) || undefined,
+                    itemType: data.get('item_type') as string,
+                    description: data.get('description') as string,
+                    budget: (data.get('budget_min') as string) || undefined,
+                    deadline: (data.get('deadline') as string) || undefined,
+                }),
             });
+            const result = await res.json();
+            if (!result.success) {
+                throw new Error(result.message || 'Failed to submit request');
+            }
             setFormStatus('success');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
@@ -46,7 +53,7 @@ export default function BespokePage() {
     };
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-slate-900 antialiased overflow-x-hidden font-[family-name:var(--font-manrope)]">
+        <div className="relative flex min-h-screen w-full flex-col !bg-white dark:!bg-white text-slate-900 antialiased overflow-x-hidden font-[family-name:var(--font-manrope)]">
             <Header />
 
             {/* Hero Section */}
