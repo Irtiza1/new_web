@@ -7,7 +7,7 @@ export type { SiteSetting };
  */
 export async function getAll(): Promise<Record<string, string>> {
     const { data, error } = await supabase
-        .from('site_settings')
+        .from('Setting')
         .select('*');
 
     if (error) throw error;
@@ -30,7 +30,7 @@ export async function update(settings: Record<string, string>) {
     }));
 
     const { error } = await supabase
-        .from('site_settings')
+        .from('Setting')
         .upsert(upserts, { onConflict: 'key' });
 
     if (error) throw error;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as orderService from '../../../lib/services/orderService';
-import { apiHandler } from '../../../lib/middleware/apiHandler';
+import * as orderService from '@/lib/services/orderService';
+import { apiHandler } from '@/lib/middleware/apiHandler';
 
 /**
  * @route   GET /api/orders/stats

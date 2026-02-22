@@ -17,12 +17,12 @@ export function apiHandler(handler: ApiHandler): ApiHandler {
             console.error('API Error:', error);
 
             if (error instanceof ZodError) {
-                const zodError = error as ZodError;
+                const zodError = error as ZodError<any>;
                 return NextResponse.json(
                     {
                         success: false,
                         error: 'Validation failed',
-                        details: zodError.errors.map((e: any) => ({
+                        details: zodError.issues.map((e: any) => ({
                             field: e.path.join('.'),
                             message: e.message,
                         })),

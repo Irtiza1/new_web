@@ -4,12 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/storefront/Header';
 
-const shippingRates = [
-    { region: 'North America', time: '3-5 Business Days', cost: 'Free', highlight: true },
-    { region: 'Europe', time: '5-7 Business Days', cost: '$15.00', highlight: false },
-    { region: 'Asia Pacific', time: '7-10 Business Days', cost: '$25.00', highlight: false },
-    { region: 'Rest of World', time: '10-14 Business Days', cost: '$35.00', highlight: false },
-];
+import { useEffect } from 'react';
+import { getShippingRates, type ShippingRate } from '@/lib/services/shippingService';
 
 const sizeChart = [
     { label: 'S', chest: '36-38"', waist: '28-30"', shoulders: '17"' },
@@ -21,6 +17,22 @@ const sizeChart = [
 
 export default function ShippingPage() {
     const [unit, setUnit] = useState<'inches' | 'cm'>('inches');
+    const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchRates() {
+            try {
+                const rates = await getShippingRates();
+                setShippingRates(rates);
+            } catch (error) {
+                console.error("Failed to fetch shipping rates", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchRates();
+    }, []);
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#0d141b] dark:text-white font-[family-name:var(--font-manrope)]">
@@ -53,11 +65,17 @@ export default function ShippingPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {shippingRates.map(rate => (
-                                            <tr key={rate.region} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-5 font-medium">{rate.region}</td>
-                                                <td className="px-6 py-5 text-[#4c739a]">{rate.time}</td>
-                                                <td className={`px-6 py-5 text-right ${rate.highlight ? 'font-bold text-[#1a73e8]' : 'font-medium'}`}>{rate.cost}</td>
+                                        {isLoading ? (
+                                            <tr><td colSpan={3} className="px-6 py-5 text-center text-gray-500">Loading rates...</td></tr>
+                                        ) : shippingRates.length === 0 ? (
+                                            <tr><td colSpan={3} className="px-6 py-5 text-center text-gray-500">No shipping rates available at this time.</td></tr>
+                                        ) : shippingRates.map(rate => (
+                                            <tr key={rate.id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-5 font-medium">{rate.method || rate.description}</td>
+                                                <td className="px-6 py-5 text-[#4c739a]">{rate.estimatedDays}</td>
+                                                <td className={`px-6 py-5 text-right font-medium`}>
+                                                    {rate.price === '0' || rate.price === 0 || String(rate.price).toLowerCase() === 'free' ? 'Free' : `$${Number(rate.price).toFixed(2)}`}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

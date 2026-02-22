@@ -257,6 +257,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        container
     );
 }

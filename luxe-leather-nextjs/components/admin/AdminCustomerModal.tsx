@@ -165,6 +165,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        container
     );
 }
