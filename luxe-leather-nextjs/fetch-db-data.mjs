@@ -26,7 +26,18 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function fetchAllData() {
-    const tables = ['Product', 'Customer', 'Order', 'CustomRequest', 'site_settings', 'media_files', 'contact_messages'];
+    const tables = [
+        'CMSContent',
+        'CartItem',
+        'CustomRequest',
+        'Customer',
+        'Order',
+        'OrderItem',
+        'Product',
+        'Setting',
+        'ShippingRate',
+        'SizeGuide'
+    ];
     const dbData = {};
 
     for (const table of tables) {
