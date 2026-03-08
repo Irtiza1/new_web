@@ -24,8 +24,8 @@ const createCustomerSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Invalid email address'),
     phone: z.string().optional(),
-    location: z.string().optional(),
-    // Status is usually auto-set or optional
+    city: z.string().optional(),
+    country: z.string().optional(),
     status: z.string().optional(),
 });
 

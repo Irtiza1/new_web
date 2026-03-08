@@ -40,10 +40,11 @@ export default function BespokePage() {
                 }),
             });
             const result = await res.json();
-            if (!result.success) {
+            if (!res.ok || !result.success) {
                 throw new Error(result.message || 'Failed to submit request');
             }
             setFormStatus('success');
+            // Ensure we scroll to the top of the form or page to show success message
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
             console.error('Failed to submit request:', err);

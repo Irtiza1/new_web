@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
 /* Luxe Leather Co. Design System */
 @theme inline {
   /* Colors - Unified Brand Palette */
@@ -61,19 +63,19 @@
   --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Root Variables for Light Mode (default) */
+/* Global Variables (Dark Mode by default) */
 :root {
-  --background: var(--color-background-light);
-  --foreground: var(--color-text-primary-light);
-}
-
-/* Dark Mode Variables */
-:root.dark {
   --background: var(--color-background-dark);
   --foreground: var(--color-text-primary-dark);
 }
 
-/* Dark mode only activates when .dark class is explicitly set */
+/* Light Mode Variables */
+:root.light {
+  --background: var(--color-background-light);
+  --foreground: var(--color-text-primary-light);
+}
+
+/* Dark mode only activates when .dark class is explicitly set (or default) */
 
 /* Global Base Styles */
 body {

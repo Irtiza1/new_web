@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import GlobalCart from "@/components/storefront/GlobalCart";
+import BackToTop from "@/components/ui/BackToTop";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
           <CartProvider>
             {children}
             <GlobalCart />
+            <BackToTop />
           </CartProvider>
         </ThemeProvider>
       </body>

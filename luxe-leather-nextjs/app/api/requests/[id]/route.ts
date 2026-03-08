@@ -12,25 +12,28 @@ const updateSchema = z.object({
     // Add other updateable fields
 });
 
-export const GET = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const request = await requestService.getById(params.id);
+export const GET = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
+    const request = await requestService.getById(id);
     if (!request) {
         throw new AppError('Request not found', 404);
     }
     return NextResponse.json({ success: true, data: request });
 });
 
-export const PUT = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
     const body = await req.json();
     const validatedData = updateSchema.parse(body);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updatedRequest = await requestService.update(params.id, validatedData as any);
+    const updatedRequest = await requestService.update(id, validatedData as any);
 
     return NextResponse.json({ success: true, data: updatedRequest });
 });
 
-export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-    await requestService.remove(params.id);
+export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
+    await requestService.remove(id);
     return NextResponse.json({ success: true });
 });

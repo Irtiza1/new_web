@@ -57,9 +57,17 @@ export const getById = async (id: string) => {
  * @returns {Promise<Product>}
  */
 export const create = async (productData: any) => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
     const { data, error } = await supabase
         .from('Product')
-        .insert([productData])
+        .insert([{
+            ...productData,
+            id,
+            createdAt: now,
+            updatedAt: now,
+            image: productData.image || productData.images?.[0] || '',
+        }])
         .select()
         .single();
 
@@ -95,6 +103,16 @@ export const update = async (id: string, updates: Partial<Product>) => {
  * @returns {Promise<void>}
  */
 export const remove = async (id: string) => {
+    // Delete associated OrderItems first to satisfy FK constraint
+    const { error: itemsError } = await supabase
+        .from('OrderItem')
+        .delete()
+        .eq('productId', id);
+
+    if (itemsError) {
+        throw new AppError(itemsError.message, 500, 'DB_ERROR');
+    }
+
     const { error } = await supabase
         .from('Product')
         .delete()

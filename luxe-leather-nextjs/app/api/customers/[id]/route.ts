@@ -23,7 +23,7 @@ const updateCustomerSchema = z.object({
  * Schema for ID param
  */
 const idSchema = z.object({
-    id: z.string().uuid(),
+    id: z.string().min(1),
 });
 
 // ============================================================================
@@ -37,8 +37,8 @@ const idSchema = z.object({
  * @param   {string} id - Customer UUID
  * @returns {Object} Customer data
  */
-export const GET = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const { id } = idSchema.parse(params);
+export const GET = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = idSchema.parse(await params);
     const customer = await customerService.getById(id);
     return NextResponse.json({ success: true, data: customer });
 });
@@ -51,8 +51,8 @@ export const GET = apiHandler(async (req: NextRequest, { params }: { params: { i
  * @body    {Object} Partial customer data
  * @returns {Object} Updated customer data
  */
-export const PUT = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const { id } = idSchema.parse(params);
+export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = idSchema.parse(await params);
     const body = await req.json();
     const data = updateCustomerSchema.parse(body);
 
@@ -67,8 +67,8 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: { i
  * @param   {string} id - Customer UUID
  * @returns {Object} Success message
  */
-export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const { id } = idSchema.parse(params);
+export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = idSchema.parse(await params);
     await customerService.remove(id);
     return NextResponse.json({ success: true, message: 'Customer deleted successfully' });
 });

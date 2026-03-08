@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    // Override turbopack workspace resolution root
+    root: import.meta.dirname || process.cwd(),
+  }
 };
 
 export default nextConfig;

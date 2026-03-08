@@ -31,19 +31,21 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
     // Form State
     const [customerId, setCustomerId] = useState('');
-    const [status, setStatus] = useState<Order['status']>('pending');
+    const [status, setStatus] = useState<Order['status']>('PENDING');
     const [items, setItems] = useState<{ productId: string; quantity: number; price: number }[]>([]);
 
     // Load data on open
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && (customers.length === 0 || products.length === 0)) {
             fetchData();
+        }
+        if (isOpen) {
             // Reset form
             setCustomerId('');
-            setStatus('pending');
+            setStatus('PENDING');
             setItems([]);
         }
-    }, [isOpen]);
+    }, [isOpen, customers.length, products.length]);
 
     const fetchData = async () => {
         setIsFetchingData(true);
@@ -130,7 +132,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto" style={{ maxWidth: '672px' }}>
                 <div className="flex items-center justify-between p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                     <h2 className="text-xl font-bold text-[#0d141b] dark:text-white">Create New Order</h2>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">

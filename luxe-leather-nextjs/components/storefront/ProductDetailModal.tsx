@@ -44,8 +44,8 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     if (!isOpen || !product) return null;
 
     // Get the product image
-    const productImage = product.image || '';
-    const productSizes = product.sizes || ['S', 'M', 'L', 'XL'];
+    const productImage = product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
+    const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     const productDescription = product.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
 
     const handleAddToCart = () => {
@@ -92,13 +92,13 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             <div className="flex items-baseline gap-2">
                                 <p className="text-2xl font-medium text-[#c27a2a]">${product.price.toFixed(2)}</p>
                             </div>
-                            {product.rating && (
+                            {(product.rating !== undefined && product.rating !== null) && (
                                 <div className="flex items-center gap-1 group cursor-pointer">
                                     <div className="flex text-[#c27a2a]">
                                         <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                                     </div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{product.rating}</span>
-                                    {product.reviews && (
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{product.rating} / 5.0</span>
+                                    {product.reviews !== undefined && (
                                         <span className="text-sm text-gray-500 dark:text-gray-400 underline decoration-gray-300 dark:decoration-gray-600 underline-offset-4 ml-1">({product.reviews} reviews)</span>
                                     )}
                                 </div>
@@ -116,30 +116,55 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#c27a2a] normal-case font-normal ml-1">{defaultColors[selectedColor].name}</span></span>
                             <div className="flex gap-3">
                                 {defaultColors.map((c, i) => (
-                                    <label key={i} className="relative cursor-pointer group" onClick={() => setSelectedColor(i)}>
-                                        <div className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-offset-2 dark:ring-offset-[#1a130e]' : ''}`} style={{ backgroundColor: c.color, borderColor: '#d4d4d4', ...(selectedColor === i ? { ringColor: c.color } : {}) }}>
-                                            {selectedColor === i && <span className="material-symbols-outlined text-white/90 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg">check</span>}
+                                    <label key={i} className="relative cursor-pointer group">
+                                        <input
+                                            type="radio"
+                                            name="color-choice"
+                                            value={c.name}
+                                            className="sr-only"
+                                            checked={selectedColor === i}
+                                            onChange={() => setSelectedColor(i)}
+                                        />
+                                        <div
+                                            onClick={() => setSelectedColor(i)}
+                                            className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-offset-2 dark:ring-offset-[#1a130e]' : ''}`}
+                                            style={{ backgroundColor: c.color, borderColor: '#d4d4d4', ...(selectedColor === i ? { ringColor: c.color } : {}) }}
+                                        >
+                                            {selectedColor === i && (
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-white text-[20px]" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>check</span>
+                                                </div>
+                                            )}
                                         </div>
+                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                            {c.name}
+                                        </span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
                         {/* Sizes */}
-                        <div className="space-y-3">
+                        <div className="flex flex-col gap-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Size</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white-800">Select Size</span>
                                 <button className="text-xs text-[#c27a2a] hover:text-[#c27a2a]/80 underline decoration-dashed underline-offset-4">Size Guide</button>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {productSizes.map((size, i) => (
-                                    <button key={size} onClick={() => setSelectedSize(i)} className={`px-4 py-2.5 rounded border text-sm font-medium transition-all text-center min-w-[3rem] ${selectedSize === i ? 'bg-[#c27a2a] text-white border-[#c27a2a]' : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-[#c27a2a]'}`}>
+                                    <button
+                                        key={size}
+                                        onClick={() => setSelectedSize(i)}
+                                        className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border-2 font-bold text-sm transition-all ${selectedSize === i
+                                            ? 'border-[#d41132] bg-[#d41132]/5 text-[#d41132] shadow-sm'
+                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                                            }`}
+                                    >
                                         {size}
                                     </button>
                                 ))}
                             </div>
                         </div>
-
                         {/* Stock indicator */}
                         {product.stock !== undefined && product.stock <= 5 && product.stock > 0 && (
                             <p className="text-sm text-amber-600 font-medium">Only {product.stock} left in stock!</p>

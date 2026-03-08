@@ -47,7 +47,10 @@ export function apiHandler(handler: ApiHandler): ApiHandler {
                 {
                     success: false,
                     error: 'Internal Server Error',
-                    ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+                    ...(process.env.NODE_ENV === 'development' && {
+                        detail: error?.message || String(error),
+                        code: error?.code,
+                    }),
                 },
                 { status: 500 }
             );

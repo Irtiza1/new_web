@@ -19,14 +19,17 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
 -- Allow public inserts (storefront form), admin reads/updates
+DROP POLICY IF EXISTS "Allow public insert contact_messages" ON contact_messages;
 CREATE POLICY "Allow public insert contact_messages"
     ON contact_messages FOR INSERT
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow authenticated read contact_messages" ON contact_messages;
 CREATE POLICY "Allow authenticated read contact_messages"
     ON contact_messages FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated update contact_messages" ON contact_messages;
 CREATE POLICY "Allow authenticated update contact_messages"
     ON contact_messages FOR UPDATE
     USING (true);
@@ -47,6 +50,7 @@ CREATE TABLE IF NOT EXISTS media_files (
 
 ALTER TABLE media_files ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow authenticated all media_files" ON media_files;
 CREATE POLICY "Allow authenticated all media_files"
     ON media_files FOR ALL
     USING (true);
@@ -61,10 +65,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read site_settings" ON site_settings;
 CREATE POLICY "Allow public read site_settings"
     ON site_settings FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "Allow authenticated write site_settings" ON site_settings;
 CREATE POLICY "Allow authenticated write site_settings"
     ON site_settings FOR ALL
     USING (true);
@@ -84,16 +90,22 @@ ON CONFLICT (key) DO NOTHING;
 -- ============================================
 
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Allow all products" ON products FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all products" ON products;
+CREATE POLICY "Allow all products" ON products FOR ALL USING (true);
 
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Allow all customers" ON customers FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all customers" ON customers;
+CREATE POLICY "Allow all customers" ON customers FOR ALL USING (true);
 
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Allow all orders" ON orders FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all orders" ON orders;
+CREATE POLICY "Allow all orders" ON orders FOR ALL USING (true);
 
 ALTER TABLE custom_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Allow public insert custom_requests"
+DROP POLICY IF EXISTS "Allow public insert custom_requests" ON custom_requests;
+CREATE POLICY "Allow public insert custom_requests"
     ON custom_requests FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Allow all read custom_requests"
+
+DROP POLICY IF EXISTS "Allow all read custom_requests" ON custom_requests;
+CREATE POLICY "Allow all read custom_requests"
     ON custom_requests FOR SELECT USING (true);

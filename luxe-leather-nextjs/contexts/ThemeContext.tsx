@@ -19,10 +19,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Load theme from localStorage on mount
     useEffect(() => {
         setMounted(true);
-        // Always default to light (white background)
+        const initialTheme: Theme = "light"; // Always light mode
+        setThemeState(initialTheme);
+        applyTheme(initialTheme);
         localStorage.setItem("theme", "light");
-        setThemeState("light");
-        applyTheme("light");
     }, []);
 
     const applyTheme = (newTheme: Theme) => {

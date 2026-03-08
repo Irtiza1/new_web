@@ -50,10 +50,11 @@ export default function AdminRequestsPage() {
                     setSelectedRequest(data.data[0]);
                 }
 
-                // Update new count - mostly for the notification badge
-                // In a real app we'd probably have a separate /stats endpoint call here
+                // Update new count
                 if (statusFilter === 'all' && !searchQuery) {
-                    const count = data.data.filter((r: CustomRequest) => r.status === 'new').length;
+                    const count = data.data.filter((r: CustomRequest) =>
+                        r.status?.toLowerCase() === 'new'
+                    ).length;
                     setNewRequestCount(count);
                 }
             }
@@ -107,24 +108,29 @@ export default function AdminRequestsPage() {
     };
 
     const StatusBadge = ({ status }: { status: string }) => {
-        const styles = {
+        const styles: Record<string, string> = {
             new: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400',
+            quote_sent: 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/30 dark:text-orange-400',
             quoted: 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/30 dark:text-orange-400',
             in_progress: 'bg-yellow-50 text-yellow-700 ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400',
-            completed: 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
+            completed: 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400',
+            cancelled: 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400',
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const style = (styles as any)[status.toLowerCase()] || styles.new;
+        const key = status.toLowerCase();
+        const style = styles[key] || styles.new;
+        // Format the label
+        const label = status === 'QUOTE_SENT' ? 'Quote Sent'
+            : status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
         return (
             <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>
-                {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                {label}
             </span>
         );
     };
 
     return (
-        <div className="bg-[#f6f7f8] dark:bg-[#101922] text-slate-900 dark:text-white h-screen flex overflow-hidden font-[family-name:var(--font-inter)]">
+        <div className="flex-1 min-w-0 bg-[#f6f7f8] dark:bg-[#101922] text-slate-900 dark:text-white h-screen flex flex-col overflow-hidden font-[family-name:var(--font-inter)]">
             {/* <AdminSidebar /> removed for layout */}
 
             {/* Main Content */}
@@ -171,8 +177,8 @@ export default function AdminRequestsPage() {
                 </header>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-8 relative">
-                    <div className="max-w-6xl mx-auto flex flex-col h-full">
+                <div className="flex-1 overflow-y-auto p-6 relative">
+                    <div className="flex flex-col h-full">
                         {/* Page Header & Filters */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                             <div>
@@ -182,16 +188,22 @@ export default function AdminRequestsPage() {
                             <div className="flex items-center gap-3">
                                 {/* Status Filter Buttons */}
                                 <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
-                                    {['all', 'new', 'quoted', 'in_progress', 'completed'].map((status) => (
+                                    {[
+                                        { label: 'All', value: 'all' },
+                                        { label: 'New', value: 'new' },
+                                        { label: 'Quote Sent', value: 'quote_sent' },
+                                        { label: 'In Progress', value: 'in_progress' },
+                                        { label: 'Completed', value: 'completed' },
+                                    ].map(({ label, value }) => (
                                         <button
-                                            key={status}
-                                            onClick={() => setStatusFilter(status)}
-                                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${statusFilter === status
+                                            key={value}
+                                            onClick={() => setStatusFilter(value)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${statusFilter === value
                                                 ? 'bg-[#d41132] text-white shadow-sm'
                                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                                 }`}
                                         >
-                                            {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                            {label}
                                         </button>
                                     ))}
                                 </div>
@@ -210,21 +222,28 @@ export default function AdminRequestsPage() {
                                         <thead>
                                             <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                                                 <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">ID</th>
-                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Client</th>
-                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Request Type</th>
-                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Target Budget</th>
+                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-full">Client</th>
+                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Request Type</th>
+                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Target Budget</th>
                                                 <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Date</th>
+                                                <th className="py-3 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Date</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {requests.map((req, idx) => (
+                                            {requests.length === 0 && !loading && (
+                                                <tr>
+                                                    <td colSpan={6} className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                                                        No requests found matching the selected filter.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {requests.map((req) => (
                                                 <tr
                                                     key={req.id}
                                                     onClick={() => setSelectedRequest(req)}
                                                     className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${selectedRequest?.id === req.id ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}
                                                 >
-                                                    <td className="py-4 px-6 text-sm font-mono text-slate-500">#REQ-{req.id?.slice(0, 4)}</td>
+                                                    <td className="py-4 px-6 text-sm font-mono text-slate-500">#REQ-{req.id?.slice(-6).toUpperCase()}</td>
                                                     <td className="py-4 px-6">
                                                         <div className="flex items-center gap-3">
                                                             <div className="size-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">
@@ -266,7 +285,7 @@ export default function AdminRequestsPage() {
                         {/* Drawer Header */}
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                             <div className="flex flex-col">
-                                <span className="text-xs font-mono text-slate-500 mb-1">#REQ-{selectedRequest.id?.slice(0, 4)}</span>
+                                <span className="text-xs font-mono text-slate-500 mb-1">#REQ-{selectedRequest.id?.slice(-6).toUpperCase()}</span>
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedRequest.itemType}</h3>
                             </div>
                             <button onClick={() => setSelectedRequest(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">

@@ -19,7 +19,7 @@ export default function AdminDashboard() {
                 const [analyticsRes, customersRes, requestsRes] = await Promise.all([
                     fetch('/api/analytics?type=summary'),
                     fetch('/api/customers?limit=1'),
-                    fetch('/api/requests?status=new&limit=1')
+                    fetch('/api/requests?status=NEW&limit=1')
                 ]);
 
                 const analyticsData = await analyticsRes.json();
@@ -29,8 +29,8 @@ export default function AdminDashboard() {
                 setStats({
                     totalRevenue: analyticsData.success ? analyticsData.data.totalRevenue : 0,
                     totalOrders: analyticsData.success ? analyticsData.data.totalOrders : 0,
-                    totalCustomers: customersData.success ? customersData.data.pagination.total : 0,
-                    pendingRequests: requestsData.success ? requestsData.data.pagination.total : 0
+                    totalCustomers: customersData.success ? customersData.pagination.total : 0,
+                    pendingRequests: requestsData.success ? requestsData.pagination.total : 0
                 });
             } catch (err) {
                 console.error('Failed to fetch dashboard stats:', err);
@@ -147,18 +147,6 @@ export default function AdminDashboard() {
                                     <div>
                                         <h3 className="font-bold text-[#0d141b] dark:text-white group-hover:text-[#d41132] transition-colors">Analytics</h3>
                                         <p className="text-sm text-[#4c739a] dark:text-[#94a3b8]">View sales reports</p>
-                                    </div>
-                                </div>
-                            </Link>
-
-                            <Link href="/admin/media" className="group bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm hover:shadow-md hover:border-[#d41132] transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-[#d41132]/10 p-3 rounded-lg">
-                                        <span className="material-symbols-outlined text-[#d41132] text-2xl">photo_library</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-[#0d141b] dark:text-white group-hover:text-[#d41132] transition-colors">Media Library</h3>
-                                        <p className="text-sm text-[#4c739a] dark:text-[#94a3b8]">Manage product images</p>
                                     </div>
                                 </div>
                             </Link>

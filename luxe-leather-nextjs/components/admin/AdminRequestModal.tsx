@@ -63,7 +63,7 @@ export default function AdminRequestModal({ isOpen, onClose, onSubmit }: AdminRe
 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto" style={{ maxWidth: '512px' }}>
                 <div className="flex items-center justify-between p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                     <h2 className="text-xl font-bold text-[#0d141b] dark:text-white">New Request</h2>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">

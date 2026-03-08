@@ -8,6 +8,7 @@ import Footer from "@/components/storefront/Footer";
 export default function HomePage() {
   const categories = [
     {
+      name: "Bags",
       image:
         "https://lh3.googleusercontent.com/aida-public/AB6AXuBCXlGxUlNVUPCAiWMd3IcYHCtTCaQvmlKE8ckXliTBTGO7kZ24DWxTydT7c4x1eeH35zHBO74SK-RKLOoM7RhMziyd1-Fu4iCqwhQ5L1bpLGdqI3WB04LpXr8J23V6k3-ilfx436cvf0BlQP6GByydrvlclk3UpR7ByQsvVPZyi6bhMx70GBeaG9FuU586DekhEOcxRgynzdU7etRxAR6HZGK8nZgiGwPtCNy-bvAm9g7Gy0wYB-PKF7Z4hw0avEYeHbeL3Zj4LU4p",
     },

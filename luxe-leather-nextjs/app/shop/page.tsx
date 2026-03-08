@@ -79,7 +79,7 @@ function ShopContent() {
 
     // Helper to get product image
     const getProductImage = (product: ShopProduct) => {
-        return product.image || '';
+        return product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
     };
 
     return (

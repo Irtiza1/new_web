@@ -32,7 +32,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
         byStatus[status] = (byStatus[status] || 0) + 1;
     });
 
-    const totalReturns = byStatus['cancelled'] ?? 0;
+    const totalReturns = byStatus['CANCELLED'] ?? 0;
 
     return {
         totalRevenue,
@@ -53,29 +53,24 @@ export interface TopProduct {
  * Get top selling products based on order items
  */
 export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
-    // 1. Get all orders with items
-    const { data: orders, error } = await supabase
-        .from('Order')
-        .select('items');
+    // 1. Get all order items directly
+    const { data: orderItems, error } = await supabase
+        .from('OrderItem')
+        .select('productId, quantity');
 
     if (error) throw error;
 
-    if (!orders || orders.length === 0) return [];
+    if (!orderItems || orderItems.length === 0) return [];
 
-    // 2. Aggregate sales by product_id
+    // 2. Aggregate sales by productId
     const salesMap: Record<string, number> = {};
     let totalSalesCount = 0;
 
-    orders.forEach(order => {
-        if (Array.isArray(order.items)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            order.items.forEach((item: any) => {
-                if (item.product_id) {
-                    const qty = Number(item.quantity) || 0;
-                    salesMap[item.product_id] = (salesMap[item.product_id] || 0) + qty;
-                    totalSalesCount += qty;
-                }
-            });
+    orderItems.forEach(item => {
+        if (item.productId) {
+            const qty = Number(item.quantity) || 0;
+            salesMap[item.productId] = (salesMap[item.productId] || 0) + qty;
+            totalSalesCount += qty;
         }
     });
 

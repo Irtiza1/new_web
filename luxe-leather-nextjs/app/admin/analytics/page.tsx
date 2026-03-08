@@ -10,14 +10,22 @@ export default function AdminAnalyticsPage() {
     const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
     const [countries, setCountries] = useState<CustomerCountry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [startDate, setStartDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d.toISOString().split('T')[0];
+    });
+    const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const dateRange = `${new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     useEffect(() => {
         async function fetchData() {
             try {
                 const [summaryRes, productsRes, countriesRes] = await Promise.all([
-                    fetch('/api/analytics?type=summary'),
-                    fetch('/api/analytics?type=top-products'),
-                    fetch('/api/analytics?type=customers-by-country')
+                    fetch('/api/analytics?type=summary', { cache: 'no-store' }),
+                    fetch('/api/analytics?type=top-products', { cache: 'no-store' }),
+                    fetch('/api/analytics?type=customers-by-country', { cache: 'no-store' })
                 ]);
 
                 const summaryData = await summaryRes.json();
@@ -80,23 +88,61 @@ export default function AdminAnalyticsPage() {
                             <h1 className="text-3xl font-black tracking-tight text-[#0d141b] dark:text-[#f3f4f6]">Analytics & Reports</h1>
                             <p className="text-[#4c739a] dark:text-[#9ca3af] mt-1 text-sm md:text-base">Overview of sales performance, product trends, and customer distribution.</p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2">
                             {/* Date Range Picker */}
-                            <button
-                                onClick={() => alert('Date range picker functionality coming soon!')}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#1a2632] border border-[#e7edf3] dark:border-[#2b3a4a] rounded-lg text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-lg">calendar_today</span>
-                                <span>Oct 24, 2023 - Nov 24, 2023</span>
-                                <span className="material-symbols-outlined text-lg text-[#4c739a] dark:text-[#9ca3af]">arrow_drop_down</span>
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowDatePicker(p => !p)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-[#1a2632] border border-[#e7edf3] dark:border-[#2b3a4a] rounded-lg text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-base">calendar_today</span>
+                                    <span className="hidden sm:inline">{dateRange}</span>
+                                    <span className="material-symbols-outlined text-base text-[#4c739a] dark:text-[#9ca3af]">arrow_drop_down</span>
+                                </button>
+                                {showDatePicker && (
+                                    <div className="absolute right-0 top-full mt-2 z-50 bg-white dark:bg-[#1a2632] border border-[#e7edf3] dark:border-[#2b3a4a] rounded-xl shadow-xl p-4 flex flex-col gap-3" style={{ minWidth: '260px' }}>
+                                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Date Range</p>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">From</label>
+                                            <input
+                                                type="date"
+                                                value={startDate}
+                                                max={endDate}
+                                                onChange={e => setStartDate(e.target.value)}
+                                                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#101922] border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">To</label>
+                                            <input
+                                                type="date"
+                                                value={endDate}
+                                                min={startDate}
+                                                max={new Date().toISOString().split('T')[0]}
+                                                onChange={e => setEndDate(e.target.value)}
+                                                className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-[#101922] border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-[#d41132] outline-none"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 pt-1">
+                                            <button
+                                                onClick={() => { setShowDatePicker(false); }}
+                                                className="flex-1 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                            >Cancel</button>
+                                            <button
+                                                onClick={() => setShowDatePicker(false)}
+                                                className="flex-1 py-1.5 text-xs font-bold bg-[#d41132] text-white rounded-lg hover:bg-[#b30f2a] transition-colors"
+                                            >Apply</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             {/* Export Button */}
                             <button
                                 onClick={handleDownloadPDF}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-[#d41132] hover:bg-[#b30f2a] text-white rounded-lg text-sm font-bold shadow-sm shadow-red-200 dark:shadow-none transition-all active:scale-95"
+                                className="flex items-center gap-2 px-3 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white rounded-lg text-sm font-bold shadow-sm transition-all active:scale-95"
                             >
-                                <span className="material-symbols-outlined text-lg">download</span>
-                                Export PDF
+                                <span className="material-symbols-outlined text-base">download</span>
+                                <span className="hidden sm:inline">Export PDF</span>
                             </button>
                         </div>
                     </div>
@@ -176,10 +222,39 @@ export default function AdminAnalyticsPage() {
                             </div>
                         </div>
                         <div className="relative w-full h-[300px] md:h-[350px]">
-                            {/* Simplified Chart Placeholder */}
-                            <div className="w-full h-full bg-[#f6f7f8] dark:bg-[#101922] rounded-lg flex items-center justify-center">
-                                <p className="text-[#4c739a] dark:text-[#9ca3af] text-sm">Revenue Chart Visualization</p>
-                            </div>
+                            {/* CSS Bar Chart based on order status breakdown */}
+                            {summary && Object.keys(summary.byStatus).length > 0 ? (
+                                <div className="w-full h-full flex flex-col justify-end gap-2 pt-6 pb-2">
+                                    <div className="flex items-end justify-around gap-3 h-full">
+                                        {Object.entries(summary.byStatus).map(([status, count], i) => {
+                                            const maxCount = Math.max(...Object.values(summary.byStatus));
+                                            const heightPct = maxCount > 0 ? Math.max(10, (count / maxCount) * 100) : 10;
+                                            const colors: Record<string, string> = {
+                                                PENDING: 'bg-yellow-400',
+                                                PROCESSING: 'bg-blue-400',
+                                                SHIPPED: 'bg-purple-400',
+                                                DELIVERED: 'bg-green-400',
+                                                CANCELLED: 'bg-red-400',
+                                            };
+                                            return (
+                                                <div key={status} className="flex flex-col items-center flex-1 gap-1 min-w-0">
+                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{count}</span>
+                                                    <div
+                                                        className={`w-full rounded-t-md transition-all duration-700 ${colors[status] ?? 'bg-slate-400'}`}
+                                                        style={{ height: `${heightPct}%` }}
+                                                    />
+                                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 text-center truncate w-full">{status.charAt(0) + status.slice(1).toLowerCase()}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="w-full h-full bg-[#f6f7f8] dark:bg-[#101922] rounded-lg flex flex-col items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600">bar_chart</span>
+                                    <p className="text-[#4c739a] dark:text-[#9ca3af] text-sm">No order data available yet.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -246,8 +321,25 @@ export default function AdminAnalyticsPage() {
                         </div>
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Map Graphic Placeholder */}
-                            <div className="flex-1 relative bg-[#eef4ff] dark:bg-[#1f2d3d] rounded-lg min-h-[300px] overflow-hidden flex items-center justify-center">
-                                <p className="text-[#4c739a] dark:text-[#9ca3af] text-sm">World Map Visualization</p>
+                            <div className="flex-1 relative bg-[#eef4ff] dark:bg-[#1f2d3d] rounded-lg min-h-[300px] overflow-hidden flex flex-col items-center justify-center gap-3">
+                                <span className="material-symbols-outlined text-6xl text-blue-200 dark:text-blue-800">public</span>
+                                <p className="text-[#4c739a] dark:text-[#9ca3af] text-sm font-medium">Customer Distribution</p>
+                                {countries.length === 0 && (
+                                    <p className="text-xs text-slate-400">No customer location data available</p>
+                                )}
+                                {countries.length > 0 && (
+                                    <div className="w-full px-6 mt-2 space-y-2">
+                                        {countries.map((c, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <span className="text-base">{c.flag}</span>
+                                                <div className="flex-1 h-2 bg-blue-100 dark:bg-blue-900/30 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-blue-400 dark:bg-blue-500 rounded-full" style={{ width: `${c.percentage}%` }} />
+                                                </div>
+                                                <span className="text-xs text-slate-500 w-8 text-right">{c.percentage}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             {/* Country List */}
                             <div className="w-full lg:w-80 flex flex-col justify-center gap-4">

@@ -39,8 +39,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             <p className="text-gray-500 text-lg font-medium">Your bag is empty.</p>
                         </div>
                     ) : (
-                        cartItems.map(item => (
-                            <div key={item.id} className="group flex gap-5">
+                        cartItems.map((item, index) => (
+                            <div key={`${item.id}-${item.variant || index}`} className="group flex gap-5">
                                 <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 dark:border-gray-700">
                                     <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${item.image}')` }} />
                                 </div>
@@ -48,19 +48,21 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                     <div>
                                         <div className="flex justify-between items-start gap-2">
                                             <h3 className="font-semibold text-slate-900 dark:text-white text-base leading-tight">{item.name}</h3>
-                                            <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                            <button onClick={() => removeFromCart(item.id, item.variant)} className="text-gray-400 hover:text-red-500 transition-colors">
                                                 <span className="material-symbols-outlined text-[20px]">delete</span>
                                             </button>
                                         </div>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.variant}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            {item.variant?.replace(/undefined/g, 'Standard') || 'Standard'}
+                                        </p>
                                     </div>
                                     <div className="flex items-end justify-between mt-2">
                                         <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md h-8">
-                                            <button onClick={() => updateQuantity(item.id, -1)} className="px-2.5 h-full hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
+                                            <button onClick={() => updateQuantity(item.id, -1, item.variant)} className="px-2.5 h-full hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
                                                 <span className="material-symbols-outlined text-[16px]">remove</span>
                                             </button>
                                             <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                                            <button onClick={() => updateQuantity(item.id, 1)} className="px-2.5 h-full hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
+                                            <button onClick={() => updateQuantity(item.id, 1, item.variant)} className="px-2.5 h-full hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
                                                 <span className="material-symbols-outlined text-[16px]">add</span>
                                             </button>
                                         </div>

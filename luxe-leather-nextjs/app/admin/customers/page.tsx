@@ -69,7 +69,8 @@ export default function AdminCustomersPage() {
     // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (activeMenu && !(event.target as Element).closest('.action-menu-trigger')) {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
                 setActiveMenu(null);
             }
         };

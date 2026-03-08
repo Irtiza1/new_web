@@ -6,7 +6,6 @@ export const ADMIN_NAV_ITEMS = [
     { name: 'Customers', path: '/admin/customers', icon: 'group' },
     { name: 'Custom Requests', path: '/admin/requests', icon: 'inbox' },
     { name: 'Analytics', path: '/admin/analytics', icon: 'bar_chart' },
-    { name: 'Media Library', path: '/admin/media', icon: 'photo_library' },
     { name: 'Settings', path: '/admin/settings', icon: 'settings' },
 ];
 

@@ -11,15 +11,15 @@ const querySchema = z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
     search: z.string().optional(),
-    status: z.enum(['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled']).optional()
+    status: z.enum(['all', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).optional()
 });
 
 const orderSchema = z.object({
-    customerId: z.string().uuid(),
+    customerId: z.string().min(1, 'Customer ID is required'),
     total: z.number().min(0),
-    status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled']),
+    status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
     items: z.array(z.object({
-        productId: z.string().uuid(),
+        productId: z.string().min(1),
         quantity: z.number().min(1),
         price: z.number().min(0)
     }))

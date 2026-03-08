@@ -136,9 +136,11 @@ export const update = async (id: string, data: Partial<Customer>) => {
  * @returns {Promise<Customer>}
  */
 export const create = async (data: any) => {
+    const id = `cm${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const now = new Date().toISOString();
     const { data: created, error } = await supabase
         .from('Customer')
-        .insert([data])
+        .insert([{ ...data, id, createdAt: now, updatedAt: now }])
         .select()
         .single();
 

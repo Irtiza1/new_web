@@ -10,7 +10,11 @@ export async function getAll(): Promise<Record<string, string>> {
         .from('Setting')
         .select('*');
 
-    if (error) throw error;
+    // If the table is empty or errors, return empty map gracefully
+    if (error) {
+        console.warn('Settings fetch warning:', error.message);
+        return {};
+    }
 
     const map: Record<string, string> = {};
     (data as SiteSetting[]).forEach((s) => {
@@ -20,19 +24,38 @@ export async function getAll(): Promise<Record<string, string>> {
 }
 
 /**
- * Update multiple settings at once
+ * Update multiple settings at once using upsert.
+ * Generates a deterministic ID from the key so upsert works correctly.
  */
 export async function update(settings: Record<string, string>) {
-    const upserts = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value,
-        updatedAt: new Date().toISOString(),
-    }));
+    // Build upserts — for each key we fetch existing id first, or generate one
+    const { data: existing } = await supabase
+        .from('Setting')
+        .select('id, key');
+
+    const existingMap: Record<string, string> = {};
+    (existing || []).forEach((s: { id: string; key: string }) => {
+        existingMap[s.key] = s.id;
+    });
+
+    const upserts = Object.entries(settings).map(([key, value]) => {
+        // Reuse existing ID if available, otherwise generate a cuid-style one
+        const id = existingMap[key] || `setting_${key.replace(/[^a-z0-9]/gi, '_')}`;
+        return {
+            id,
+            key,
+            value,
+            updatedAt: new Date().toISOString(),
+        };
+    });
 
     const { error } = await supabase
         .from('Setting')
         .upsert(upserts, { onConflict: 'key' });
 
-    if (error) throw error;
+    if (error) {
+        console.error('Settings upsert error:', JSON.stringify(error));
+        throw error;
+    }
     return { success: true };
 }

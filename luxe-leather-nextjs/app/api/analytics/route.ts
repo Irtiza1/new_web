@@ -3,9 +3,11 @@ import { z } from 'zod';
 import * as analyticsService from '@/lib/services/analyticsService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 // Schema for query parameters
 const querySchema = z.object({
-    type: z.enum(['summary', 'top-products', 'customers-by-country']),
+    type: z.enum(['summary', 'top-products', 'customers-by-country']).optional().default('summary'),
     limit: z.string().optional(),
 });
 
