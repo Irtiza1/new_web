@@ -21,6 +21,7 @@ function ShopContent() {
     const [products, setProducts] = useState<ShopProduct[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState('newest');
 
     // Fetch products from DB on mount
     useEffect(() => {
@@ -60,50 +61,86 @@ function ShopContent() {
         setVisibleCount(prev => prev + 4);
     };
 
+    const getProductImage = (product: ShopProduct) => {
+        return product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
+    };
+
     const filteredProducts = products.filter(product => {
-        // Filter by Search Term
         if (search) {
             const searchTerm = search.toLowerCase();
             const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
                 (product.category || '').toLowerCase().includes(searchTerm);
             if (!matchesSearch) return false;
         }
-
-        // Filter by Category
         if (activeCategory === 'All Products') return true;
         return (product.category || '').trim() === activeCategory;
     });
 
-    const visibleProducts = filteredProducts.slice(0, visibleCount);
-    const hasMoreProducts = visibleCount < filteredProducts.length;
+    // Apply Sorting
+    const sortedProducts = [...filteredProducts].sort((a, b) => {
+        if (sortBy === 'price-low') return a.price - b.price;
+        if (sortBy === 'price-high') return b.price - a.price;
+        if (sortBy === 'newest') return (b.id as number) - (a.id as number);
+        return 0;
+    });
 
-    // Helper to get product image
-    const getProductImage = (product: ShopProduct) => {
-        return product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
-    };
+    const visibleProducts = sortedProducts.slice(0, visibleCount);
+    const hasMoreProducts = visibleCount < filteredProducts.length;
 
     return (
         <div id="shop-main-container" className="bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#0e121b] dark:text-white min-h-screen flex flex-col font-[family-name:var(--font-manrope)] overflow-y-auto h-screen">
             <Header />
 
             {/* Main Content */}
-            <main className="flex-grow w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-12">
-                {/* Page Header */}
-                <div className="mb-12 text-center md:text-left">
-                    <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Our Collection</h2>
-                    <p className="text-lg text-[#4e6797] dark:text-gray-400">Discover our premium leather goods, handcrafted by artisans for a lifetime of adventure.</p>
+            <main className="flex-grow w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-8 md:py-12">
+
+                {/* Breadcrumbs */}
+                <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-8 overflow-hidden whitespace-nowrap">
+                    <Link href="/" className="hover:text-[#c27a2a]">Home</Link>
+                    <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    <span className="text-gray-300">Shop</span>
+                    <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    <span className="text-[#c27a2a] truncate">{activeCategory}</span>
+                </nav>
+
+                {/* Page Header & Sorting */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div className="text-center md:text-left">
+                        <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 uppercase">The Collection</h2>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">Handcrafted leather goods for the modern nomad.</p>
+                    </div>
+
+                    <div className="flex items-center justify-between md:justify-end gap-4 border-t border-gray-100 dark:border-white/5 pt-6 md:pt-0 md:border-0">
+                        <p className="text-[10px] font-black uppercase tracking-tighter text-gray-400">
+                            Showing {visibleProducts.length} of {filteredProducts.length} results
+                        </p>
+                        <div className="relative group">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="appearance-none bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-4 pr-10 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-[#c27a2a] transition-all cursor-pointer"
+                            >
+                                <option value="newest">Latest Arrivals</option>
+                                <option value="price-low">Price: Low to High</option>
+                                <option value="price-high">Price: High to Low</option>
+                            </select>
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm group-hover:text-[#c27a2a] transition-colors">
+                                expand_more
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="mb-10 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                <div className="mb-10 overflow-x-auto pb-4 no-scrollbar">
                     <div className="flex gap-3 min-w-max">
                         {categories.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
-                                className={`px-6 py-2.5 rounded-full font-medium text-sm transition-all ${activeCategory === cat
-                                    ? 'bg-[#0e121b] text-white dark:bg-white dark:text-[#0e121b] shadow-lg shadow-gray-200/50 dark:shadow-none hover:scale-105 active:scale-95'
-                                    : 'bg-white dark:bg-gray-800 text-[#0e121b] dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-[#0e121b] dark:hover:border-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                className={`px-6 py-3 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all ${activeCategory === cat
+                                    ? 'bg-[#1c140d] text-white dark:bg-white dark:text-[#1c140d] shadow-xl shadow-[#1c140d]/10'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:border-[#c27a2a] hover:text-[#c27a2a]'
                                     }`}
                             >
                                 {cat}

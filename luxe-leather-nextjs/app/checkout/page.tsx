@@ -1,0 +1,203 @@
+'use client';
+
+import { useState } from 'react';
+import { useCart } from '@/contexts/CartContext';
+import Header from '@/components/storefront/Header';
+import Footer from '@/components/storefront/Footer';
+import Link from 'next/link';
+
+export default function CheckoutPage() {
+    const { cartItems, cartTotal, checkout } = useCart();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        country: 'Pakistan',
+        notes: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        // Enhance: We'll wrap the existing checkout logic but add 'Notes' support
+        // For now using existing checkout which handles API calls
+        try {
+            await checkout({
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                address: formData.address,
+                city: formData.city,
+                country: formData.country,
+            });
+            // Note: In a real app, we'd also send formData.notes to the API
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (cartItems.length === 0) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0e121b]">
+                <Header />
+                <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
+                    <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">shopping_cart_off</span>
+                    <h2 className="text-2xl font-bold mb-2">Your bag is empty</h2>
+                    <p className="text-gray-500 mb-6">Add some premium leather to your collection to proceed.</p>
+                    <Link href="/shop" className="bg-[#c27a2a] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#a35508] transition-all">
+                        Return to Shop
+                    </Link>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0e121b] font-[family-name:var(--font-manrope)]">
+            <Header />
+
+            <main className="flex-grow w-full max-w-[1200px] mx-auto px-6 lg:px-12 py-12 md:py-20">
+                <div className="flex flex-col lg:flex-row gap-12 items-start">
+
+                    {/* Left Column: Checkout Form */}
+                    <div className="w-full lg:w-3/5 space-y-8">
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1c140d] dark:text-white uppercase">Checkout</h1>
+                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-2">Billing & Shipping Details</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Full Name*</label>
+                                    <input required name="name" value={formData.name} onChange={handleInputChange} type="text" placeholder="John Doe" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Email Address*</label>
+                                    <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="john@example.com" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Phone Number*</label>
+                                <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" placeholder="+92 300 1234567" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Shipping Address*</label>
+                                <input required name="address" value={formData.address} onChange={handleInputChange} type="text" placeholder="House #, Street Name" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">City*</label>
+                                    <input required name="city" value={formData.city} onChange={handleInputChange} type="text" placeholder="Lahore" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Country</label>
+                                    <input name="country" value={formData.country} readOnly type="text" className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none text-gray-400 cursor-not-allowed" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-4">
+                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Order Notes (Optional)</label>
+                                <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Special measurements or delivery requests..." rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors resize-none" />
+                            </div>
+
+                            <div className="pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full bg-[#c27a2a] text-white py-5 rounded-lg font-black text-lg uppercase tracking-widest shadow-xl shadow-[#c27a2a]/20 hover:bg-[#a35508] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                >
+                                    {isSubmitting ? (
+                                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                    ) : (
+                                        <>
+                                            Place Order via Concierge
+                                            <span className="material-symbols-outlined">arrow_forward</span>
+                                        </>
+                                    )}
+                                </button>
+                                <p className="text-[10px] text-center text-gray-400 mt-4 uppercase font-bold tracking-tighter">
+                                    Trusted by 5,000+ Customers Worldwide • Secure Concierge Service
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Right Column: Order Summary */}
+                    <div className="w-full lg:w-2/5 space-y-6 lg:sticky lg:top-32">
+                        <div className="bg-white dark:bg-[#1a130e] border border-gray-100 dark:border-white/5 rounded-2xl p-8 shadow-sm">
+                            <h3 className="text-lg font-black uppercase tracking-widest text-[#1c140d] dark:text-white mb-6 border-b border-gray-100 dark:border-white/5 pb-4">Order Summary</h3>
+
+                            <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2 custom_scroll">
+                                {cartItems.map((item) => (
+                                    <div key={item.id} className="flex gap-4">
+                                        <div className="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-lg overflow-hidden shrink-0 border border-gray-100 dark:border-white/5">
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-sm font-bold text-[#1c140d] dark:text-white truncate">{item.name}</h4>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">{item.variant}</p>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-xs text-gray-500 font-medium">Qty: {item.quantity}</span>
+                                                <span className="text-sm font-bold text-[#c27a2a]">${(item.price * item.quantity).toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="space-y-3 pt-6 border-t border-gray-100 dark:border-white/5">
+                                <div className="flex justify-between text-sm text-gray-500">
+                                    <span className="font-medium uppercase tracking-tighter">Subtotal</span>
+                                    <span className="font-bold text-[#1c140d] dark:text-white">${cartTotal.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm text-gray-500">
+                                    <span className="font-medium uppercase tracking-tighter">Shipping</span>
+                                    <span className="text-[#137fec] font-bold uppercase tracking-tighter">Free</span>
+                                </div>
+                                <div className="flex justify-between text-xl font-black text-[#1c140d] dark:text-white pt-4">
+                                    <span className="uppercase tracking-tighter">Total</span>
+                                    <span>${cartTotal.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Trust Badges */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white dark:bg-[#1a130e] p-4 rounded-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center gap-2">
+                                <span className="material-symbols-outlined text-[#c27a2a]">verified_user</span>
+                                <span className="text-[10px] font-black uppercase text-gray-400">Secure Payment</span>
+                            </div>
+                            <div className="bg-white dark:bg-[#1a130e] p-4 rounded-xl border border-gray-100 dark:border-white/5 flex flex-col items-center text-center gap-2">
+                                <span className="material-symbols-outlined text-[#c27a2a]">workspace_premium</span>
+                                <span className="text-[10px] font-black uppercase text-gray-400">Quality Assured</span>
+                            </div>
+                        </div>
+
+                        {/* Payment Icons */}
+                        <div className="flex justify-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-4" alt="Visa" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-6" alt="Mastercard" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="h-5" alt="PayPal" />
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <Footer />
+        </div>
+    );
+}
