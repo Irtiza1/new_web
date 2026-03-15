@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import GlobalCart from "@/components/storefront/GlobalCart";
 import BackToTop from "@/components/ui/BackToTop";
-import WhatsAppFAB from "@/components/ui/WhatsAppFAB";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -55,7 +55,7 @@ export default function RootLayout({
             {children}
             <GlobalCart />
             <BackToTop />
-            <WhatsAppFAB />
+
           </CartProvider>
         </ThemeProvider>
       </body>
