@@ -3,12 +3,12 @@ import { STOREFRONT_NAV_ITEMS } from "@/lib/constants/navigation";
 
 export default function Footer() {
     return (
-        <footer className="bg-[#0C0E12] text-white pt-24 pb-32 border-t border-white/5 relative overflow-hidden">
+        <footer className="bg-[#0C0E12] text-white pt-16 pb-20 border-t border-white/5 relative overflow-hidden">
             {/* Subtle background glow */}
             <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#c27a2a]/5 rounded-full blur-[120px] pointer-events-none"></div>
 
             <div className="max-w-[1440px] mx-auto px-6 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-16 lg:gap-8 mb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
                     {/* Brand Col */}
                     <div className="lg:col-span-2 flex flex-col gap-6">
                         <div className="flex items-center gap-3 mb-2">
@@ -42,7 +42,7 @@ export default function Footer() {
 
                     {/* Links Col 1 - Shop */}
                     <div>
-                        <h4 className="font-bold text-sm mb-8 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">The Collection</h4>
+                        <h4 className="font-bold text-sm mb-4 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">The Collection</h4>
                         <ul className="flex flex-col gap-4 text-xs font-medium text-gray-400">
                             {STOREFRONT_NAV_ITEMS.filter(item => item.path === '/shop').map(item => (
                                 <li key={item.name}>
@@ -59,14 +59,14 @@ export default function Footer() {
 
                     {/* Links Col 2 - Concierge */}
                     <div>
-                        <h4 className="font-bold text-sm mb-8 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">Concierge</h4>
+                        <h4 className="font-bold text-sm mb-4 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">Concierge</h4>
                         <ul className="flex flex-col gap-4 text-xs font-medium text-gray-400">
                             <li><Link href="/contact" className="hover:text-white transition-colors tracking-widest uppercase">Trace Order</Link></li>
                             <li><Link href="/shipping" className="hover:text-white transition-colors tracking-widest uppercase">Care & Maintenance</Link></li>
                             <li><Link href="/shipping" className="hover:text-white transition-colors tracking-widest uppercase">Shipping Policy</Link></li>
                             <li><Link href="/contact" className="hover:text-white transition-colors tracking-widest uppercase">Private Consultations</Link></li>
                         </ul>
-                        <div className="mt-8 pt-8 border-t border-white/5">
+                        <div className="mt-6 pt-6 border-t border-white/5">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Artisan Support</p>
                             <a href="mailto:concierge@luxeleather.co" className="text-xs text-[#c27a2a] hover:text-white transition-colors font-bold tracking-widest">
                                 concierge@luxeleather.co
@@ -77,7 +77,7 @@ export default function Footer() {
                     {/* Newsletter - The Journal */}
                     <div className="flex flex-col gap-8">
                         <div>
-                            <h4 className="font-bold text-sm mb-6 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">The Artisan's Journal</h4>
+                            <h4 className="font-bold text-sm mb-4 uppercase tracking-[0.2em] text-[#c27a2a] font-serif">The Artisan's Journal</h4>
                             <p className="text-gray-400 text-xs mb-6 leading-relaxed">
                                 Join our inner circle for exclusive early access to limited edition drops and artisan stories.
                             </p>
@@ -112,7 +112,7 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Stripe */}
-                <div className="pt-12 border-t border-white/5 flex flex-col lg:flex-row items-center justify-between gap-12 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600">
+                <div className="pt-8 border-t border-white/5 flex flex-col lg:flex-row items-center justify-between gap-10 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600">
                     <div className="flex flex-col md:flex-row items-center gap-8 lg:gap-12">
                         <p>© {new Date().getFullYear()} Luxe Leather Co. All rights reserved.</p>
                         <div className="flex gap-8">
