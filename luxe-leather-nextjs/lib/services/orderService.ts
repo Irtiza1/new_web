@@ -12,8 +12,8 @@ import { AppError } from '../utils/AppError';
  */
 export const getAll = async (query: { search?: string; status?: string; limit?: string }) => {
     let dbQuery = supabase
-        .from('Order')
-        .select('*, Customer(name, email), OrderItem(*)')
+        .from('orders')
+        .select('*, customers(name, email), order_items(*)')
         .order('createdAt', { ascending: false });
 
     if (query.status && query.status !== 'all') {
@@ -54,8 +54,8 @@ export const getAll = async (query: { search?: string; status?: string; limit?: 
  */
 export const getById = async (id: string) => {
     const { data, error } = await supabase
-        .from('Order')
-        .select('*, Customer(name, email, phone), OrderItem(*, Product(name, price))')
+        .from('orders')
+        .select('*, customers(name, email, phone), order_items(*, products(name, price))')
         .eq('id', id)
         .single();
 
@@ -72,13 +72,13 @@ export const getById = async (id: string) => {
  */
 export const create = async (orderData: any) => {
     const { items, ...orderPayload } = orderData;
-    const orderId = `cm${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const orderId = crypto.randomUUID();
     const now = new Date().toISOString();
 
     // Insert the main Order record
     const { data, error } = await supabase
-        .from('Order')
-        .insert([{ ...orderPayload, id: orderId, createdAt: now, updatedAt: now, subtotal: orderPayload.total ?? 0, shipping: orderPayload.shipping ?? 0 }])
+        .from('orders')
+        .insert([{ ...orderPayload, id: orderId, createdAt: now, updatedAt: now, subtotal: orderPayload.total ?? 0, shipping: orderPayload.shipping ?? 0, customer_id: orderPayload.customer_id || orderPayload.customerId }])
         .select()
         .single();
 
@@ -91,15 +91,15 @@ export const create = async (orderData: any) => {
     // Insert the associated OrderItems if provided
     if (items && Array.isArray(items) && items.length > 0) {
         const orderItems = items.map((item: any) => ({
-            id: `cm${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`,
-            orderId,
-            productId: item.productId,
+            id: crypto.randomUUID(),
+            order_id: orderId,
+            product_id: item.product_id || item.productId,
             quantity: item.quantity,
             price: item.price,
         }));
 
         const { error: itemsError } = await supabase
-            .from('OrderItem')
+            .from('order_items')
             .insert(orderItems);
 
         if (itemsError) {
@@ -119,7 +119,7 @@ export const create = async (orderData: any) => {
  */
 export const update = async (id: string, updates: Partial<Order>) => {
     const { data, error } = await supabase
-        .from('Order')
+        .from('orders')
         .update(updates)
         .eq('id', id)
         .select()
@@ -137,8 +137,18 @@ export const update = async (id: string, updates: Partial<Order>) => {
  * @returns {Promise<void>}
  */
 export const remove = async (id: string) => {
+    // Delete associated OrderItems first
+    const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', id);
+
+    if (itemsError) {
+        throw new AppError(itemsError.message, 500, 'DB_ERROR');
+    }
+
     const { error } = await supabase
-        .from('Order')
+        .from('orders')
         .delete()
         .eq('id', id);
 
@@ -153,14 +163,14 @@ export const remove = async (id: string) => {
 export const getStats = async () => {
     // Get total revenue
     const { data: totalRevenue, error: revenueError } = await supabase
-        .from('Order')
+        .from('orders')
         .select('total');
 
     if (revenueError) throw new AppError(revenueError.message, 500, 'DB_ERROR');
 
     // Get order counts by status
     const { data: statusCounts, error: statusError } = await supabase
-        .from('Order')
+        .from('orders')
         .select('status');
 
     if (statusError) throw new AppError(statusError.message, 500, 'DB_ERROR');

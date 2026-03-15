@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 
 export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettingsState] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function load() {
@@ -23,6 +25,36 @@ export default function AdminSettingsPage() {
         }
         load();
     }, []);
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/media', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+
+            setSettingsState(prev => ({ ...prev, logo_url: data.url }));
+        } catch (error) {
+            console.error('Logo upload failed:', error);
+            alert('Failed to upload logo');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleRemoveLogo = () => {
+        setSettingsState(prev => ({ ...prev, logo_url: '' }));
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -149,22 +181,44 @@ export default function AdminSettingsPage() {
                                     </div>
 
                                     <div className="md:col-span-8 lg:col-span-9 flex flex-col sm:flex-row gap-6 items-start">
-                                        <div className="w-32 h-32 flex-shrink-0 bg-[#f6f7f8] dark:bg-[#101922] rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:border-[#d41132] transition-colors">
-                                            <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 z-10 text-3xl group-hover:scale-110 transition-transform">cloud_upload</span>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleLogoUpload}
+                                        />
+                                        <div 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="w-32 h-32 flex-shrink-0 bg-[#f6f7f8] dark:bg-[#101922] rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:border-[#d41132] transition-colors"
+                                        >
+                                            {settings.logo_url ? (
+                                                <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                                            ) : (
+                                                <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 z-10 text-3xl group-hover:scale-110 transition-transform">cloud_upload</span>
+                                            )}
+                                            {isUploading && (
+                                                <div className="absolute inset-0 bg-white/60 dark:bg-black/60 flex items-center justify-center z-20">
+                                                    <span className="material-symbols-outlined animate-spin text-[#d41132]">progress_activity</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex flex-col gap-3 pt-2">
                                             <button
-                                                onClick={() => alert('Image upload simulation')}
-                                                className="px-4 py-2 bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] hover:border-[#d41132] text-[#0d141b] dark:text-white text-sm font-bold rounded-lg transition-colors shadow-sm"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={isUploading}
+                                                className="px-4 py-2 bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] hover:border-[#d41132] text-[#0d141b] dark:text-white text-sm font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
                                             >
-                                                Upload New Image
+                                                {settings.logo_url ? 'Change Logo' : 'Upload Logo'}
                                             </button>
-                                            <button
-                                                onClick={() => alert('Image removed')}
-                                                className="text-sm font-semibold text-red-500 hover:text-red-600 px-4"
-                                            >
-                                                Remove
-                                            </button>
+                                            {settings.logo_url && (
+                                                <button
+                                                    onClick={handleRemoveLogo}
+                                                    className="text-sm font-semibold text-red-500 hover:text-red-600 px-4 text-left"
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

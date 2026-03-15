@@ -18,6 +18,8 @@ export default function AdminCustomersPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSegment, setSelectedSegment] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -293,7 +295,7 @@ export default function AdminCustomersPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {filteredCustomers.map((customer) => (
+                                            {filteredCustomers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((customer) => (
                                                 <tr key={customer.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                     <td className="py-4 px-6">
                                                         <input className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent" type="checkbox" />
@@ -366,9 +368,15 @@ export default function AdminCustomersPage() {
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
                                         Showing <span className="font-medium text-slate-900 dark:text-white">1</span> to <span className="font-medium text-slate-900 dark:text-white">{customers.length}</span> of <span className="font-medium text-slate-900 dark:text-white">{customers.length}</span> results
                                     </p>
-                                    <div className="flex gap-2">
-                                        <button className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800" disabled>Previous</button>
-                                        <button className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800" disabled>Next</button>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Previous</button>
+                                        {Array.from({ length: Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).slice(
+                                            Math.max(0, currentPage - 3),
+                                            Math.min(Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE), currentPage + 2)
+                                        ).map(page => (
+                                            <button key={page} onClick={() => setCurrentPage(page)} className={`px-3 py-1 text-sm rounded border transition-colors ${currentPage === page ? 'bg-[#d41132] text-white border-[#d41132]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{page}</button>
+                                        ))}
+                                        <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage >= Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE)} className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Next</button>
                                     </div>
                                 </div>
                             </>

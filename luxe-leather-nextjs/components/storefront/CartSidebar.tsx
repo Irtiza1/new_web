@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 
@@ -9,7 +10,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-    const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount } = useCart();
     const router = useRouter();
 
     return (
@@ -88,19 +89,35 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                     <div className="border-t border-gray-100 dark:border-gray-800 p-8 bg-white dark:bg-[#111827] space-y-4 shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)] z-20">
                         <div className="space-y-2 mb-6">
                             <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                                <span>Subtotal</span>
+                                <span className="text-xs font-bold uppercase tracking-widest">Subtotal</span>
                                 <span className="font-medium text-slate-900 dark:text-white">${cartTotal.toFixed(2)}</span>
                             </div>
+                            {discount > 0 && (
+                                <div className="flex justify-between items-center text-sm text-green-600 dark:text-green-400 animate-in fade-in slide-in-from-right-2 duration-300">
+                                    <span className="text-xs font-bold uppercase tracking-widest italic">Discount Applied</span>
+                                    <span className="font-bold">-${discount.toFixed(2)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                                <span>Shipping</span>
+                                <span className="text-xs font-bold uppercase tracking-widest">Shipping</span>
                                 <span>Calculated next step</span>
                             </div>
                             <div className="flex justify-between items-center text-lg font-bold text-slate-900 dark:text-white pt-2 border-t border-dashed border-gray-200 dark:border-gray-700 mt-2">
-                                <span>Total</span>
-                                <span>${cartTotal.toFixed(2)}</span>
+                                <span className="text-sm font-black uppercase tracking-widest">Total</span>
+                                <span className="text-xl font-black text-[#c27a2a]">${totalAfterDiscount.toFixed(2)}</span>
                             </div>
                         </div>
+
                         <div className="flex flex-col gap-3">
+                            <Link
+                                href="/cart"
+                                onClick={onClose}
+                                className="w-full h-14 flex items-center justify-center gap-3 rounded-xl border-2 border-[#1c140d] dark:border-[#c27a2a] text-[#1c140d] dark:text-[#c27a2a] font-black uppercase tracking-widest transition-all hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98]"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
+                                <span>View Full Cart</span>
+                            </Link>
+
                             <button
                                 onClick={() => {
                                     onClose();
@@ -109,14 +126,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                                 className="w-full h-14 flex items-center justify-center gap-3 rounded-xl bg-[#c27a2a] hover:bg-[#a35508] text-white font-black uppercase tracking-widest transition-all shadow-xl shadow-[#c27a2a]/20 hover:shadow-[#c27a2a]/30 active:scale-[0.98]"
                             >
                                 <span>Proceed to Checkout</span>
-                                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                                <span className="material-symbols-outlined text-[20px]">lock</span>
                             </button>
-                            <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-tighter mt-2">
-                                Trusted Concierge Service • Free Worldwide Shipping
-                            </p>
                         </div>
-                        <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-4">
-                            Secure checkout managed directly by our concierge team.
+                        <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-tighter mt-4">
+                            Trusted Concierge Service • Free Worldwide Shipping
                         </p>
                     </div>
                 ) : (

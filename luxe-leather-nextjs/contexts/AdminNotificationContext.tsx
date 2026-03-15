@@ -27,19 +27,19 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
         try {
             // New Requests
             const { count: requestsCount } = await supabase
-                .from('CustomRequest')
+                .from('custom_requests')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'NEW');
 
             // Pending Orders
             const { count: ordersCount } = await supabase
-                .from('Order')
+                .from('orders')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'PENDING');
 
             // Low Stock Products
             const { count: stockCount } = await supabase
-                .from('Product')
+                .from('products')
                 .select('*', { count: 'exact', head: true })
                 .lt('stock', 5);
 

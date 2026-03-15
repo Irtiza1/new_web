@@ -32,7 +32,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
     // Form State
     const [customerId, setCustomerId] = useState('');
     const [status, setStatus] = useState<Order['status']>('PENDING');
-    const [items, setItems] = useState<{ productId: string; quantity: number; price: number }[]>([]);
+    const [items, setItems] = useState<{ product_id: string; quantity: number; price: number }[]>([]);
 
     // Load data on open
     useEffect(() => {
@@ -71,7 +71,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
     const handleAddItem = () => {
         if (products.length === 0) return;
-        setItems([...items, { productId: products[0].id, quantity: 1, price: products[0].price }]);
+        setItems([...items, { product_id: products[0].id, quantity: 1, price: products[0].price }]);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -80,14 +80,14 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
         setItems(newItems);
     };
 
-    const handleItemChange = (index: number, field: 'productId' | 'quantity', value: string | number) => {
+    const handleItemChange = (index: number, field: 'product_id' | 'quantity', value: string | number) => {
         const newItems = [...items];
         const item = { ...newItems[index] };
 
-        if (field === 'productId') {
+        if (field === 'product_id') {
             const prod = products.find(p => p.id === value);
             if (prod) {
-                item.productId = prod.id;
+                item.product_id = prod.id;
                 item.price = prod.price; // Update price when product changes
             }
         } else if (field === 'quantity') {
@@ -110,7 +110,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
         setIsLoading(true);
         try {
             const orderData = {
-                customerId,
+                customer_id: customerId,
                 status,
                 total: calculateTotal(),
                 items
@@ -203,8 +203,8 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
                                                 <div className="flex-1">
                                                     <label className="text-xs font-semibold text-gray-500 mb-1 block">Product</label>
                                                     <select
-                                                        value={item.productId}
-                                                        onChange={(e) => handleItemChange(idx, 'productId', e.target.value)}
+                                                        value={item.product_id}
+                                                        onChange={(e) => handleItemChange(idx, 'product_id', e.target.value)}
                                                         className="w-full text-sm px-3 py-2 rounded bg-white dark:bg-[#1a2632] border border-gray-300 dark:border-gray-600"
                                                     >
                                                         {products.map(p => (

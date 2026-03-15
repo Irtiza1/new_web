@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { Coupon } from "@/lib/supabase";
 
 export interface CartItem {
+    // ... same ...
     id: number;
     name: string;
     variant?: string;
@@ -27,9 +29,14 @@ interface CartContextType {
     cartItems: CartItem[];
     cartCount: number;
     cartTotal: number;
+    appliedCoupon: Coupon | null;
+    discount: number;
+    totalAfterDiscount: number;
     addToCart: (item: Omit<CartItem, "quantity">) => void;
     removeFromCart: (id: number, variant?: string) => void;
     updateQuantity: (id: number, delta: number, variant?: string) => void;
+    applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
+    removeCoupon: () => void;
     checkout: (data: CheckoutData) => Promise<void>;
 }
 
@@ -38,16 +45,25 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Load cart from localStorage on mount
     useEffect(() => {
         const savedCart = localStorage.getItem("luxeCart");
+        const savedCoupon = localStorage.getItem("luxeCoupon");
         if (savedCart) {
             try {
                 setCartItems(JSON.parse(savedCart));
             } catch (error) {
                 console.error("Failed to parse cart data", error);
+            }
+        }
+        if (savedCoupon) {
+            try {
+                setAppliedCoupon(JSON.parse(savedCoupon));
+            } catch (error) {
+                console.warn("Failed to parse coupon data");
             }
         }
         setIsLoaded(true);
@@ -57,14 +73,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (isLoaded) {
             localStorage.setItem("luxeCart", JSON.stringify(cartItems));
+            if (appliedCoupon) {
+                localStorage.setItem("luxeCoupon", JSON.stringify(appliedCoupon));
+            } else {
+                localStorage.removeItem("luxeCoupon");
+            }
         }
-    }, [cartItems, isLoaded]);
+    }, [cartItems, appliedCoupon, isLoaded]);
 
     const openCart = () => setIsOpen(true);
     const closeCart = () => setIsOpen(false);
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const discount = appliedCoupon
+        ? (appliedCoupon.discountType === 'percentage'
+            ? (cartTotal * (appliedCoupon.value / 100))
+            : appliedCoupon.value)
+        : 0;
+
+    const totalAfterDiscount = Math.max(0, cartTotal - discount);
+
+    const applyCoupon = async (code: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const res = await fetch(`/api/coupons?code=${encodeURIComponent(code)}`);
+            const result = await res.json();
+
+            if (!result.success) {
+                return { success: false, message: result.message };
+            }
+
+            const coupon = result.data;
+            if (coupon.minOrderAmount && cartTotal < coupon.minOrderAmount) {
+                return { success: false, message: `Minimum order amount for this coupon is $${coupon.minOrderAmount}` };
+            }
+
+            setAppliedCoupon(coupon);
+            return { success: true, message: 'Coupon applied successfully!' };
+        } catch (error) {
+            return { success: false, message: 'Failed to apply coupon' };
+        }
+    };
+
+    const removeCoupon = () => setAppliedCoupon(null);
 
     // Note: since the same product id can have multiple variants, we match by id AND variant
     // where needed, or we rely on the component using a composite id.
@@ -152,7 +204,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    customerId: customerId,
+                    customer_id: customerId,
                     status: 'PENDING',
                     total: cartTotal,
                     items: orderItems,
@@ -188,9 +240,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 cartItems,
                 cartCount,
                 cartTotal,
+                appliedCoupon,
+                discount,
+                totalAfterDiscount,
                 addToCart,
                 removeFromCart,
                 updateQuantity,
+                applyCoupon,
+                removeCoupon,
                 checkout,
             }}
         >

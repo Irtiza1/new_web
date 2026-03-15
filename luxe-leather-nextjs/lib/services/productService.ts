@@ -10,12 +10,12 @@ import { AppError } from '../utils/AppError';
  * @param {Object} query - Query parameters
  * @returns {Promise<Product[]>} List of products
  */
-export const getAll = async (query: { search?: string; category?: string; limit?: string }) => {
+export const getAll = async (query: { search?: string; category?: string; limit?: string; sortBy?: string }) => {
     let dbQuery = supabase
-        .from('Product')
+        .from('products')
         .select('*');
 
-    if (query.category && query.category !== 'All') {
+    if (query.category && query.category !== 'All' && query.category !== 'All Products') {
         dbQuery = dbQuery.eq('category', query.category);
     }
 
@@ -23,7 +23,18 @@ export const getAll = async (query: { search?: string; category?: string; limit?
         dbQuery = dbQuery.ilike('name', `%${query.search}%`);
     }
 
-    dbQuery = dbQuery.order('createdAt', { ascending: false });
+    // Apply Sorting at DB level
+    if (query.sortBy === 'popularity') {
+        dbQuery = dbQuery.order('sales_count', { ascending: false });
+    } else if (query.sortBy === 'rating') {
+        dbQuery = dbQuery.order('rating', { ascending: false, nullsFirst: false });
+    } else if (query.sortBy === 'price-low') {
+        dbQuery = dbQuery.order('price', { ascending: true });
+    } else if (query.sortBy === 'price-high') {
+        dbQuery = dbQuery.order('price', { ascending: false });
+    } else {
+        dbQuery = dbQuery.order('createdAt', { ascending: false });
+    }
 
     const { data, error } = await dbQuery;
 
@@ -40,7 +51,7 @@ export const getAll = async (query: { search?: string; category?: string; limit?
  */
 export const getById = async (id: string) => {
     const { data, error } = await supabase
-        .from('Product')
+        .from('products')
         .select('*')
         .eq('id', id)
         .single();
@@ -59,15 +70,28 @@ export const getById = async (id: string) => {
 export const create = async (productData: any) => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+
+    // Only include columns that actually exist in the Product table:
+    // id, name, description, price, stock, category, image, badge, rating, sizes, createdAt, updatedAt
+    const payload: any = {
+        id,
+        createdAt: now,
+        updatedAt: now,
+        name: productData.name,
+        description: productData.description || null,
+        price: productData.price,
+        stock: productData.stock ?? 0,
+        category: productData.category,
+        image: productData.image || (Array.isArray(productData.images) && productData.images[0]) || '',
+        badge: productData.badge || null,
+        rating: productData.rating ?? 0,
+        reviews: productData.reviews ?? 0,
+        sizes: productData.sizes || [],
+    };
+
     const { data, error } = await supabase
-        .from('Product')
-        .insert([{
-            ...productData,
-            id,
-            createdAt: now,
-            updatedAt: now,
-            image: productData.image || productData.images?.[0] || '',
-        }])
+        .from('products')
+        .insert([payload])
         .select()
         .single();
 
@@ -85,7 +109,7 @@ export const create = async (productData: any) => {
  */
 export const update = async (id: string, updates: Partial<Product>) => {
     const { data, error } = await supabase
-        .from('Product')
+        .from('products')
         .update(updates)
         .eq('id', id)
         .select()
@@ -105,16 +129,16 @@ export const update = async (id: string, updates: Partial<Product>) => {
 export const remove = async (id: string) => {
     // Delete associated OrderItems first to satisfy FK constraint
     const { error: itemsError } = await supabase
-        .from('OrderItem')
+        .from('order_items')
         .delete()
-        .eq('productId', id);
+        .eq('product_id', id);
 
     if (itemsError) {
         throw new AppError(itemsError.message, 500, 'DB_ERROR');
     }
 
     const { error } = await supabase
-        .from('Product')
+        .from('products')
         .delete()
         .eq('id', id);
 

@@ -4,6 +4,8 @@ import * as requestService from '@/lib/services/requestService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
 import { AppError } from '@/lib/utils/AppError';
 
+export const dynamic = 'force-dynamic';
+
 // Schema for query parameters
 const querySchema = z.object({
     page: z.string().optional(),

@@ -8,7 +8,7 @@ import Footer from '@/components/storefront/Footer';
 import ProductDetailModal, { type ShopProduct } from '@/components/storefront/ProductDetailModal';
 import { useCart } from '@/contexts/CartContext';
 
-const categories = ['All Products', 'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'];
+const FALLBACK_CATEGORIES = ['All Products', 'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'];
 
 function ShopContent() {
     const searchParams = useSearchParams();
@@ -19,9 +19,23 @@ function ShopContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
     const [products, setProducts] = useState<ShopProduct[]>([]);
+    const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState('newest');
+
+    // Load categories from DB
+    useEffect(() => {
+        fetch('/api/categories')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    const names = ['All Products', ...data.data.filter((c: any) => c.is_visible).map((c: any) => c.name)];
+                    setCategories(names);
+                }
+            })
+            .catch(() => { /* fallback remains */ });
+    }, []);
 
     // Fetch products from DB on mount
     useEffect(() => {
@@ -69,19 +83,33 @@ function ShopContent() {
         if (search) {
             const searchTerm = search.toLowerCase();
             const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
-                (product.category || '').toLowerCase().includes(searchTerm);
+                (product.category || '').toLowerCase().includes(searchTerm) ||
+                (product.description || '').toLowerCase().includes(searchTerm);
             if (!matchesSearch) return false;
         }
         if (activeCategory === 'All Products') return true;
-        return (product.category || '').trim() === activeCategory;
+
+        const productCat = (product.category || '').toLowerCase().trim();
+        const tabCat = activeCategory.toLowerCase().trim();
+
+        // Flexible matching: 'Bags' matches 'Bags & Satchels', 'Jacket' matches 'Jackets'
+        // Check if tab label contains product category word, or product category contains tab word
+        const tabWords = tabCat.replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+        const productCatWords = productCat.replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+
+        return tabWords.some(w => productCat.includes(w)) ||
+            productCatWords.some(w => tabCat.includes(w)) ||
+            productCat === tabCat;
     });
 
     // Apply Sorting
     const sortedProducts = [...filteredProducts].sort((a, b) => {
         if (sortBy === 'price-low') return a.price - b.price;
         if (sortBy === 'price-high') return b.price - a.price;
-        if (sortBy === 'newest') return (b.id as number) - (a.id as number);
-        return 0;
+        if (sortBy === 'popularity') return (b.salesCount || 0) - (a.salesCount || 0);
+        if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+        if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return 0; // Default
     });
 
     const visibleProducts = sortedProducts.slice(0, visibleCount);
@@ -120,7 +148,10 @@ function ShopContent() {
                                 onChange={(e) => setSortBy(e.target.value)}
                                 className="appearance-none bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-4 pr-10 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest outline-none focus:border-[#c27a2a] transition-all cursor-pointer"
                             >
-                                <option value="newest">Latest Arrivals</option>
+                                <option value="default">Default Sorting</option>
+                                <option value="popularity">Sort by Popularity</option>
+                                <option value="rating">Sort by Average Rating</option>
+                                <option value="newest">Sort by Latest</option>
                                 <option value="price-low">Price: Low to High</option>
                                 <option value="price-high">Price: High to Low</option>
                             </select>
@@ -206,15 +237,15 @@ function ShopContent() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-lg group-hover:text-[#4e6797] transition-colors">{product.name}</h3>
-                                        {product.rating && (
+                                        {!!product.rating && product.rating > 0 && (
                                             <div className="flex items-center gap-1 my-1">
                                                 <span className="material-symbols-outlined text-[16px] text-[#fbbf24] fill-current">star</span>
                                                 <span className="text-sm font-medium">{product.rating}</span>
-                                                {product.reviews && <span className="text-xs text-gray-400">({product.reviews})</span>}
+                                                {!!product.reviews && <span className="text-xs text-gray-400">({product.reviews})</span>}
                                             </div>
                                         )}
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium text-[#0e121b] dark:text-gray-200">${product.price}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <p className="font-bold text-[#c27a2a] uppercase tracking-widest text-[11px]">${Number(product.price || 0).toFixed(2)}</p>
                                         </div>
                                         {product.stock !== undefined && product.stock === 0 && (
                                             <p className="text-xs text-red-500 font-medium mt-1">Out of stock</p>

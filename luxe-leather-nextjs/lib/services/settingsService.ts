@@ -7,7 +7,7 @@ export type { SiteSetting };
  */
 export async function getAll(): Promise<Record<string, string>> {
     const { data, error } = await supabase
-        .from('Setting')
+        .from('site_settings')
         .select('*');
 
     // If the table is empty or errors, return empty map gracefully
@@ -30,7 +30,7 @@ export async function getAll(): Promise<Record<string, string>> {
 export async function update(settings: Record<string, string>) {
     // Build upserts — for each key we fetch existing id first, or generate one
     const { data: existing } = await supabase
-        .from('Setting')
+        .from('site_settings')
         .select('id, key');
 
     const existingMap: Record<string, string> = {};
@@ -50,7 +50,7 @@ export async function update(settings: Record<string, string>) {
     });
 
     const { error } = await supabase
-        .from('Setting')
+        .from('site_settings')
         .upsert(upserts, { onConflict: 'key' });
 
     if (error) {

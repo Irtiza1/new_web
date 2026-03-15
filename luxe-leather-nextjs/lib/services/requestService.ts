@@ -36,7 +36,7 @@ export const getAll = async (query: {
     limit?: number;
 }) => {
     let dbQuery = supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .select('*', { count: 'exact' });
 
     // Note: Supabase RequestStatus enum rejects eq() filters, so we fetch all
@@ -80,7 +80,7 @@ export const getAll = async (query: {
  */
 export const getById = async (id: string) => {
     const { data, error } = await supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .select('*')
         .eq('id', id)
         .single();
@@ -94,10 +94,10 @@ export const getById = async (id: string) => {
  */
 export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
     // Generate a cuid-style id manually (CustomRequest table uses cuid not UUID)
-    const id = `cm${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const { data, error } = await supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .insert([{ ...request, id, status: 'NEW', createdAt: now, updatedAt: now }])
         .select()
         .single();
@@ -112,7 +112,7 @@ export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | '
 export const updateStatus = async (id: string, status: string) => {
     const dbStatus = toDbStatus(status);
     const { data, error } = await supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .update({ status: dbStatus })
         .eq('id', id)
         .select()
@@ -137,7 +137,7 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
     try {
         // Step 1: Perform the update (no .select() to avoid RLS RETURNING issues)
         const { error: updateError } = await supabase
-            .from('CustomRequest')
+            .from('custom_requests')
             .update(safeUpdates)
             .eq('id', id);
 
@@ -148,7 +148,7 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
 
         // Step 2: Re-fetch the updated record
         const { data, error: fetchError } = await supabase
-            .from('CustomRequest')
+            .from('custom_requests')
             .select('*')
             .eq('id', id)
             .single();
@@ -166,7 +166,7 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
  */
 export const remove = async (id: string) => {
     const { error } = await supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .delete()
         .eq('id', id);
 
@@ -179,7 +179,7 @@ export const remove = async (id: string) => {
  */
 export const getStats = async (): Promise<RequestStats> => {
     const { data, error } = await supabase
-        .from('CustomRequest')
+        .from('custom_requests')
         .select('status');
 
     if (error) throw error;

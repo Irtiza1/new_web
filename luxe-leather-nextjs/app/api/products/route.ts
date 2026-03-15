@@ -3,6 +3,8 @@ import { z } from 'zod';
 import * as productService from '../../../lib/services/productService';
 import { apiHandler } from '../../../lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 // ===================================
 // VALIDATION SCHEMAS
 // ===================================

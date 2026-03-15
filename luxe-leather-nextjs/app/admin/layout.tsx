@@ -8,7 +8,7 @@ export default function AdminLayout({
 }) {
     return (
         <AdminNotificationProvider>
-            <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
+            <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922]">
                 <AdminSidebar />
                 {children}
             </div>

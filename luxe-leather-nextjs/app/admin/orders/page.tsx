@@ -21,6 +21,8 @@ export default function AdminOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,14 +45,13 @@ export default function AdminOrdersPage() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const mapped: OrderRow[] = (data.data || []).map((o: any) => ({
                     id: o.id,
-                    customer_name: o.Customer?.name || 'Unknown',
-                    customer_email: o.Customer?.email || '',
+                    customer_name: o.customers?.name || 'Unknown',
+                    customer_email: o.customers?.email || '',
                     total: Number(o.total),
                     status: o.status,
-                    created_at: o.createdAt,
-                    items_count: Array.isArray(o.OrderItem) ? o.OrderItem.length :
-                        Array.isArray(o.items) ? o.items.length :
-                            Array.isArray(o.OrderItems) ? o.OrderItems.length : 0
+                    created_at: o.created_at || o.createdAt,
+                    items_count: Array.isArray(o.order_items) ? o.order_items.length :
+                        Array.isArray(o.items) ? o.items.length : 0
                 }));
                 setOrders(mapped);
             } else {
@@ -286,10 +287,10 @@ export default function AdminOrdersPage() {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                filteredOrders.map((order) => (
+                                                filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((order) => (
                                                     <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                         <td className="py-4 px-6">
-                                                            <span className="text-sm font-medium text-slate-900 dark:text-white">#{order.id}</span>
+                                                            <span className="text-sm font-mono font-medium text-slate-900 dark:text-white" title={order.id}>#{order.id.slice(-8).toUpperCase()}</span>
                                                         </td>
                                                         <td className="py-4 px-6">
                                                             <div className="flex flex-col gap-1">
@@ -340,11 +341,21 @@ export default function AdminOrdersPage() {
                                 {/* Pagination Footer */}
                                 <div className="bg-white dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Showing <span className="font-medium text-slate-900 dark:text-white">1</span> to <span className="font-medium text-slate-900 dark:text-white">{filteredOrders.length}</span> of <span className="font-medium text-slate-900 dark:text-white">{orders.length}</span> results
+                                        Showing <span className="font-medium text-slate-900 dark:text-white">{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredOrders.length)}</span> to <span className="font-medium text-slate-900 dark:text-white">{Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)}</span> of <span className="font-medium text-slate-900 dark:text-white">{filteredOrders.length}</span> results
                                     </p>
-                                    <div className="flex gap-2">
-                                        <button className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800" disabled>Previous</button>
-                                        <button className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800" disabled>Next</button>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Previous</button>
+                                        {Array.from({ length: Math.ceil(filteredOrders.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).slice(
+                                            Math.max(0, currentPage - 3),
+                                            Math.min(Math.ceil(filteredOrders.length / ITEMS_PER_PAGE), currentPage + 2)
+                                        ).map(page => (
+                                            <button
+                                                key={page}
+                                                onClick={() => setCurrentPage(page)}
+                                                className={`px-3 py-1 text-sm rounded border transition-colors ${currentPage === page ? 'bg-[#d41132] text-white border-[#d41132]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                            >{page}</button>
+                                        ))}
+                                        <button onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredOrders.length / ITEMS_PER_PAGE), p + 1))} disabled={currentPage === Math.ceil(filteredOrders.length / ITEMS_PER_PAGE)} className="px-3 py-1 text-sm rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Next</button>
                                     </div>
                                 </div>
                             </>

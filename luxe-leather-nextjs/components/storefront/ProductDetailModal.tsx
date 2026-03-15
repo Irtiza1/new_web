@@ -1,9 +1,17 @@
-import { useState, useEffect } from 'react';
-import { useCart } from "@/contexts/CartContext";
-import RelatedProducts from './RelatedProducts';
-import { useRef } from 'react';
+"use client";
 
-// Flexible Product interface that works with both DB and hardcoded data
+import { useState, useRef, useEffect } from "react";
+import { useCart } from "@/contexts/CartContext";
+
+interface ReviewData {
+    id: string;
+    customer_name: string;
+    rating: number;
+    comment: string | null;
+    is_featured: boolean;
+    created_at: string;
+}
+
 export interface ShopProduct {
     id: string | number;
     name: string;
@@ -11,11 +19,15 @@ export interface ShopProduct {
     description?: string | null;
     category?: string;
     image?: string;
+    images?: string[];
     sizes?: string[];
     stock?: number;
     rating?: number;
     reviews?: number;
     badge?: string | null;
+    salesCount?: number;
+    customSizingPrice?: number;
+    createdAt: string;
 }
 
 interface ProductDetailModalProps {
@@ -25,46 +37,81 @@ interface ProductDetailModalProps {
 }
 
 const defaultColors = [
-    { name: 'Black', color: '#171717' },
-    { name: 'Dk Brown', color: '#5D4037', selected: true },
-    { name: 'Tan', color: '#D2B48C' },
+    { name: "Saddle Tan", color: "#A0522D" },
+    { name: "Espresso", color: "#3D2B1F" },
+    { name: "Nero", color: "#000000" },
+    { name: "Cognac", color: "#8B4513" }
 ];
 
 export default function ProductDetailModal({ isOpen, onClose, product }: ProductDetailModalProps) {
     const { addToCart } = useCart();
-    const [selectedColor, setSelectedColor] = useState(1);
+    const [selectedColor, setSelectedColor] = useState(0);
     const [selectedSize, setSelectedSize] = useState(0);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isCustomSize, setIsCustomSize] = useState(false);
+    const [customMeasurements, setCustomMeasurements] = useState({ chest: '', waist: '', shoulders: '', length: '' });
     const [activeTab, setActiveTab] = useState('specs');
-    const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isZoomed, setIsZoomed] = useState(false);
     const imgRef = useRef<HTMLDivElement>(null);
+    const [productReviews, setProductReviews] = useState<ReviewData[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+
+    // Reset state when product changes
+    useEffect(() => {
+        setSelectedColor(0);
+        setSelectedSize(0);
+        setSelectedImageIndex(0);
+        setIsCustomSize(false);
+        setActiveTab('specs');
+        setIsZoomed(false);
+    }, [product?.id]);
+
+    // Fetch real reviews for this product
+    useEffect(() => {
+        if (!product?.id) return;
+        setReviewsLoading(true);
+        fetch('/api/reviews')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Filter for approved reviews for this product
+                    const approvedReviews = (data.data || []).filter(
+                        (r: any) => r.status === 'approved' &&
+                            (r.product_id === String(product.id) || r.product_id === product.id)
+                    );
+                    // If no product-specific reviews, show all featured approved reviews
+                    if (approvedReviews.length === 0) {
+                        const featured = (data.data || []).filter(
+                            (r: any) => r.status === 'approved' && r.is_featured
+                        );
+                        setProductReviews(featured);
+                    } else {
+                        setProductReviews(approvedReviews);
+                    }
+                }
+            })
+            .catch(() => setProductReviews([]))
+            .finally(() => setReviewsLoading(false));
+    }, [product?.id]);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!imgRef.current) return;
         const { left, top, width, height } = imgRef.current.getBoundingClientRect();
-        const x = ((e.pageX - left) / width) * 100;
-        const y = ((e.pageY - top) / height) * 100;
+        const x = ((e.clientX - left) / width) * 100;
+        const y = ((e.clientY - top) / height) * 100;
         setMousePos({ x, y });
     };
-
-    // Reset state when product changes
-    useEffect(() => {
-        if (isOpen) {
-            setSelectedColor(1);
-            setSelectedSize(0);
-            setActiveTab('specs');
-        }
-    }, [isOpen, product]);
 
     if (!isOpen || !product) return null;
 
     // Get the product image
-    const productImage = product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
+    const allImages = [product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop', ...(product.images || [])];
+    const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     const productDescription = product.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
+    const displayPrice = isCustomSize ? (product.customSizingPrice || product.price + 50) : product.price;
 
-    // Tab content logic
     const renderTabContent = () => {
         switch (activeTab) {
             case 'specs':
@@ -88,23 +135,50 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
             case 'reviews':
                 return (
                     <div className="space-y-4">
-                        {[
-                            { user: 'Sajid M.', date: '2 days ago', rating: 5, comment: 'Exceptional quality. The leather smells divine and the stitching is perfect.' },
-                            { user: 'Sarah K.', date: '1 week ago', rating: 5, comment: 'Fast delivery! The custom sizing I requested in notes was spot on.' }
-                        ].map((review, i) => (
-                            <div key={i} className="border-b border-gray-50 dark:border-white/5 pb-3">
-                                <div className="flex justify-between items-center mb-1">
-                                    <div className="flex gap-0.5 text-[#fbbf24]">
-                                        {[...Array(review.rating)].map((_, i) => (
-                                            <span key={i} className="material-symbols-outlined text-[12px] fill-current">star</span>
-                                        ))}
-                                    </div>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase">{review.date}</span>
-                                </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 italic">"{review.comment}"</p>
-                                <p className="text-[10px] font-black text-[#1c140d] dark:text-white mt-1 uppercase">— {review.user}</p>
+                        {reviewsLoading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <span className="material-symbols-outlined animate-spin text-xl text-gray-400">progress_activity</span>
                             </div>
-                        ))}
+                        ) : productReviews.length === 0 ? (
+                            <div className="text-center py-6">
+                                <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-gray-600 block mb-2">rate_review</span>
+                                <p className="text-xs text-gray-400">No reviews yet for this product.</p>
+                            </div>
+                        ) : (
+                            productReviews.map((review) => {
+                                const timeAgo = (() => {
+                                    const diff = Date.now() - new Date(review.created_at).getTime();
+                                    const days = Math.floor(diff / 86400000);
+                                    if (days === 0) return 'Today';
+                                    if (days === 1) return '1 day ago';
+                                    if (days < 7) return `${days} days ago`;
+                                    if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+                                    return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
+                                })();
+                                return (
+                                    <div key={review.id} className="border-b border-gray-50 dark:border-white/5 pb-3">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex gap-0.5 text-[#fbbf24]">
+                                                    {[...Array(review.rating)].map((_, i) => (
+                                                        <span key={i} className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                                    ))}
+                                                    {[...Array(5 - review.rating)].map((_, i) => (
+                                                        <span key={i} className="material-symbols-outlined text-[12px] text-gray-200 dark:text-gray-600">star</span>
+                                                    ))}
+                                                </div>
+                                                {review.is_featured && (
+                                                    <span className="text-[8px] font-black uppercase tracking-widest bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded">Featured</span>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{timeAgo}</span>
+                                        </div>
+                                        {review.comment && <p className="text-xs text-gray-600 dark:text-gray-400 italic">"{review.comment}"</p>}
+                                        <p className="text-[10px] font-black text-[#1c140d] dark:text-white mt-1 uppercase">— {review.customer_name}</p>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 );
             case 'shipping':
@@ -130,12 +204,16 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     };
 
     const handleAddToCart = () => {
+        const variant = isCustomSize
+            ? `Custom Size: ${Object.entries(customMeasurements).map(([k, v]) => `${k}: ${v}`).join(', ')}, Color: ${defaultColors[selectedColor].name}`
+            : `Size: ${productSizes[selectedSize]}, Color: ${defaultColors[selectedColor].name}`;
+
         addToCart({
-            id: typeof product.id === 'string' ? parseInt(product.id, 16) % 100000 : product.id,
+            id: typeof product.id === 'string' ? parseInt(product.id, 16) % 100000 : Number(product.id),
             name: product.name,
-            price: product.price,
+            price: displayPrice,
             image: productImage,
-            variant: `Size: ${productSizes[selectedSize]}, Color: ${defaultColors[selectedColor].name}`
+            variant: variant
         });
         onClose();
     };
@@ -143,15 +221,13 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-[#221910]/40 backdrop-blur-md transition-all duration-300 font-[family-name:var(--font-inter)]">
             <div className="absolute inset-0" onClick={onClose}></div>
-            {/* Modal Card */}
             <div className="bg-white dark:bg-[#1a130e] w-full max-w-[1100px] h-full max-h-[85vh] md:max-h-[750px] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative ring-1 ring-white/10 z-10">
-                {/* Close Button */}
                 <button onClick={onClose} className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black text-[#1c140d] dark:text-white transition-all shadow-sm backdrop-blur-sm group border border-transparent hover:border-[#c27a2a]/20">
                     <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">close</span>
                 </button>
 
                 {/* Left: Image Gallery */}
-                <div className="w-full md:w-1/2 h-[40vh] md:h-full bg-[#F0EFE8] dark:bg-[#251d16] flex flex-col p-6 md:p-8 gap-4 relative">
+                <div className="w-full md:w-1/2 h-[45vh] md:h-full bg-[#F0EFE8] dark:bg-[#251d16] flex flex-col p-4 md:p-8 gap-4 relative">
                     <div
                         ref={imgRef}
                         onMouseMove={handleMouseMove}
@@ -159,51 +235,71 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         onMouseLeave={() => setIsZoomed(false)}
                         className="flex-1 w-full relative rounded-lg overflow-hidden shadow-inner group cursor-zoom-in"
                     >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             alt={product.name}
-                            className={`object-cover w-full h-full transition-transform duration-500 ease-out ${isZoomed ? 'scale-[2]' : 'scale-100'}`}
+                            className={`object-cover w-full h-full transition-transform duration-500 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
                             src={productImage}
                             style={isZoomed ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` } : {}}
                         />
+                        {/* Color tint overlay */}
+                        <div
+                            className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+                            style={{
+                                backgroundColor: defaultColors[selectedColor].color,
+                                opacity: selectedColor === 0 ? 0 : 0.12,
+                                mixBlendMode: 'multiply'
+                            }}
+                        />
+                        {/* Color name badge */}
+                        <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full border border-white/50 flex-shrink-0" style={{ backgroundColor: defaultColors[selectedColor].color }} />
+                            <span className="text-white">{defaultColors[selectedColor].name}</span>
+                        </div>
                         {product.badge && (
-                            <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase text-[#c27a2a] shadow-sm">
+                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase text-[#c27a2a] shadow-sm">
                                 {product.badge}
                             </div>
                         )}
-
                     </div>
+
+                    {allImages.length > 1 && (
+                        <div className="flex gap-2 justify-center pb-2 overflow-x-auto no-scrollbar">
+                            {allImages.map((img, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setSelectedImageIndex(idx)}
+                                    className={`w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-[#c27a2a] scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                >
+                                    <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right: Product Details */}
-                <div className="w-full md:w-1/2 h-full overflow-y-auto p-6 md:p-10 lg:p-12 flex flex-col">
-                    <p className="text-xs font-bold tracking-widest uppercase text-[#c27a2a]/80 mb-3">Shop / {product.name}</p>
-
+                <div className="w-full md:w-1/2 h-full bg-white dark:bg-[#1c140d] flex flex-col p-6 md:p-10 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col gap-2 mb-4">
                         <h2 className="text-[#1c140d] dark:text-white text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">{product.name}</h2>
                         <div className="flex items-baseline justify-between">
                             <div className="flex items-baseline gap-2">
-                                <p className="text-2xl font-medium text-[#c27a2a]">${product.price.toFixed(2)}</p>
+                                <p className="text-2xl font-medium text-[#c27a2a]">${displayPrice.toFixed(2)}</p>
+                                {isCustomSize && <span className="text-[10px] bg-[#c27a2a]/10 text-[#c27a2a] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">Bespoke Pricing</span>}
                             </div>
                             {(product.rating !== undefined && product.rating !== null) && (
                                 <div className="flex items-center gap-1 group cursor-pointer">
                                     <div className="flex text-[#c27a2a]">
                                         <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                                     </div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{product.rating} / 5.0</span>
-                                    {product.reviews !== undefined && (
-                                        <span className="text-sm text-gray-500 dark:text-gray-400 underline decoration-gray-300 dark:decoration-gray-600 underline-offset-4 ml-1">({product.reviews} reviews)</span>
-                                    )}
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{product.rating}</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400 opacity-50 ml-1">({product.reviews || 0})</span>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Permanent Description */}
                     <div className="mb-6">
-                        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 italic">
-                            {productDescription}
-                        </p>
+                        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 italic">{productDescription}</p>
                     </div>
 
                     {/* Tabs Header */}
@@ -212,15 +308,10 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`pb-2 text-xs font-bold tracking-widest uppercase transition-all relative ${activeTab === tab
-                                    ? 'text-[#c27a2a]'
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                                    }`}
+                                className={`pb-2 text-xs font-bold tracking-widest uppercase transition-all relative ${activeTab === tab ? 'text-[#c27a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             >
                                 {tab}
-                                {activeTab === tab && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c27a2a]"></div>
-                                )}
+                                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c27a2a]"></div>}
                             </button>
                         ))}
                     </div>
@@ -229,23 +320,26 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         {renderTabContent()}
                     </div>
 
-                    {/* Trust Pack: Hand-Stitched / Eco-Tanned */}
-                    <div className="grid grid-cols-3 gap-2 mb-8 border-y border-gray-100 dark:border-white/5 py-6">
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <span className="material-symbols-outlined text-[#c27a2a] text-xl">temp_preferences_eco</span>
-                            <span className="text-[9px] font-black uppercase text-gray-400 tracking-tighter">Eco-Tanned</span>
-                        </div>
-                        <div className="flex flex-col items-center text-center gap-2 border-x border-gray-100 dark:border-white/5">
-                            <span className="material-symbols-outlined text-[#c27a2a] text-xl">precision_manufacturing</span>
-                            <span className="text-[9px] font-black uppercase text-gray-400 tracking-tighter">Hand-Stitched</span>
-                        </div>
-                        <div className="flex flex-col items-center text-center gap-2">
-                            <span className="material-symbols-outlined text-[#c27a2a] text-xl">verified</span>
-                            <span className="text-[9px] font-black uppercase text-gray-400 tracking-tighter">Lifetime Cov.</span>
+                    {/* Custom Sizing Toggle */}
+                    <div className="bg-[#f0efe8]/50 dark:bg-white/5 p-4 rounded-xl border border-dashed border-[#c27a2a]/30 mb-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-[#c27a2a]">architecture</span>
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-tight">Need a custom fit?</p>
+                                    <p className="text-[10px] text-gray-500">Provide your exact measurements.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsCustomSize(!isCustomSize)}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isCustomSize ? 'bg-[#c27a2a] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-[#c27a2a]'}`}
+                            >
+                                {isCustomSize ? 'Use Regular' : 'Enable Bespoke'}
+                            </button>
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-6 flex-1">
+                    <div className="flex flex-col gap-8 flex-1">
                         {/* Colors */}
                         <div className="space-y-3">
                             <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#c27a2a] normal-case font-normal ml-1">{defaultColors[selectedColor].name}</span></span>
@@ -261,9 +355,8 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                             onChange={() => setSelectedColor(i)}
                                         />
                                         <div
-                                            onClick={() => setSelectedColor(i)}
-                                            className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-offset-2 dark:ring-offset-[#1a130e]' : ''}`}
-                                            style={{ backgroundColor: c.color, borderColor: '#d4d4d4', ...(selectedColor === i ? { ringColor: c.color } : {}) }}
+                                            className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-[#c27a2a] ring-offset-2 dark:ring-offset-[#1a130e]' : ''}`}
+                                            style={{ backgroundColor: c.color, borderColor: '#d4d4d4' }}
                                         >
                                             {selectedColor === i && (
                                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -271,112 +364,61 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                                 </div>
                                             )}
                                         </div>
-                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                            {c.name}
-                                        </span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
                         {/* Sizes */}
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-bold text-slate-900 dark:text-white-800">Select Size</span>
-                                <button
-                                    onClick={() => setIsSizeGuideOpen(true)}
-                                    className="text-xs text-[#c27a2a] hover:text-[#c27a2a]/80 underline decoration-dashed underline-offset-4"
-                                >
-                                    Size Guide
-                                </button>
+                        {!isCustomSize ? (
+                            <div className="flex flex-col gap-3">
+                                <span className="text-sm font-bold text-slate-900 dark:text-white-800 uppercase tracking-wider">Select Size</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {productSizes.map((size, i) => (
+                                        <button
+                                            key={size}
+                                            onClick={() => setSelectedSize(i)}
+                                            className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border font-bold text-sm transition-all ${selectedSize === i ? 'border-[#c27a2a] bg-[#c27a2a]/5 text-[#c27a2a]' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'}`}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                {productSizes.map((size, i) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedSize(i)}
-                                        className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border-2 font-bold text-sm transition-all ${selectedSize === i
-                                            ? 'border-[#d41132] bg-[#d41132]/5 text-[#d41132] shadow-sm'
-                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
-                                            }`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                        ) : (
+                            <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <span className="text-sm font-bold text-[#c27a2a] uppercase tracking-wider">Bespoke Measurements (Inches)</span>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {Object.keys(customMeasurements).map((field) => (
+                                        <div key={field} className="flex flex-col gap-1">
+                                            <span className="text-[10px] uppercase font-bold text-gray-400">{field}</span>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. 42"
+                                                value={customMeasurements[field as keyof typeof customMeasurements]}
+                                                onChange={(e) => setCustomMeasurements(prev => ({ ...prev, [field]: e.target.value }))}
+                                                className="h-10 px-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md text-sm outline-none focus:border-[#c27a2a]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        {/* Stock indicator */}
-                        {product.stock !== undefined && product.stock <= 5 && product.stock > 0 && (
-                            <p className="text-sm text-amber-600 font-medium">Only {product.stock} left in stock!</p>
-                        )}
-                        {product.stock === 0 && (
-                            <p className="text-sm text-red-500 font-medium">Out of stock</p>
                         )}
 
-                        {/* Shipping Timeline Info Block */}
-                        <div className="bg-[#f0efe8] dark:bg-white/5 p-4 rounded-lg border border-[#c27a2a]/20 flex gap-4 items-center">
-                            <div className="size-10 rounded-full bg-white dark:bg-black/20 flex items-center justify-center text-[#c27a2a] shrink-0">
-                                <span className="material-symbols-outlined text-[20px]">schedule</span>
-                            </div>
-                            <div className="space-y-0.5">
-                                <p className="text-[10px] font-bold tracking-widest uppercase text-gray-500 dark:text-gray-400">Shipment Timeline</p>
-                                <p className="text-xs font-semibold text-[#1c140d] dark:text-white italic">
-                                    3-5 days <span className="text-[#c27a2a] not-italic">(Regular)</span> | 12-15 days <span className="text-[#c27a2a] not-italic">(Custom)</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Add to Bag */}
-                        <div className="pt-2">
+                        {/* Add to Cart */}
+                        <div className="mt-auto">
                             <button
                                 onClick={handleAddToCart}
                                 disabled={product.stock === 0}
-                                className="w-full bg-[#c27a2a] hover:bg-[#a35508] active:scale-[0.99] text-white font-bold text-lg py-4 rounded-lg shadow-lg shadow-[#c27a2a]/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:grayscale"
                             >
-                                <span>{product.stock === 0 ? 'Out of Stock' : 'Add to Bag'}</span>
-                                <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">shopping_bag</span>
+                                <span className="material-symbols-outlined">shopping_bag</span>
+                                {product.stock === 0 ? 'Out of Stock' : 'Add to Collection'}
                             </button>
                         </div>
-
-                        {/* Related Products Section */}
-                        <RelatedProducts currentProductId={product.id as number} category={product.category} />
                     </div>
                 </div>
             </div>
-
-            {/* Size Guide Modal Layer */}
-            {isSizeGuideOpen && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
-                    <div className="bg-white dark:bg-[#1a130e] w-full max-w-xl rounded-xl shadow-2xl overflow-hidden relative border border-white/5">
-                        <button
-                            onClick={() => setIsSizeGuideOpen(false)}
-                            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-gray-100 dark:bg-black/50 hover:bg-gray-200 dark:hover:bg-black text-gray-800 dark:text-white transition-all shadow-sm"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-
-                        <div className="p-8">
-                            <h3 className="text-2xl font-bold mb-6 text-[#1c140d] dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[#c27a2a]">straighten</span>
-                                Master Size Guide
-                            </h3>
-
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden border border-gray-100 dark:border-white/5 relative bg-[#fdfdfb] flex items-center justify-center">
-                                {/* Using a high-quality placeholder for size chart if specific one isn't available */}
-                                <img
-                                    src="https://zenjileatherjackets.com/wp-content/uploads/2021/04/men-size-chart.jpg"
-                                    alt="Luxe Leather Size Chart"
-                                    className="max-w-full max-h-full object-contain"
-                                />
-                            </div>
-
-                            <p className="mt-6 text-xs text-gray-500 italic text-center">
-                                *All measurements are in inches. For custom bespoke sizing, please contact us via the Bespoke page.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

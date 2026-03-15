@@ -3,6 +3,8 @@ import { z } from 'zod';
 import * as orderService from '../../../lib/services/orderService';
 import { apiHandler } from '../../../lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 // ===================================
 // VALIDATION SCHEMAS
 // ===================================
@@ -15,11 +17,11 @@ const querySchema = z.object({
 });
 
 const orderSchema = z.object({
-    customerId: z.string().min(1, 'Customer ID is required'),
+    customer_id: z.string().min(1, 'Customer ID is required'),
     total: z.number().min(0),
     status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
     items: z.array(z.object({
-        productId: z.string().min(1),
+        product_id: z.string().min(1),
         quantity: z.number().min(1),
         price: z.number().min(0)
     }))

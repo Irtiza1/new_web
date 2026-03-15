@@ -11,15 +11,22 @@ export interface ShippingRate {
 
 export async function getShippingRates(): Promise<ShippingRate[]> {
     const { data, error } = await supabase
-        .from('ShippingRate')
+        .from('shipping_zones')
         .select('*')
-        .eq('isActive', true)
-        .order('price', { ascending: true });
+        .eq('is_active', true)
+        .order('rate', { ascending: true });
 
     if (error) {
         console.error('Error fetching shipping rates:', error);
         return [];
     }
 
-    return data as ShippingRate[];
+    return (data || []).map(z => ({
+        id: z.id,
+        method: z.name,
+        description: z.regions,
+        price: z.rate,
+        estimatedDays: `${z.handling_days} days`,
+        isActive: z.is_active
+    }));
 }

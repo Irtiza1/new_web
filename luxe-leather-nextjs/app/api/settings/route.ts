@@ -3,6 +3,8 @@ import { z } from 'zod';
 import * as settingsService from '@/lib/services/settingsService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 // Schema for updating settings (flexible key-value)
 const updateSchema = z.record(z.string(), z.string());
 

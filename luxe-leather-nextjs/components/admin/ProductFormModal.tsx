@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Product } from '@/lib/supabase';
 
@@ -17,9 +17,17 @@ export type pProduct = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
 export default function ProductFormModal({ isOpen, onClose, onSubmit, initialData }: ProductFormModalProps) {
     const [mounted, setMounted] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [categories, setCategories] = useState<string[]>([
+        'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'
+    ]);
 
     useEffect(() => {
         setMounted(true);
+        // Load categories from admin API
+        fetch('/api/categories')
+            .then(r => r.json())
+            .then(d => { if (d.success && d.data?.length > 0) setCategories(d.data.map((c: any) => c.name)); })
+            .catch(() => { });
         return () => setMounted(false);
     }, []);
 
@@ -140,14 +148,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                 className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
                             >
-                                <option value="Accessories">Accessories</option>
-                                <option value="Bags">Bags</option>
-                                <option value="Wallets">Wallets</option>
-                                <option value="Jackets">Jackets</option>
-                                <option value="Travel">Travel</option>
-                                <option value="Shoes">Shoes</option>
-                                <option value="Full Coats">Full Coats</option>
-                                <option value="Bags & Satchels">Bags & Satchels</option>
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
                             </select>
                         </div>
                     </div>

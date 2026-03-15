@@ -1,13 +1,49 @@
 
-export const ADMIN_NAV_ITEMS = [
-    { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
-    { name: 'Products', path: '/admin/products', icon: 'inventory_2' },
-    { name: 'Orders', path: '/admin/orders', icon: 'shopping_bag' },
-    { name: 'Customers', path: '/admin/customers', icon: 'group' },
-    { name: 'Custom Requests', path: '/admin/requests', icon: 'inbox' },
-    { name: 'Analytics', path: '/admin/analytics', icon: 'bar_chart' },
-    { name: 'Settings', path: '/admin/settings', icon: 'settings' },
+export const ADMIN_NAV_GROUPS = [
+    {
+        label: 'Main',
+        items: [
+            { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
+            { name: 'Analytics', path: '/admin/analytics', icon: 'bar_chart' },
+        ]
+    },
+    {
+        label: 'Commerce',
+        items: [
+            { name: 'Products', path: '/admin/products', icon: 'inventory_2' },
+            { name: 'Orders', path: '/admin/orders', icon: 'shopping_bag' },
+            { name: 'Coupons', path: '/admin/coupons', icon: 'local_offer' },
+            { name: 'Categories', path: '/admin/categories', icon: 'category' },
+        ]
+    },
+    {
+        label: 'People',
+        items: [
+            { name: 'Customers', path: '/admin/customers', icon: 'group' },
+            { name: 'Requests', path: '/admin/requests', icon: 'inbox' },
+            { name: 'Reviews', path: '/admin/reviews', icon: 'star_rate' },
+        ]
+    },
+    {
+        label: 'Content',
+        items: [
+            { name: 'Homepage Builder', path: '/admin/homepage', icon: 'home_app_logo' },
+            { name: 'Storefront CMS', path: '/admin/cms', icon: 'auto_stories' },
+            { name: 'Navigation', path: '/admin/navigation', icon: 'menu' },
+            { name: 'Media Library', path: '/admin/media', icon: 'photo_library' },
+        ]
+    },
+    {
+        label: 'System',
+        items: [
+            { name: 'Shipping Zones', path: '/admin/shipping', icon: 'local_shipping' },
+            { name: 'Settings', path: '/admin/settings', icon: 'settings' },
+        ]
+    },
 ];
+
+// Flat list for backward compatibility
+export const ADMIN_NAV_ITEMS = ADMIN_NAV_GROUPS.flatMap(g => g.items);
 
 export const STOREFRONT_NAV_ITEMS = [
     { name: 'Home', path: '/' },

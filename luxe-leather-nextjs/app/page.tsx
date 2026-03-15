@@ -1,11 +1,14 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/storefront/Header";
 import Footer from "@/components/storefront/Footer";
+import { contentService } from "@/lib/services/contentService";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cmsContent: Record<string, string> = {};
+  await Promise.all(['home_hero_title', 'home_hero_subtitle', 'home_hero_cta'].map(async (key) => {
+    cmsContent[key] = await contentService.getBySlug(key);
+  }));
   const categories = [
     {
       name: "Bags",
@@ -94,7 +97,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col font-[family-name:var(--font-manrope)] bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1A1A1A] dark:text-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1A1A1A] dark:text-white overflow-x-hidden">
       <Header />
 
       <main className="flex-grow">
@@ -113,16 +116,15 @@ export default function HomePage() {
 
           {/* Content */}
           <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto flex flex-col items-center gap-6">
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1]">
-              Crafted for the World
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] uppercase">
+              {cmsContent.home_hero_title || "Crafted for the World"}
             </h1>
             <p className="text-lg md:text-xl font-medium text-white/90 leading-relaxed">
-              Premium leather goods, handmade by masters using centuries-old
-              techniques. Designed to last a lifetime.
+              {cmsContent.home_hero_subtitle || "Premium leather goods, handmade by masters using centuries-old techniques. Designed to last a lifetime."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Link href="/shop" className="bg-[#d41132] hover:bg-[#d41132]/90 text-white px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all transform hover:scale-105 shadow-lg shadow-[#d41132]/30">
-                Shop Collection
+                {cmsContent.home_hero_cta || "Shop Collection"}
               </Link>
               <Link href="/bespoke" className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
                 Explore Custom

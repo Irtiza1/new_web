@@ -18,7 +18,7 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
     const offset = (page - 1) * limit;
 
     let dbQuery = supabase
-        .from('Customer')
+        .from('customers')
         .select('*', { count: 'exact' })
         .order('createdAt', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -44,17 +44,18 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
 
     if (customerIds.length > 0) {
         const { data: orders } = await supabase
-            .from('Order')
-            .select('customerId, total')
-            .in('customerId', customerIds); // Only fetch for these customers!
+            .from('orders')
+            .select('customer_id, total')
+            .in('customer_id', customerIds); // Only fetch for these customers!
 
         if (orders) {
             orders.forEach(order => {
-                if (!ordersMap[order.customerId]) {
-                    ordersMap[order.customerId] = { count: 0, total: 0 };
+                const cid = order.customer_id;
+                if (!ordersMap[cid]) {
+                    ordersMap[cid] = { count: 0, total: 0 };
                 }
-                ordersMap[order.customerId].count++;
-                ordersMap[order.customerId].total += order.total;
+                ordersMap[cid].count++;
+                ordersMap[cid].total += order.total;
             });
         }
     }
@@ -83,7 +84,7 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
  */
 export const getById = async (id: string) => {
     const { data: customer, error } = await supabase
-        .from('Customer')
+        .from('customers')
         .select('*')
         .eq('id', id)
         .single();
@@ -94,9 +95,9 @@ export const getById = async (id: string) => {
 
     // Fetch stats
     const { data: orders } = await supabase
-        .from('Order')
+        .from('orders')
         .select('total')
-        .eq('customerId', id);
+        .eq('customer_id', id);
 
     const stats = orders?.reduce<{ count: number; total: number }>((acc, order) => ({
         count: acc.count + 1,
@@ -118,7 +119,7 @@ export const getById = async (id: string) => {
  */
 export const update = async (id: string, data: Partial<Customer>) => {
     const { data: updated, error } = await supabase
-        .from('Customer')
+        .from('customers')
         .update(data)
         .eq('id', id)
         .select()
@@ -136,10 +137,10 @@ export const update = async (id: string, data: Partial<Customer>) => {
  * @returns {Promise<Customer>}
  */
 export const create = async (data: any) => {
-    const id = `cm${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const { data: created, error } = await supabase
-        .from('Customer')
+        .from('customers')
         .insert([{ ...data, id, createdAt: now, updatedAt: now }])
         .select()
         .single();
@@ -157,7 +158,7 @@ export const create = async (data: any) => {
  */
 export const getByEmail = async (email: string) => {
     const { data: customer, error } = await supabase
-        .from('Customer')
+        .from('customers')
         .select('*')
         .eq('email', email)
         .single();
@@ -174,7 +175,7 @@ export const getByEmail = async (email: string) => {
  */
 export const remove = async (id: string) => {
     const { error } = await supabase
-        .from('Customer')
+        .from('customers')
         .delete()
         .eq('id', id);
 

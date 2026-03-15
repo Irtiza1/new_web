@@ -12,14 +12,28 @@ export type Product = {
     description: string | null;
     price: number;
     image: string;
+    images?: string[]; // Array of secondary images
     category: string;
     stock: number;
     sizes?: string[];
     badge?: string | null;
     rating?: number;
     reviews?: number;
+    salesCount?: number; // For sorting by popularity
+    customSizingPrice?: number; // Base price for custom sizing
     createdAt: string;
     updatedAt: string;
+};
+
+export type Coupon = {
+    id: string;
+    code: string;
+    discountType: 'percentage' | 'fixed';
+    value: number;
+    minOrderAmount?: number;
+    isActive: boolean;
+    expiryDate?: string | null;
+    createdAt: string;
 };
 
 export type Customer = {

@@ -17,7 +17,7 @@ export interface AnalyticsSummary {
  */
 export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     const { data: orders, error } = await supabase
-        .from('Order')
+        .from('orders')
         .select('total, status');
 
     if (error) throw error;
@@ -55,8 +55,8 @@ export interface TopProduct {
 export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
     // 1. Get all order items directly
     const { data: orderItems, error } = await supabase
-        .from('OrderItem')
-        .select('productId, quantity');
+        .from('order_items')
+        .select('product_id, quantity');
 
     if (error) throw error;
 
@@ -67,9 +67,9 @@ export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
     let totalSalesCount = 0;
 
     orderItems.forEach(item => {
-        if (item.productId) {
+        if (item.product_id) {
             const qty = Number(item.quantity) || 0;
-            salesMap[item.productId] = (salesMap[item.productId] || 0) + qty;
+            salesMap[item.product_id] = (salesMap[item.product_id] || 0) + qty;
             totalSalesCount += qty;
         }
     });
@@ -84,7 +84,7 @@ export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
     // 4. Fetch product names
     const productIds = sortedProducts.map(([id]) => id);
     const { data: products } = await supabase
-        .from('Product')
+        .from('products')
         .select('id, name')
         .in('id', productIds);
 
@@ -123,7 +123,7 @@ const FLAG_MAP: Record<string, string> = {
  */
 export async function getCustomersByCountry(): Promise<CustomerCountry[]> {
     const { data: customers, error } = await supabase
-        .from('Customer')
+        .from('customers')
         .select('country');
 
     if (error) throw error;

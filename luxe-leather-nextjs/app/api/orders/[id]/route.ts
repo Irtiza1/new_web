@@ -3,6 +3,8 @@ import { z } from 'zod';
 import * as orderService from '../../../../lib/services/orderService';
 import { apiHandler } from '../../../../lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 const idSchema = z.object({
     id: z.string().min(1),
 });

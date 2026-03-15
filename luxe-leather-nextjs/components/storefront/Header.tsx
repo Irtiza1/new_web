@@ -1,16 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import AnnouncementBar from "./AnnouncementBar";
 import { STOREFRONT_NAV_ITEMS } from "@/lib/constants/navigation";
 
+interface NavItem {
+    id: string;
+    label: string;
+    url: string;
+    is_visible: boolean;
+    opens_in_new_tab: boolean;
+    display_order: number;
+}
+
 export default function Header() {
     const { cartCount, cartTotal, openCart } = useCart();
     const router = useRouter();
-    {/* Search Bar Overlay - REMOVED, now uses SearchOverlay.tsx */ }
+    const [navItems, setNavItems] = useState<NavItem[]>([]);
+
+    useEffect(() => {
+        const homeItem: NavItem = { id: 'home', label: 'Home', url: '/', is_visible: true, opens_in_new_tab: false, display_order: -1 };
+
+        fetch('/api/nav-items')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data.length > 0) {
+                    const apiItems = data.data
+                        .filter((i: NavItem) => i.is_visible)
+                        .sort((a: NavItem, b: NavItem) => a.display_order - b.display_order);
+                    // Only add Home if not already in the API data
+                    const hasHome = apiItems.some((i: NavItem) => i.url === '/' || i.label.toLowerCase() === 'home');
+                    setNavItems(hasHome ? apiItems : [homeItem, ...apiItems]);
+                } else {
+                    setNavItems(STOREFRONT_NAV_ITEMS.map((i, idx) => ({ id: String(idx), label: i.name, url: i.path, is_visible: true, opens_in_new_tab: false, display_order: idx })));
+                }
+            })
+            .catch(() => {
+                setNavItems(STOREFRONT_NAV_ITEMS.map((i, idx) => ({ id: String(idx), label: i.name, url: i.path, is_visible: true, opens_in_new_tab: false, display_order: idx })));
+            });
+    }, []);
 
     return (
         <>
@@ -24,20 +55,22 @@ export default function Header() {
                                 checkroom
                             </span>
                         </div>
-                        <span className="text-xl font-extrabold tracking-tight uppercase">
+                        <span className="text-xl font-extrabold tracking-tight uppercase font-[family-name:var(--font-playfair)]">
                             Luxe Leather
                         </span>
                     </Link>
 
-                    {/* Links (Center) */}
+                    {/* Links (Center) - Dynamic from /api/nav-items */}
                     <nav className="hidden md:flex items-center gap-8 transition-opacity duration-200">
-                        {STOREFRONT_NAV_ITEMS.map((item) => (
+                        {navItems.map((item) => (
                             <Link
-                                key={item.path}
-                                href={item.path}
+                                key={item.id}
+                                href={item.url}
+                                target={item.opens_in_new_tab ? '_blank' : undefined}
+                                rel={item.opens_in_new_tab ? 'noopener noreferrer' : undefined}
                                 className="text-sm font-bold text-[#1A1A1A] dark:text-white hover:text-[#d41132] transition-colors"
                             >
-                                {item.name}
+                                {item.label}
                             </Link>
                         ))}
                     </nav>

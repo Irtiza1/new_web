@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 import { apiHandler } from '@/lib/middleware/apiHandler';
 
+export const dynamic = 'force-dynamic';
+
 const contactSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Valid email is required'),

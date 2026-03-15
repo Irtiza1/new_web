@@ -19,9 +19,19 @@ export default function AdminProductsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
+    const [categories, setCategories] = useState<string[]>(['Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes']);
+
+    // Fetch categories
+    useEffect(() => {
+        fetch('/api/categories').then(r => r.json()).then(d => {
+            if (d.success && d.data?.length > 0) setCategories(d.data.map((c: any) => c.name));
+        }).catch(() => { });
+    }, []);
 
     // Fetch products on load
     useEffect(() => {
@@ -45,6 +55,7 @@ export default function AdminProductsPage() {
         }
 
         setFilteredProducts(result);
+        setCurrentPage(1);
     }, [products, searchTerm, selectedCategory]);
 
     const fetchProducts = async () => {
@@ -201,11 +212,9 @@ export default function AdminProductsPage() {
                             className="px-4 py-2 rounded-lg bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] focus:ring-2 focus:ring-[#d41132] outline-none transition-all text-sm font-medium"
                         >
                             <option value="All">All Categories</option>
-                            <option value="Accessories">Accessories</option>
-                            <option value="Bags">Bags</option>
-                            <option value="Wallets">Wallets</option>
-                            <option value="Jackets">Jackets</option>
-                            <option value="Travel">Travel</option>
+                            {categories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -239,7 +248,7 @@ export default function AdminProductsPage() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredProducts.map((product) => (
+                                        filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((product) => (
                                             <tr key={product.id} className="hover:bg-[#f6f7f8] dark:hover:bg-[#17202b] transition-colors group">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
@@ -286,7 +295,7 @@ export default function AdminProductsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-2 transition-opacity">
                                                         <button
                                                             onClick={() => openEditModal(product)}
                                                             className="p-1.5 text-gray-500 hover:text-[#0d141b] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
@@ -310,14 +319,39 @@ export default function AdminProductsPage() {
                             </table>
                         </div>
 
-                        {/* Pagination (Static for now) */}
-                        <div className="px-6 py-4 border-t border-[#e5e7eb] dark:border-[#2d3b4a] flex items-center justify-between text-sm text-gray-500">
-                            <span>Showing {filteredProducts.length} results</span>
-                            <div className="flex gap-2">
-                                <button className="px-3 py-1 rounded border border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] disabled:opacity-50" disabled>Previous</button>
-                                <button className="px-3 py-1 rounded border border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] disabled:opacity-50" disabled>Next</button>
-                            </div>
-                        </div>
+                        {/* Pagination */}
+                        {(() => {
+                            const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+                            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+                            const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filteredProducts.length);
+                            return (
+                                <div className="px-6 py-4 border-t border-[#e5e7eb] dark:border-[#2d3b4a] flex items-center justify-between text-sm text-gray-500">
+                                    <span>Showing {startIdx + 1}–{endIdx} of {filteredProducts.length} results</span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-3 py-1 rounded border border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        >Previous</button>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).slice(
+                                            Math.max(0, currentPage - 3),
+                                            Math.min(totalPages, currentPage + 2)
+                                        ).map(page => (
+                                            <button
+                                                key={page}
+                                                onClick={() => setCurrentPage(page)}
+                                                className={`px-3 py-1 rounded border transition-colors ${currentPage === page ? 'bg-[#d41132] text-white border-[#d41132]' : 'border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                                            >{page}</button>
+                                        ))}
+                                        <button
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-3 py-1 rounded border border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        >Next</button>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </main>
 
