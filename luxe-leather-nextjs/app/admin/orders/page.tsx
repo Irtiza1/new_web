@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import type { Order } from '@/lib/supabase';
 import AdminOrderModal from '@/components/admin/AdminOrderModal';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface OrderRow {
     id: string;
@@ -27,6 +28,24 @@ export default function AdminOrdersPage() {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         loadOrders();
@@ -105,18 +124,102 @@ export default function AdminOrdersPage() {
     };
 
     const handleDelete = async (orderId: string) => {
-        if (!confirm('Are you sure you want to delete this order?')) return;
-        try {
-            const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.success) {
-                await loadOrders();
-            } else {
-                console.error('Failed to delete order:', data.error);
+        if (isBulkDeleting) return;
+        
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Order',
+            message: 'Are you sure you want to delete this order? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                try {
+                    const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) {
+                        // Optimistic update
+                        setOrders(prev => prev.filter(o => o.id !== orderId));
+                        setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(orderId);
+                            return next;
+                        });
+                    } else {
+                        alert('Failed to delete order: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (err) {
+                    alert('An unexpected error occurred during deletion.');
+                    console.error('Failed to delete order:', err);
+                }
             }
-        } catch (err) {
-            console.error('Failed to delete order:', err);
-        }
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        if (isBulkDeleting || selectedIds.size === 0) return;
+        
+        const count = selectedIds.size;
+        setConfirmModal({
+            isOpen: true,
+            title: `Delete ${count} Orders`,
+            message: `Are you sure you want to delete ${count} orders? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                const idsToDelete = Array.from(selectedIds);
+                let successCount = 0;
+                let failCount = 0;
+
+                try {
+                    await Promise.all(idsToDelete.map(async (id) => {
+                        try {
+                            const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                            if (res.ok) successCount++;
+                            else failCount++;
+                        } catch (err) {
+                            failCount++;
+                        }
+                    }));
+
+                    if (successCount > 0) {
+                        setOrders(prev => prev.filter(o => !selectedIds.has(o.id)));
+                        setSelectedIds(new Set());
+                    }
+
+                    if (failCount > 0) {
+                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                    }
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                } finally {
+                    setIsBulkDeleting(false);
+                    loadOrders();
+                }
+            }
+        });
+    };
+
+    const toggleSelectAll = () => {
+        const visibleIds = filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(o => o.id);
+        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
+
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allVisibleSelected) {
+                visibleIds.forEach(id => next.delete(id));
+            } else {
+                visibleIds.forEach(id => next.add(id));
+            }
+            return next;
+        });
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
 
     const getStatusBadge = (status: Order['status']) => {
@@ -270,6 +373,14 @@ export default function AdminOrdersPage() {
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                                <th className="py-4 px-6 w-12 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                        checked={filteredOrders.length > 0 && filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).every(o => selectedIds.has(o.id))}
+                                                        onChange={toggleSelectAll}
+                                                    />
+                                                </th>
                                                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order ID</th>
                                                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer</th>
                                                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Items</th>
@@ -288,7 +399,15 @@ export default function AdminOrdersPage() {
                                                 </tr>
                                             ) : (
                                                 filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((order) => (
-                                                    <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <tr key={order.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(order.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                                                        <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                                                            <input
+                                                                 type="checkbox"
+                                                                 className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                                 checked={selectedIds.has(order.id)}
+                                                                 onChange={() => toggleSelect(order.id)}
+                                                            />
+                                                        </td>
                                                         <td className="py-4 px-6">
                                                             <span className="text-sm font-mono font-medium text-slate-900 dark:text-white" title={order.id}>#{order.id.slice(-8).toUpperCase()}</span>
                                                         </td>
@@ -308,7 +427,9 @@ export default function AdminOrdersPage() {
                                                             {getStatusBadge(order.status)}
                                                         </td>
                                                         <td className="py-4 px-6">
-                                                            <span className="text-sm text-slate-500 dark:text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
+                                                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                                                {isMounted ? new Date(order.created_at).toLocaleDateString() : '...'}
+                                                            </span>
                                                         </td>
                                                         <td className="py-4 px-6 text-right relative">
                                                             <button
@@ -388,7 +509,9 @@ export default function AdminOrdersPage() {
                         {/* Status Badge */}
                         <div className="flex items-center justify-between">
                             {getStatusBadge(selectedOrder.status)}
-                            <span className="text-xs text-slate-500">{new Date(selectedOrder.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                            <span className="text-xs text-slate-500">
+                                {isMounted ? new Date(selectedOrder.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '...'}
+                            </span>
                         </div>
 
                         {/* Customer Info */}
@@ -459,7 +582,7 @@ export default function AdminOrdersPage() {
                             Advance Status
                         </button>
                         <button
-                            onClick={() => { if (confirm('Delete this order?')) { handleDelete(selectedOrder.id); setSelectedOrder(null); } }}
+                            onClick={() => { handleDelete(selectedOrder.id); setSelectedOrder(null); }}
                             className="w-full flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-red-300 text-red-600 font-medium py-2.5 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                         >
                             <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -468,6 +591,46 @@ export default function AdminOrdersPage() {
                     </div>
                 </aside>
             )}
+
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl border border-slate-800 flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 w-[90%] md:w-auto">
+                    <div className="flex items-center gap-3">
+                        <span className="bg-[#d41132] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {selectedIds.size}
+                        </span>
+                        <p className="text-sm font-medium whitespace-nowrap">orders selected</p>
+                    </div>
+                    <div className="hidden md:block w-px h-6 bg-slate-700" />
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSelectedIds(new Set())}
+                            className="text-sm font-bold text-slate-400 hover:text-white transition-colors px-2"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={isBulkDeleting}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg transition-all shadow-sm disabled:opacity-50"
+                        >
+                            {isBulkDeleting ? (
+                                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                            ) : (
+                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                            )}
+                            {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
+                        </button>
+                    </div>
+                </div>
+            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }

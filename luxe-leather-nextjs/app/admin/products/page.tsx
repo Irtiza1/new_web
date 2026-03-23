@@ -12,6 +12,7 @@ interface ExtendedProduct extends Product {
 }
 
 import ProductFormModal, { pProduct } from '@/components/admin/ProductFormModal';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 export default function AdminProductsPage() {
     const [products, setProducts] = useState<ExtendedProduct[]>([]);
@@ -25,6 +26,24 @@ export default function AdminProductsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<ExtendedProduct | null>(null);
     const [categories, setCategories] = useState<string[]>(['Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes']);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Fetch categories
     useEffect(() => {
@@ -113,22 +132,104 @@ export default function AdminProductsPage() {
     };
 
     const handleDeleteProduct = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
+        if (isBulkDeleting) return;
+        
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Product',
+            message: 'Are you sure you want to delete this product? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                try {
+                    const res = await fetch(`/api/products/${id}`, {
+                        method: 'DELETE',
+                    });
 
-        try {
-            const res = await fetch(`/api/products/${id}`, {
-                method: 'DELETE',
-            });
+                    if (!res.ok) throw new Error('Failed to delete product');
 
-            if (!res.ok) throw new Error('Failed to delete product');
+                    // Optimistic update
+                    setProducts(products.filter(p => p.id !== id));
+                    setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(id);
+                        return next;
+                    });
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                    alert('Failed to delete product. Please try again.');
+                    fetchProducts(); // Revert on error
+                }
+            }
+        });
+    };
 
-            // Optimistic update
-            setProducts(products.filter(p => p.id !== id));
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            alert('Failed to delete product.');
-            fetchProducts(); // Revert on error
-        }
+    const handleBulkDelete = async () => {
+        if (isBulkDeleting || selectedIds.size === 0) return;
+        
+        const count = selectedIds.size;
+        setConfirmModal({
+            isOpen: true,
+            title: `Delete ${count} Products`,
+            message: `Are you sure you want to delete ${count} products? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                const idsToDelete = Array.from(selectedIds);
+                let successCount = 0;
+                let failCount = 0;
+
+                try {
+                    await Promise.all(idsToDelete.map(async (id) => {
+                        try {
+                            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                            if (res.ok) successCount++;
+                            else failCount++;
+                        } catch (err) {
+                            failCount++;
+                        }
+                    }));
+
+                    if (successCount > 0) {
+                        setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+                        setSelectedIds(new Set());
+                    }
+
+                    if (failCount > 0) {
+                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                    }
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                    alert('An error occurred during bulk deletion.');
+                } finally {
+                    setIsBulkDeleting(false);
+                    fetchProducts(); // Refresh to ensure sync
+                }
+            }
+        });
+    };
+
+    const toggleSelectAll = () => {
+        const visibleIds = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(p => p.id);
+        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
+
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allVisibleSelected) {
+                visibleIds.forEach(id => next.delete(id));
+            } else {
+                visibleIds.forEach(id => next.add(id));
+            }
+            return next;
+        });
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
 
     const openEditModal = (product: ExtendedProduct) => {
@@ -224,6 +325,14 @@ export default function AdminProductsPage() {
                             <table className="w-full text-left">
                                 <thead className="bg-[#f6f7f8] dark:bg-[#101922] border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                                     <tr>
+                                        <th className="px-6 py-4 w-12 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                checked={filteredProducts.length > 0 && filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).every(p => selectedIds.has(p.id))}
+                                                onChange={toggleSelectAll}
+                                            />
+                                        </th>
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#4c739a] dark:text-[#94a3b8]">Product</th>
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#4c739a] dark:text-[#94a3b8]">Category</th>
                                         <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#4c739a] dark:text-[#94a3b8]">Price</th>
@@ -249,7 +358,15 @@ export default function AdminProductsPage() {
                                         </tr>
                                     ) : (
                                         filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((product) => (
-                                            <tr key={product.id} className="hover:bg-[#f6f7f8] dark:hover:bg-[#17202b] transition-colors group">
+                                            <tr key={product.id} className={`hover:bg-[#f6f7f8] dark:hover:bg-[#17202b] transition-colors group ${selectedIds.has(product.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                                                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                        checked={selectedIds.has(product.id)}
+                                                        onChange={() => toggleSelect(product.id)}
+                                                    />
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
@@ -362,7 +479,47 @@ export default function AdminProductsPage() {
                     onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
                     initialData={editingProduct}
                 />
-            </div>
+
+                {/* Bulk Action Bar */}
+                {selectedIds.size > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl border border-slate-800 flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 w-[90%] md:w-auto">
+                        <div className="flex items-center gap-3">
+                            <span className="bg-[#d41132] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                {selectedIds.size}
+                            </span>
+                            <p className="text-sm font-medium whitespace-nowrap">items selected</p>
+                        </div>
+                        <div className="hidden md:block w-px h-6 bg-slate-700" />
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setSelectedIds(new Set())}
+                                className="text-sm font-bold text-slate-400 hover:text-white transition-colors px-2"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={isBulkDeleting}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg transition-all shadow-sm disabled:opacity-50"
+                            >
+                                {isBulkDeleting ? (
+                                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                                ) : (
+                                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                                )}
+                                {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
-    );
+    </div>
+);
 }

@@ -12,6 +12,7 @@ interface CustomerWithStats extends Customer {
 }
 
 import AdminCustomerModal, { pCustomer } from '@/components/admin/AdminCustomerModal';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 export default function AdminCustomersPage() {
     const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
@@ -24,6 +25,24 @@ export default function AdminCustomersPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         loadCustomers();
@@ -103,23 +122,104 @@ export default function AdminCustomersPage() {
         window.URL.revokeObjectURL(url);
     };
 
-    const handleDelete = async (customerId: string) => {
-        if (!confirm('Are you sure you want to delete this customer?')) return;
-        try {
-            const res = await fetch(`/api/customers/${customerId}`, {
-                method: 'DELETE',
-            });
-            const data = await res.json();
+    const handleDeleteCustomer = async (id: string) => {
+        if (isBulkDeleting) return;
+        
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Customer',
+            message: 'Are you sure you want to delete this customer and all their associated orders? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                try {
+                    const res = await fetch(`/api/customers/${id}`, {
+                        method: 'DELETE',
+                    });
 
-            if (data.success) {
-                await loadCustomers();
-            } else {
-                alert('Failed to delete customer: ' + data.error);
+                    if (!res.ok) throw new Error('Failed to delete customer');
+
+                    // Optimistic update
+                    setCustomers(customers.filter(c => c.id !== id));
+                    setSelectedIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(id);
+                        return next;
+                    });
+                } catch (error) {
+                    console.error('Error deleting customer:', error);
+                    alert('Failed to delete customer. They might still have orders that could not be removed.');
+                    loadCustomers(); // Refresh on error
+                }
             }
-        } catch (err) {
-            console.error('Failed to delete customer:', err);
-            alert('An error occurred while deleting.');
-        }
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        if (isBulkDeleting || selectedIds.size === 0) return;
+        
+        const count = selectedIds.size;
+        setConfirmModal({
+            isOpen: true,
+            title: `Delete ${count} Customers`,
+            message: `Are you sure you want to delete ${count} customers and their orders? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                const idsToDelete = Array.from(selectedIds);
+                let successCount = 0;
+                let failCount = 0;
+
+                try {
+                    await Promise.all(idsToDelete.map(async (id) => {
+                        try {
+                            const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+                            if (res.ok) successCount++;
+                            else failCount++;
+                        } catch (err) {
+                            failCount++;
+                        }
+                    }));
+
+                    if (successCount > 0) {
+                        setCustomers(prev => prev.filter(c => !selectedIds.has(c.id)));
+                        setSelectedIds(new Set());
+                    }
+
+                    if (failCount > 0) {
+                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                    }
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                } finally {
+                    setIsBulkDeleting(false);
+                    loadCustomers();
+                }
+            }
+        });
+    };
+
+    const toggleSelectAll = () => {
+        const visibleIds = filteredCustomers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(c => c.id);
+        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
+
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allVisibleSelected) {
+                visibleIds.forEach(id => next.delete(id));
+            } else {
+                visibleIds.forEach(id => next.add(id));
+            }
+            return next;
+        });
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
     };
 
     const handleCreateCustomer = async (data: pCustomer) => {
@@ -280,8 +380,13 @@ export default function AdminCustomersPage() {
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">
-                                                    <input className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent" type="checkbox" />
+                                                <th className="px-6 py-4 w-12 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                        checked={filteredCustomers.length > 0 && filteredCustomers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).every(c => selectedIds.has(c.id))}
+                                                        onChange={toggleSelectAll}
+                                                    />
                                                 </th>
                                                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-200 group">
                                                     <div className="flex items-center gap-1">Customer <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100">arrow_downward</span></div>
@@ -296,9 +401,14 @@ export default function AdminCustomersPage() {
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                             {filteredCustomers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((customer) => (
-                                                <tr key={customer.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                                    <td className="py-4 px-6">
-                                                        <input className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent" type="checkbox" />
+                                                <tr key={customer.id} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group ${selectedIds.has(customer.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
+                                                            checked={selectedIds.has(customer.id)}
+                                                            onChange={() => toggleSelect(customer.id)}
+                                                        />
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <div className="flex items-center gap-3">
@@ -333,8 +443,8 @@ export default function AdminCustomersPage() {
                                                     <td className="py-4 px-6 text-right">
                                                         <span className="text-sm font-bold text-slate-900 dark:text-white">${customer.totalSpent.toFixed(2)}</span>
                                                     </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-sm text-slate-500 dark:text-slate-400">{new Date(customer.createdAt).toLocaleDateString()}</span>
+                                                    <td className="py-4 px-6 text-sm text-slate-500 dark:text-slate-400">
+                                                        {isMounted ? new Date(customer.createdAt).toLocaleDateString() : '...'}
                                                     </td>
                                                     <td className="py-4 px-6 text-right relative">
                                                         <button
@@ -352,7 +462,7 @@ export default function AdminCustomersPage() {
                                                                     <span className="material-symbols-outlined text-lg">edit</span> Edit Customer
                                                                 </button>
                                                                 <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
-                                                                <button onClick={() => { handleDelete(customer.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                                                <button onClick={() => { handleDeleteCustomer(customer.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
                                                                     <span className="material-symbols-outlined text-lg">delete</span> Delete
                                                                 </button>
                                                             </div>
@@ -390,6 +500,46 @@ export default function AdminCustomersPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={editingCustomer ? handleUpdateCustomer : handleCreateCustomer}
                 initialData={editingCustomer}
+            />
+
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl border border-slate-800 flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 w-[90%] md:w-auto">
+                    <div className="flex items-center gap-3">
+                        <span className="bg-[#d41132] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {selectedIds.size}
+                        </span>
+                        <p className="text-sm font-medium whitespace-nowrap">customers selected</p>
+                    </div>
+                    <div className="hidden md:block w-px h-6 bg-slate-700" />
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSelectedIds(new Set())}
+                            className="text-sm font-bold text-slate-400 hover:text-white transition-colors px-2"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={isBulkDeleting}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg transition-all shadow-sm disabled:opacity-50"
+                        >
+                            {isBulkDeleting ? (
+                                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                            ) : (
+                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                            )}
+                            {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
+                        </button>
+                    </div>
+                </div>
+            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
             />
         </div>
     );

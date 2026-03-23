@@ -173,13 +173,58 @@ export const getByEmail = async (email: string) => {
  * Delete a customer by ID
  * ... (existing remove)
  */
+/**
+ * Delete a customer and all their associated data
+ * @param {string} id - Customer UUID
+ */
 export const remove = async (id: string) => {
+    // 1. Find all order IDs for this customer
+    const { data: customerOrders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('customer_id', id);
+
+    if (customerOrders && customerOrders.length > 0) {
+        const orderIds = customerOrders.map(o => o.id);
+
+        // 2. Delete all order items for those orders
+        const { error: itemsError } = await supabase
+            .from('order_items')
+            .delete()
+            .in('order_id', orderIds);
+
+        if (itemsError) {
+            console.error('Error deleting customer order items:', itemsError);
+            throw new AppError(itemsError.message, 500, 'DB_ERROR');
+        }
+
+        // 3. Delete the orders
+        const { error: ordersError } = await supabase
+            .from('orders')
+            .delete()
+            .in('id', orderIds);
+
+        if (ordersError) {
+            console.error('Error deleting customer orders:', ordersError);
+            throw new AppError(ordersError.message, 500, 'DB_ERROR');
+        }
+    }
+
+    // 4. Nullify customer_id in custom_requests (custom_requests table name is custom_requests)
+    // We don't want to delete requests, just unlink them from the deleted customer.
+    await supabase
+        .from('custom_requests')
+        .update({ customerId: null })
+        .eq('customerId', id);
+
+    // 5. Finally delete the customer
     const { error } = await supabase
         .from('customers')
         .delete()
         .eq('id', id);
 
     if (error) {
+        console.error('Error deleting customer:', error);
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
 };
