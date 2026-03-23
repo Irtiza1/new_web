@@ -7,21 +7,47 @@ export const dynamic = 'force-dynamic';
 const BUCKET = 'product-images';
 
 export async function GET() {
-    const { data, error } = await supabase.storage.from(BUCKET).list('', {
-        limit: 200,
+    // 1. Get files from Storage
+    const { data: storageData, error: storageError } = await supabase.storage.from(BUCKET).list('', {
+        limit: 100,
         sortBy: { column: 'created_at', order: 'desc' }
     });
 
-    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-
-    const files = (data || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => ({
+    const storageFiles = (storageData || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => ({
         name: f.name,
         url: supabase.storage.from(BUCKET).getPublicUrl(f.name).data.publicUrl,
         size: f.metadata?.size || 0,
-        created_at: f.created_at
+        created_at: f.created_at,
+        source: 'storage'
     }));
 
-    return NextResponse.json({ success: true, data: files });
+    // 2. Get files from Database
+    const { data: dbData, error: dbError } = await supabase
+        .from('media_files')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+    const dbFiles = (dbData || []).map(f => ({
+        name: f.filename,
+        url: f.url,
+        size: f.size || 0,
+        created_at: f.created_at,
+        source: 'database'
+    }));
+
+    // Combine and remove duplicates (by URL)
+    const combined = [...storageFiles];
+    const seenUrls = new Set(storageFiles.map(f => f.url));
+
+    for (const f of dbFiles) {
+        if (!seenUrls.has(f.url)) {
+            combined.push(f);
+            seenUrls.add(f.url);
+        }
+    }
+
+    return NextResponse.json({ success: true, data: combined });
 }
 
 export async function POST(request: Request) {

@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
+import AdminTable from '@/components/admin/shared/AdminTable';
+import AdminPagination from '@/components/admin/shared/AdminPagination';
+import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
 import type { CustomRequest } from '@/lib/services/requestService';
+import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminRequestModal, { pRequest } from '@/components/admin/AdminRequestModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 
@@ -18,6 +22,8 @@ export default function AdminRequestsPage() {
 
     // Stats for notifications (could be fetched separately or derived)
     const [newRequestCount, setNewRequestCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +37,7 @@ export default function AdminRequestsPage() {
         isOpen: false,
         title: '',
         message: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
     });
 
     useEffect(() => {
@@ -121,7 +127,7 @@ export default function AdminRequestsPage() {
 
     const handleDelete = async (id: string) => {
         if (isBulkDeleting) return;
-        
+
         setConfirmModal({
             isOpen: true,
             title: 'Delete Request',
@@ -154,7 +160,7 @@ export default function AdminRequestsPage() {
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-        
+
         const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
@@ -200,7 +206,7 @@ export default function AdminRequestsPage() {
     };
 
     const toggleSelectAll = () => {
-        const visibleIds = filteredRequests.map(r => r.id);
+        const visibleIds = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(r => r.id);
         const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
 
         setSelectedIds(prev => {
@@ -267,144 +273,124 @@ export default function AdminRequestsPage() {
     };
 
     return (
-        <div className="flex-1 min-w-0 bg-[#f6f7f8] dark:bg-[#101922] text-slate-900 dark:text-white h-screen flex flex-col overflow-hidden font-[family-name:var(--font-inter)]">
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 relative h-full">
-                {/* Top Header */}
-                <header className="h-16 bg-white dark:bg-[#15202b] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 shrink-0">
-                    <div className="flex-1 max-w-lg">
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                <span className="material-symbols-outlined">search</span>
-                            </div>
-                            <input
-                                className="block w-full rounded-lg border-0 py-2 pl-10 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[#d41132] sm:text-sm bg-slate-50 dark:bg-slate-800 dark:ring-slate-700 dark:text-white transition-all"
-                                placeholder="Search requests..."
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+        <AdminPageLayout
+            title="Custom Request Pipeline"
+            subtitle="Manage and track incoming custom inquiries."
+            actions={
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-[#d41132] hover:bg-[#b30f2a] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-colors flex items-center gap-2"
+                >
+                    <span className="material-symbols-outlined text-lg">add</span>
+                    New Request
+                </button>
+            }
+            filters={
+                <div className="flex flex-col lg:flex-row justify-between items-center gap-4 w-full">
+                    <div className="relative w-full lg:max-w-md group">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                            <span className="material-symbols-outlined">search</span>
                         </div>
+                        <input
+                            className="block w-full rounded-lg border-0 py-2.5 pl-10 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[#d41132] sm:text-sm bg-slate-50 dark:bg-slate-800 dark:ring-slate-700 dark:text-white transition-all outline-none"
+                            placeholder="Search requests..."
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                    <div className="flex items-center gap-4 ml-6">
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="bg-[#d41132] hover:bg-[#b30f2a] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-colors flex items-center gap-2"
-                        >
-                            <span className="material-symbols-outlined text-lg">add</span>
-                            New Request
-                        </button>
-                    </div>
-                </header>
-
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-6 relative">
-                    <div className="flex flex-col h-full gap-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Custom Request Pipeline</h2>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1">Manage and track incoming custom inquiries.</p>
-                            </div>
-                            <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
-                                {[
-                                    { label: 'All', value: 'all' },
-                                    { label: 'New', value: 'new' },
-                                    { label: 'Quoted', value: 'quoted' },
-                                    { label: 'In Progress', value: 'in_progress' },
-                                    { label: 'Completed', value: 'completed' },
-                                ].map((tab) => (
-                                    <button
-                                        key={tab.value}
-                                        onClick={() => setStatusFilter(tab.value)}
-                                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                                            statusFilter === tab.value
-                                                ? 'bg-[#d41132] text-white shadow-sm'
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Data Table Card */}
-                        <div className="bg-white dark:bg-[#15202b] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex-1 flex flex-col">
-                            <div className="overflow-x-auto">
-                                {loading ? (
-                                    <div className="flex items-center justify-center py-12">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d41132]"></div>
-                                    </div>
-                                ) : (
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                                                <th className="py-4 px-6 w-12 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
-                                                        checked={filteredRequests.length > 0 && filteredRequests.every(r => selectedIds.has(r.id))}
-                                                        onChange={toggleSelectAll}
-                                                    />
-                                                </th>
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer</th>
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project</th>
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Budget</th>
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                                <th className="py-4 px-6 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {filteredRequests.length === 0 && (
-                                                <tr>
-                                                    <td colSpan={6} className="py-12 text-center text-sm text-slate-500 uppercase tracking-widest font-bold opacity-50">
-                                                        No requests found
-                                                    </td>
-                                                </tr>
-                                            )}
-                                            {filteredRequests.map((req) => (
-                                                <tr 
-                                                    key={req.id} 
-                                                    onClick={() => setSelectedRequest(req)}
-                                                    className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${selectedIds.has(req.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}
-                                                >
-                                                    <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent"
-                                                            checked={selectedIds.has(req.id)}
-                                                            onChange={() => toggleSelect(req.id)}
-                                                        />
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="size-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 flex items-center justify-center text-xs font-bold">
-                                                                {req.name?.slice(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-900 dark:text-white">{req.name}</span>
-                                                                <span className="text-[10px] text-slate-400 font-mono tracking-tighter">#{req.id.slice(-6).toUpperCase()}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 font-medium">{req.itemType}</td>
-                                                    <td className="py-4 px-6 text-sm text-slate-600 dark:text-slate-400 tabular-nums">${req.budget}</td>
-                                                    <td className="py-4 px-6">
-                                                        <StatusBadge status={req.status} />
-                                                    </td>
-                                                    <td className="py-4 px-6 text-sm text-slate-500 tabular-nums">
-                                                        {isMounted ? new Date(req.createdAt).toLocaleDateString() : '...'}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <AdminFilterTabs
+                        tabs={[
+                            { label: 'All', value: 'all' },
+                            { label: 'New', value: 'new' },
+                            { label: 'Quoted', value: 'quoted' },
+                            { label: 'In Progress', value: 'in_progress' },
+                            { label: 'Completed', value: 'completed' },
+                        ]}
+                        activeTab={statusFilter}
+                        onTabChange={setStatusFilter}
+                    />
                 </div>
-            </main>
+            }
+            pagination={
+                <AdminPagination
+                    currentPage={currentPage}
+                    totalItems={filteredRequests.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(val) => {
+                        setItemsPerPage(val);
+                        setCurrentPage(1);
+                    }}
+                />
+            }
+            bulkActions={
+                <AdminBulkActionsBar
+                    selectedCount={selectedIds.size}
+                    onCancel={() => setSelectedIds(new Set())}
+                    onDelete={handleBulkDelete}
+                    isDeleting={isBulkDeleting}
+                />
+            }
+        >
+            <AdminTable
+                headers={['Customer', 'Project', 'Budget', 'Status', 'Date']}
+                onSelectAll={toggleSelectAll}
+                isAllSelected={filteredRequests.length > 0 && filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(r => selectedIds.has(r.id))}
+            >
+                {loading ? (
+                    <tr>
+                        <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
+                                Loading requests...
+                            </div>
+                        </td>
+                    </tr>
+                ) : filteredRequests.length === 0 ? (
+                    <tr>
+                        <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                            No requests found.
+                        </td>
+                    </tr>
+                ) : (
+                    filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((req) => (
+                        <tr
+                            key={req.id}
+                            onClick={() => setSelectedRequest(req)}
+                            className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${selectedIds.has(req.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}
+                        >
+                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
+                                    checked={selectedIds.has(req.id)}
+                                    onChange={() => toggleSelect(req.id)}
+                                />
+                            </td>
+                            <td className="py-4 px-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">
+                                        {req.name?.slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{req.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-mono tracking-tighter">#{req.id.slice(-6).toUpperCase()}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="py-4 px-6 text-sm text-slate-700 dark:text-slate-300 font-medium">{req.itemType}</td>
+                            <td className="py-4 px-6 text-sm text-slate-900 dark:text-white font-black tabular-nums">${req.budget}</td>
+                            <td className="py-4 px-6">
+                                <StatusBadge status={req.status} />
+                            </td>
+                            <td className="py-4 px-6 text-sm text-slate-500 dark:text-slate-400 font-medium tabular-nums">
+                                {isMounted ? new Date(req.createdAt).toLocaleDateString() : '...'}
+                            </td>
+                        </tr>
+                    ))
+                )}
+            </AdminTable>
 
             <AdminRequestModal
                 isOpen={isModalOpen}
@@ -414,30 +400,30 @@ export default function AdminRequestsPage() {
 
             {/* Detail Modal */}
             {selectedRequest && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-[#15202b] w-full max-w-2xl rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 p-8 flex flex-col max-h-[90vh]">
-                        <button 
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-[#15202b] w-full sm:max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 p-8 flex flex-col">
+                        <button
                             onClick={() => setSelectedRequest(null)}
                             className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
                         >
                             <span className="material-symbols-outlined">close</span>
                         </button>
 
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
+                        <div className="flex items-center gap-4 mb-8 shrink-0">
+                            <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 font-bold">
                                 <span className="material-symbols-outlined text-3xl">draw</span>
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold dark:text-white">Request Detail</h3>
+                                <h3 className="text-xl font-bold dark:text-white text-slate-900">Request Detail</h3>
                                 <p className="text-sm text-slate-500 font-mono">#{selectedRequest.id.slice(-8).toUpperCase()}</p>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto pr-2 space-y-6">
-                            <div className="grid grid-cols-2 gap-6 border-b border-slate-100 dark:border-slate-800 pb-6">
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-6 min-h-0">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-slate-100 dark:border-slate-800 pb-6">
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Customer</label>
-                                    <p className="font-semibold dark:text-white">{selectedRequest.name}</p>
+                                    <p className="font-semibold dark:text-white text-slate-900">{selectedRequest.name}</p>
                                     <p className="text-sm text-slate-500">{selectedRequest.email}</p>
                                 </div>
                                 <div>
@@ -450,7 +436,7 @@ export default function AdminRequestsPage() {
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Deadline</label>
-                                    <p className="font-semibold dark:text-white">{selectedRequest.deadline}</p>
+                                    <p className="font-semibold dark:text-white text-slate-900">{selectedRequest.deadline}</p>
                                 </div>
                             </div>
                             <div>
@@ -461,9 +447,9 @@ export default function AdminRequestsPage() {
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
                             <div className="flex gap-2">
-                                <button 
+                                <button
                                     onClick={() => handleStatusUpdate(selectedRequest.id, 'quoted')}
                                     className="px-6 py-2.5 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg transition-all shadow-md text-sm"
                                 >
@@ -473,7 +459,7 @@ export default function AdminRequestsPage() {
                                     Send Message
                                 </button>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => { handleDelete(selectedRequest.id); setSelectedRequest(null); }}
                                 className="px-6 py-2.5 border border-red-200 text-red-600 hover:bg-red-50 font-bold rounded-lg transition-all text-sm"
                             >
@@ -484,38 +470,7 @@ export default function AdminRequestsPage() {
                 </div>
             )}
 
-            {/* Bulk Action Bar */}
-            {selectedIds.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl shadow-2xl border border-slate-800 flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 w-[90%] md:w-auto">
-                    <div className="flex items-center gap-3">
-                        <span className="bg-[#d41132] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                            {selectedIds.size}
-                        </span>
-                        <p className="text-sm font-medium whitespace-nowrap">requests selected</p>
-                    </div>
-                    <div className="hidden md:block w-px h-6 bg-slate-700" />
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setSelectedIds(new Set())}
-                            className="text-sm font-bold text-slate-400 hover:text-white transition-colors px-2"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleBulkDelete}
-                            disabled={isBulkDeleting}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg transition-all shadow-sm disabled:opacity-50"
-                        >
-                            {isBulkDeleting ? (
-                                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                            ) : (
-                                <span className="material-symbols-outlined text-[20px]">delete</span>
-                            )}
-                            {isBulkDeleting ? 'Deleting...' : 'Delete Selected'}
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* Detail Modal */}
             <ConfirmModal
                 isOpen={confirmModal.isOpen}
                 title={confirmModal.title}
@@ -523,6 +478,6 @@ export default function AdminRequestsPage() {
                 onConfirm={confirmModal.onConfirm}
                 onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
             />
-        </div>
+        </AdminPageLayout>
     );
 }

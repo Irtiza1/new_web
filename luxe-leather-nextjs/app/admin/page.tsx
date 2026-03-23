@@ -57,13 +57,13 @@ export default function AdminDashboard() {
     }, []);
 
     return (
-        <div className="flex min-h-screen w-full bg-[#f6f7f8] dark:bg-[#0d141b] font-[family-name:var(--font-inter)]">
+        <div className="flex min-h-full min-h-0 w-full bg-[#f6f7f8] dark:bg-[#0d141b] font-[family-name:var(--font-inter)]">
 
 
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
                 {/* Header */}
                 <header className="bg-white dark:bg-[#1a2632] border-b border-[#e5e7eb] dark:border-[#2d3b4a] px-8 py-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">Admin Dashboard</h1>
                             <p className="text-[#4c739a] dark:text-[#94a3b8] mt-1">Welcome back! Here's your overview.</p>
@@ -78,9 +78,9 @@ export default function AdminDashboard() {
                 <main className="flex-1 p-8">
                     <div className="max-w-7xl mx-auto">
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             <div className="bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                                     <span className="material-symbols-outlined text-[#d41132] text-3xl">payments</span>
                                     <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">+12%</span>
                                 </div>
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                                     <span className="material-symbols-outlined text-[#d41132] text-3xl">shopping_bag</span>
                                     <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">+5%</span>
                                 </div>
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                                     <span className="material-symbols-outlined text-[#d41132] text-3xl">group</span>
                                     <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">+8%</span>
                                 </div>
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                                     <span className="material-symbols-outlined text-[#d41132] text-3xl">inbox</span>
                                     <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded">Pending</span>
                                 </div>
@@ -117,10 +117,10 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Middle Section: Chart and Activity */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                             {/* Revenue Chart */}
                             <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                                     <h3 className="text-lg font-bold text-[#0d141b] dark:text-white">Order Distribution</h3>
                                     <Link href="/admin/analytics" className="text-xs font-bold text-[#d41132] hover:underline">View Full Analytics</Link>
                                 </div>
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
                                                 <div className="absolute -top-8 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                                     {count} orders
                                                 </div>
-                                                <div 
+                                                <div
                                                     className={`w-full max-w-[40px] rounded-t-lg transition-all duration-1000 ${colors[status] || 'bg-gray-400'}`}
                                                     style={{ height: `${height}%`, minHeight: '10%' }}
                                                 />
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Quick Actions */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-3 gap-6">
                             <Link href="/admin/orders" className="group bg-white dark:bg-[#1a2632] rounded-xl border border-[#e5e7eb] dark:border-[#2d3b4a] p-6 shadow-sm hover:shadow-md hover:border-[#d41132] transition-all">
                                 <div className="flex items-center gap-4">
                                     <div className="bg-[#d41132]/10 p-3 rounded-lg">

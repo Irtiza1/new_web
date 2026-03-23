@@ -80,10 +80,10 @@ export default function AdminSettingsPage() {
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
+        <div className="flex h-full min-h-0 w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
             {/* <AdminSidebar /> removed for layout */}
 
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
                 {/* Header */}
                 <header className="w-full px-6 pt-8 pb-0 border-b border-[#e5e7eb] dark:border-[#2d3b4a] bg-white dark:bg-[#1a2632] sticky top-0 z-10 shadow-sm shrink-0">
                     <div className="max-w-7xl mx-auto">
@@ -95,7 +95,7 @@ export default function AdminSettingsPage() {
                                 <span className="text-[#0d141b] dark:text-white font-medium">Settings</span>
                             </div>
                             {/* Title & Actions */}
-                            <div className="flex flex-wrap justify-between items-end gap-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                                 <div className="flex flex-col gap-1">
                                     <h1 className="text-3xl font-black tracking-tight text-[#0d141b] dark:text-white">Platform Settings</h1>
                                     <p className="text-[#4c739a] dark:text-[#94a3b8]">Manage your store identity, shipping configurations, and SEO preferences.</p>
@@ -119,7 +119,7 @@ export default function AdminSettingsPage() {
                             </div>
 
                             {/* Tabs Navigation (Horizontal) */}
-                            <div className="flex items-center gap-8 mt-2">
+                            <div className="flex overflow-x-auto items-center gap-8 mt-2 pb-2 custom-scrollbar">
                                 <button
                                     onClick={() => setActiveTab('general')}
                                     className={`flex items-center gap-2 pb-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'general' ? 'text-[#d41132] border-[#d41132]' : 'text-[#4c739a] dark:text-[#94a3b8] border-transparent hover:text-[#0d141b] dark:hover:text-white'}`}
@@ -188,7 +188,7 @@ export default function AdminSettingsPage() {
                                             accept="image/*"
                                             onChange={handleLogoUpload}
                                         />
-                                        <div 
+                                        <div
                                             onClick={() => fileInputRef.current?.click()}
                                             className="w-32 h-32 flex-shrink-0 bg-[#f6f7f8] dark:bg-[#101922] rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center relative overflow-hidden group cursor-pointer hover:border-[#d41132] transition-colors"
                                         >
@@ -278,7 +278,7 @@ export default function AdminSettingsPage() {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2 md:col-span-2">
-                                    <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
                                         <div>
                                             <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Enable International Shipping</label>
                                             <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Allow orders from outside details zones.</p>
@@ -352,7 +352,7 @@ export default function AdminSettingsPage() {
                                 </h2>
                             </div>
                             <div className="p-6 flex flex-col gap-4">
-                                <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div>
                                         <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Email on New Order</label>
                                         <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Receive an email whenever a customer places a new order.</p>
@@ -367,7 +367,7 @@ export default function AdminSettingsPage() {
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
                                     </label>
                                 </div>
-                                <div className="flex items-center justify-between p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div>
                                         <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Email on Low Stock</label>
                                         <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Get notified when product stock drops below 5 units.</p>

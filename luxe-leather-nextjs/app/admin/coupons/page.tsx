@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
+import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
+import AdminTable from '@/components/admin/shared/AdminTable';
+import AdminPagination from '@/components/admin/shared/AdminPagination';
+import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
 interface Coupon {
     id: string;
@@ -28,6 +33,11 @@ export default function AdminCouponsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const showToast = (text: string, type: 'success' | 'error' = 'success') => {
         setToast({ text, type });
@@ -93,8 +103,99 @@ export default function AdminCouponsPage() {
         loadCoupons();
     };
 
+    const filteredCoupons = coupons.filter(c => {
+        if (statusFilter === 'active') return c.is_active;
+        if (statusFilter === 'inactive') return !c.is_active;
+        return true;
+    });
+
+    const handleBulkDelete = async () => {
+        if (isBulkDeleting || selectedIds.size === 0) return;
+        if (!confirm(`Are you sure you want to delete ${selectedIds.size} coupons?`)) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.all(
+                Array.from(selectedIds).map(id =>
+                    fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' }).then(res => res.json())
+                )
+            );
+            const successCount = results.filter(r => r.success).length;
+            showToast(`${successCount} coupons deleted successfully`);
+            loadCoupons();
+            setSelectedIds(new Set());
+        } catch (err) {
+            showToast('Bulk delete failed', 'error');
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        const visibleCoupons = filteredCoupons.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+        const allVisibleSelected = visibleCoupons.every(c => selectedIds.has(c.id));
+
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allVisibleSelected) {
+                visibleCoupons.forEach(c => next.delete(c.id));
+            } else {
+                visibleCoupons.forEach(c => next.add(c.id));
+            }
+            return next;
+        });
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
     return (
-        <main className="flex-1 overflow-y-auto bg-[#f6f7f8] dark:bg-[#101922] p-6 md:p-8">
+        <AdminPageLayout
+            title="Coupons"
+            subtitle="Create and manage discount codes for your storefront"
+            actions={
+                <button onClick={openCreate} className="flex items-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md">
+                    <span className="material-symbols-outlined text-[18px]">add</span> New Coupon
+                </button>
+            }
+            filters={
+                <AdminFilterTabs
+                    tabs={[
+                        { label: 'All Coupons', value: 'all' },
+                        { label: 'Active', value: 'active' },
+                        { label: 'Inactive', value: 'inactive' },
+                    ]}
+                    activeTab={statusFilter}
+                    onTabChange={(val) => setStatusFilter(val as any)}
+                />
+            }
+            pagination={
+                <AdminPagination
+                    currentPage={currentPage}
+                    totalItems={filteredCoupons.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(val) => {
+                        setItemsPerPage(val);
+                        setCurrentPage(1);
+                    }}
+                />
+            }
+            bulkActions={
+                <AdminBulkActionsBar
+                    selectedCount={selectedIds.size}
+                    onCancel={() => setSelectedIds(new Set())}
+                    onDelete={handleBulkDelete}
+                    isDeleting={isBulkDeleting}
+                />
+            }
+        >
             {/* Toast */}
             {toast && (
                 <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
@@ -102,19 +203,8 @@ export default function AdminCouponsPage() {
                 </div>
             )}
 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white">Coupons</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Create and manage discount codes for your storefront</p>
-                </div>
-                <button onClick={openCreate} className="flex items-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md">
-                    <span className="material-symbols-outlined text-[18px]">add</span> New Coupon
-                </button>
-            </div>
-
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {[
                     { label: 'Total Coupons', value: coupons.length, icon: 'local_offer', color: 'text-blue-600' },
                     { label: 'Active', value: coupons.filter(c => c.is_active).length, icon: 'check_circle', color: 'text-green-600' },
@@ -122,81 +212,85 @@ export default function AdminCouponsPage() {
                     { label: 'Total Uses', value: coupons.reduce((sum, c) => sum + (c.uses_count || 0), 0), icon: 'confirmation_number', color: 'text-amber-600' },
                 ].map(s => (
                     <div key={s.label} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">{s.label}</p>
-                            <span className={`material-symbols-outlined ${s.color}`}>{s.icon}</span>
+                        <div className="flex items-center justify-between gap-4 mb-2">
+                            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">{s.label}</p>
+                            <span className={`material-symbols-outlined text-lg ${s.color}`}>{s.icon}</span>
                         </div>
-                        <p className="text-3xl font-black text-slate-900 dark:text-white">{s.value}</p>
+                        <p className="text-2xl font-black text-slate-900 dark:text-white">{s.value}</p>
                     </div>
                 ))}
             </div>
 
             {/* Table */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+            <AdminTable
+                headers={['Code', 'Type', 'Value', 'Min. Order', 'Uses', 'Expiry', 'Status', 'Actions']}
+                onSelectAll={toggleSelectAll}
+                isAllSelected={filteredCoupons.length > 0 && filteredCoupons.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(c => selectedIds.has(c.id))}
+            >
                 {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">progress_activity</span>
-                    </div>
-                ) : coupons.length === 0 ? (
-                    <div className="text-center py-20 text-slate-400">
-                        <span className="material-symbols-outlined text-5xl mb-3 block">local_offer</span>
-                        <p className="font-semibold">No coupons yet</p>
-                        <button onClick={openCreate} className="mt-4 text-[#d41132] font-bold text-sm hover:underline">Create your first coupon →</button>
-                    </div>
+                    <tr>
+                        <td colSpan={9} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                Loading coupons...
+                            </div>
+                        </td>
+                    </tr>
+                ) : filteredCoupons.length === 0 ? (
+                    <tr>
+                        <td colSpan={9} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                            No codes found.
+                        </td>
+                    </tr>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                                <tr>
-                                    {['Code', 'Type', 'Value', 'Min. Order', 'Uses', 'Expiry', 'Status', 'Actions'].map(h => (
-                                        <th key={h} className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                                {coupons.map(c => (
-                                    <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-                                        <td className="px-4 py-3"><span className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">{c.code}</span></td>
-                                        <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-300">{c.discount_type}</td>
-                                        <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{c.discount_type === 'percentage' ? `${c.value}%` : `$${c.value}`}</td>
-                                        <td className="px-4 py-3 text-slate-500">{c.min_order_amount ? `$${c.min_order_amount}` : '—'}</td>
-                                        <td className="px-4 py-3 text-slate-500">{c.uses_count || 0}{c.max_uses ? `/${c.max_uses}` : ''}</td>
-                                        <td className="px-4 py-3 text-slate-500">{c.expiry_date ? new Date(c.expiry_date).toLocaleDateString() : '—'}</td>
-                                        <td className="px-4 py-3">
-                                            <button onClick={() => toggleActive(c)} className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${c.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
-                                                {c.is_active ? 'Active' : 'Inactive'}
-                                            </button>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                                                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                                                </button>
-                                                <button onClick={() => setDeleteId(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
-                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    filteredCoupons.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((c) => (
+                        <tr key={c.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(c.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
+                                    checked={selectedIds.has(c.id)}
+                                    onChange={() => toggleSelect(c.id)}
+                                />
+                            </td>
+                            <td className="px-4 py-4"><span className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">{c.code}</span></td>
+                            <td className="px-4 py-4 capitalize text-slate-600 dark:text-slate-300">{c.discount_type}</td>
+                            <td className="px-4 py-4 font-bold text-slate-900 dark:text-white">{c.discount_type === 'percentage' ? `${c.value}%` : `$${c.value}`}</td>
+                            <td className="px-4 py-4 text-slate-500 dark:text-slate-400 font-medium">{c.min_order_amount ? `$${c.min_order_amount}` : '—'}</td>
+                            <td className="px-4 py-4 text-slate-500 dark:text-slate-400 font-medium">{c.uses_count || 0}{c.max_uses ? `/${c.max_uses}` : ''}</td>
+                            <td className="px-4 py-4 text-slate-500 dark:text-slate-400 font-medium">{c.expiry_date ? new Date(c.expiry_date).toLocaleDateString() : '—'}</td>
+                            <td className="px-4 py-4">
+                                <button onClick={() => toggleActive(c)} className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${c.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+                                    {c.is_active ? 'Active' : 'Inactive'}
+                                </button>
+                            </td>
+                            <td className="px-4 py-4">
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                                    </button>
+                                    <button onClick={() => setDeleteId(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
+                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))
                 )}
-            </div>
+            </AdminTable>
 
             {/* Create/Edit Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-slate-200 dark:border-slate-700">
                             <h2 className="text-lg font-black text-slate-900 dark:text-white">{editingCoupon ? 'Edit Coupon' : 'Create Coupon'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Code *</label>
                                     <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="SUMMER25" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:border-[#d41132] outline-none" />
@@ -209,7 +303,7 @@ export default function AdminCouponsPage() {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Value *</label>
                                     <input type="number" value={form.value} onChange={e => setForm(f => ({ ...f, value: e.target.value }))} placeholder={form.discount_type === 'percentage' ? '10' : '25'} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none" />
@@ -219,7 +313,7 @@ export default function AdminCouponsPage() {
                                     <input type="number" value={form.min_order_amount} onChange={e => setForm(f => ({ ...f, min_order_amount: e.target.value }))} placeholder="50" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Max Uses</label>
                                     <input type="number" value={form.max_uses} onChange={e => setForm(f => ({ ...f, max_uses: e.target.value }))} placeholder="Unlimited" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none" />
@@ -248,8 +342,8 @@ export default function AdminCouponsPage() {
 
             {/* Delete Confirm */}
             {deleteId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
                         <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="material-symbols-outlined text-red-500 text-3xl">delete</span>
                         </div>
@@ -262,6 +356,6 @@ export default function AdminCouponsPage() {
                     </div>
                 </div>
             )}
-        </main>
+        </AdminPageLayout>
     );
 }

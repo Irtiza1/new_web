@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { contentService, CMSContent } from "@/lib/services/contentService";
+import AdminFilterTabs from "@/components/admin/shared/AdminFilterTabs";
 
 export default function CMSAdminPage() {
     const [content, setContent] = useState<CMSContent[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const [activeCategory, setActiveCategory] = useState('announcement');
 
     useEffect(() => {
         loadContent();
@@ -67,8 +69,16 @@ export default function CMSAdminPage() {
                 )}
             </div>
 
+            <div className="mb-8">
+                <AdminFilterTabs
+                    tabs={categories.map(cat => ({ label: cat.name, value: cat.prefix }))}
+                    activeTab={activeCategory}
+                    onTabChange={setActiveCategory}
+                />
+            </div>
+
             <div className="space-y-12">
-                {categories.map((cat) => (
+                {categories.filter(cat => cat.prefix === activeCategory).map((cat) => (
                     <section key={cat.name} className="space-y-6">
                         <div className="flex items-center gap-4">
                             <h2 className="text-lg font-black uppercase tracking-widest text-[#c27a2a]">{cat.name}</h2>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ADMIN_NAV_GROUPS } from '@/lib/constants/navigation';
 import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
     const pathname = usePathname();
     const { counts } = useAdminNotifications();
 
@@ -19,8 +19,16 @@ export default function AdminSidebar() {
     };
 
     return (
-        <aside className="w-[260px] flex-shrink-0 border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 transition-colors duration-300 relative h-full hidden lg:block">
-            <div className="absolute inset-0 flex flex-col overflow-hidden p-3">
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity backdrop-blur-sm"
+                    onClick={onClose}
+                />
+            )}
+            <aside className={`w-[260px] flex-shrink-0 border-r border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 transition-transform duration-300 fixed lg:relative h-full z-50 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                <div className="absolute inset-0 flex flex-col overflow-hidden p-3">
                 {/* Brand */}
                 <Link href="/admin" className="flex items-center gap-3 px-3 py-4 group mb-2 shrink-0">
                     <div className="bg-gradient-to-br from-[#d41132] to-[#a60e25] rounded-xl flex-shrink-0 size-10 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
@@ -46,6 +54,7 @@ export default function AdminSidebar() {
                                     <Link
                                         key={item.path}
                                         href={item.path}
+                                        onClick={() => { if (onClose) onClose(); }}
                                         className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm group ${active
                                             ? 'bg-[#d41132]/10 text-[#d41132] dark:bg-[#d41132]/20 dark:text-red-400 font-semibold'
                                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
@@ -88,5 +97,6 @@ export default function AdminSidebar() {
                 </div>
             </div>
         </aside>
+        </>
     );
 }

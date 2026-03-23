@@ -5,17 +5,12 @@ import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 import { contentService } from '@/lib/services/contentService';
 import { getShippingRates, type ShippingRate } from '@/lib/services/shippingService';
-
-const sizeChart = [
-    { label: 'Small', chest: '36-38"', waist: '28-30"', shoulders: '17"', length: '25"' },
-    { label: 'Medium', chest: '38-40"', waist: '31-33"', shoulders: '18"', length: '26"' },
-    { label: 'Large', chest: '40-42"', waist: '34-36"', shoulders: '19"', length: '27"' },
-    { label: 'X-Large', chest: '42-44"', waist: '38-40"', shoulders: '20"', length: '28"' },
-];
+import { getSizeGuides, type SizeGuide } from '@/lib/services/sizeService';
 
 export default function ShippingPage() {
     const [unit, setUnit] = useState<'inches' | 'cm'>('inches');
     const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+    const [sizeChart, setSizeChart] = useState<SizeGuide[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
 
@@ -32,17 +27,22 @@ export default function ShippingPage() {
     }, []);
 
     useEffect(() => {
-        async function fetchRates() {
+        async function fetchData() {
+            setIsLoading(true);
             try {
-                const rates = await getShippingRates();
+                const [rates, sizes] = await Promise.all([
+                    getShippingRates(),
+                    getSizeGuides()
+                ]);
                 setShippingRates(rates);
+                setSizeChart(sizes);
             } catch (error) {
-                console.error("Failed to fetch shipping rates", error);
+                console.error("Failed to fetch page data", error);
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchRates();
+        fetchData();
     }, []);
 
     return (

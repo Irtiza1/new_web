@@ -69,7 +69,7 @@ export default function AdminMediaPage() {
                 </div>
             )}
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white">Media Library</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{files.length} images · Upload, browse, and copy image URLs for use across your store</p>

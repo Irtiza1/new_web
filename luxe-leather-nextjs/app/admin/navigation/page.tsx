@@ -76,7 +76,7 @@ export default function AdminNavigationPage() {
                 </div>
             )}
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white">Navigation Editor</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Control what links appear in your storefront header</p>
@@ -86,7 +86,7 @@ export default function AdminNavigationPage() {
                 </button>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid lg:grid-cols-1 sm:grid-cols-3 gap-6">
                 {/* Nav Items List */}
                 <div className="lg:col-span-2">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
@@ -152,8 +152,8 @@ export default function AdminNavigationPage() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full sm:max-w-md shadow-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-slate-200 dark:border-slate-700">
                             <h2 className="text-lg font-black text-slate-900 dark:text-white">{editingItem ? 'Edit Link' : 'New Nav Link'}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"><span className="material-symbols-outlined">close</span></button>
                         </div>

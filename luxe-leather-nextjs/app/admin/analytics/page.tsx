@@ -74,10 +74,10 @@ export default function AdminAnalyticsPage() {
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
+        <div className="flex h-full min-h-0 w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922] font-[family-name:var(--font-inter)]">
 
 
-            <div className="flex-1 flex flex-col h-screen overflow-auto">
+            <div className="flex-1 flex flex-col h-full min-h-0 overflow-auto">
 
 
                 {/* Main Content */}
@@ -259,7 +259,7 @@ export default function AdminAnalyticsPage() {
                     </div>
 
                     {/* Charts Split Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-1 sm:grid-cols-3 gap-6">
                         {/* Top Selling Products */}
                         <div className="lg:col-span-2 bg-white dark:bg-[#1a2632] rounded-xl border border-[#e7edf3] dark:border-[#2b3a4a] shadow-sm p-6">
                             <h3 className="text-lg font-bold text-[#0d141b] dark:text-[#f3f4f6] mb-6">Top Selling Products</h3>
@@ -344,7 +344,7 @@ export default function AdminAnalyticsPage() {
                             {/* Country List */}
                             <div className="w-full lg:w-80 flex flex-col justify-center gap-4">
                                 {countries.length > 0 ? countries.map((c, i) => (
-                                    <div key={i} className="flex items-center justify-between p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
+                                    <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 bg-[#f6f7f8] dark:bg-[#101922] rounded-lg">
                                         <div className="flex items-center gap-3">
                                             <span className="text-lg">{c.flag}</span>
                                             <span className="text-sm font-medium text-[#0d141b] dark:text-[#f3f4f6]">{c.country}</span>

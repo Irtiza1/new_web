@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { contentService } from '@/lib/services/contentService';
+import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 
 const sections = [
     {
@@ -84,23 +85,15 @@ export default function AdminHomepagePage() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Edit every section of the homepage in real-time — changes reflect instantly on the live site</p>
             </div>
 
-            <div className="flex gap-6">
-                {/* Sections Sidebar */}
-                <div className="w-56 flex-shrink-0">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        {sections.map(section => (
-                            <button
-                                key={section.id}
-                                onClick={() => setActiveSection(section.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-all border-b border-slate-100 dark:border-slate-700 last:border-0 text-left ${activeSection === section.id ? 'bg-[#d41132]/10 text-[#d41132] dark:bg-[#d41132]/20 dark:text-red-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                            >
-                                <span className="material-symbols-outlined text-[18px]">{section.icon}</span>
-                                {section.title}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="mb-6">
+                <AdminFilterTabs
+                    tabs={sections.map(s => ({ label: s.title, value: s.id }))}
+                    activeTab={activeSection}
+                    onTabChange={setActiveSection}
+                />
+            </div>
 
+            <div className="flex flex-col gap-6">
                 {/* Fields */}
                 <div className="flex-1">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
@@ -134,7 +127,7 @@ export default function AdminHomepagePage() {
                                                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-3 text-sm focus:border-[#d41132] outline-none dark:text-white transition-colors"
                                             />
                                         )}
-                                        <div className="flex items-center justify-between mt-2">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
                                             <p className="text-[10px] text-slate-400 font-mono">{field.key}</p>
                                             <button
                                                 onClick={() => handleSave(field.key, content[field.key] || '')}

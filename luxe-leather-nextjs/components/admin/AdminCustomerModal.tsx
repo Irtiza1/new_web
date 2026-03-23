@@ -75,7 +75,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto" style={{ maxWidth: '480px' }}>
-                <div className="flex items-center justify-between p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                     <h2 className="text-xl font-bold text-[#0d141b] dark:text-white">
                         {initialData ? 'Edit Customer' : 'Add New Customer'}
                     </h2>

@@ -133,7 +133,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-[#1a2632] rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto" style={{ maxWidth: '672px' }}>
-                <div className="flex items-center justify-between p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
                     <h2 className="text-xl font-bold text-[#0d141b] dark:text-white">Create New Order</h2>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                         <span className="material-symbols-outlined">close</span>
@@ -181,7 +181,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
                             {/* Items */}
                             <div className="flex flex-col gap-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                     <label className="text-sm font-bold text-[#0d141b] dark:text-white">Order Items</label>
                                     <button
                                         type="button"
