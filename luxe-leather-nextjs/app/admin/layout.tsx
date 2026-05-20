@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AdminNotificationProvider } from '@/contexts/AdminNotificationContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export default function AdminLayout({
@@ -13,6 +14,7 @@ export default function AdminLayout({
 
     return (
         <AdminNotificationProvider>
+          <ToastProvider>
             <div className="flex h-screen w-full overflow-hidden bg-[#f6f7f8] dark:bg-[#101922]">
                 <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
                 <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
@@ -37,6 +39,7 @@ export default function AdminLayout({
                     </div>
                 </div>
             </div>
+          </ToastProvider>
         </AdminNotificationProvider>
     );
 }

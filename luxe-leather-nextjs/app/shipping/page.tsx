@@ -14,6 +14,12 @@ export default function ShippingPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
 
+    const convert = (val: string): string => {
+        const num = parseFloat(val);
+        if (isNaN(num)) return val;
+        return unit === 'cm' ? (num * 2.54).toFixed(1) : val;
+    };
+
     useEffect(() => {
         async function loadCMS() {
             const keys = ['shipping_hero_title', 'shipping_hero_subtitle'];
@@ -175,12 +181,12 @@ export default function ShippingPage() {
                                         </div>
                                         <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest text-[#c27a2a]">
                                             <div className="text-center">
-                                                <p className="text-gray-400 mb-1">Chest</p>
-                                                <p>{size.chest}</p>
+                                                <p className="text-gray-400 mb-1">Chest ({unit})</p>
+                                                <p>{convert(size.chest)}</p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-gray-400 mb-1">Shoulder</p>
-                                                <p>{size.shoulders}</p>
+                                                <p className="text-gray-400 mb-1">Shoulder ({unit})</p>
+                                                <p>{convert(size.shoulders)}</p>
                                             </div>
                                         </div>
                                     </div>

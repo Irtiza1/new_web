@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Product } from '@/lib/supabase';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface ProductFormModalProps {
 export type pProduct = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
 
 export default function ProductFormModal({ isOpen, onClose, onSubmit, initialData }: ProductFormModalProps) {
+    const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [categories, setCategories] = useState<string[]>([
@@ -75,7 +77,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             onClose();
         } catch (error) {
             console.error('Error submitting form:', error);
-            alert('Failed to save product. Please try again.');
+            showToast('Failed to save product. Please try again.', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -101,7 +103,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             setFormData(prev => ({ ...prev, image: data.url }));
         } catch (error) {
             console.error('Upload failed:', error);
-            alert('Failed to upload image');
+            showToast('Failed to upload image', 'error');
         } finally {
             setIsUploading(false);
         }

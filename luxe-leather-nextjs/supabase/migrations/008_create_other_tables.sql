@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS media_files (
     content_type TEXT,
     folder TEXT DEFAULT 'general',
     alt_text TEXT,
-    created_at TIMESTAMPTZ DEFAULT now()
+    "createdAt" TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE media_files ENABLE ROW LEVEL SECURITY;
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     key TEXT NOT NULL UNIQUE,
     value TEXT,
-    updated_at TIMESTAMPTZ DEFAULT now()
+    "updatedAt" TIMESTAMPTZ DEFAULT now()
 );
 
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;

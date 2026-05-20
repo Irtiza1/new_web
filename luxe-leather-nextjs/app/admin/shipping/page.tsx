@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface ShippingZone {
     id: string;
@@ -26,16 +28,40 @@ export default function AdminShippingPage() {
     const [editingZone, setEditingZone] = useState<ShippingZone | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
-    const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const { showToast } = useToast();
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
-    const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-        setToast({ text, type });
-        setTimeout(() => setToast(null), 3000);
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === id ? null : id);
     };
 
     const load = useCallback(async () => {
@@ -70,32 +96,45 @@ export default function AdminShippingPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this shipping zone?')) return;
-        const res = await fetch(`/api/shipping-zones?id=${id}`, { method: 'DELETE' });
-        if ((await res.json()).success) { showToast('Zone deleted'); load(); }
-        else showToast('Failed to delete', 'error');
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Shipping Zone',
+            message: 'Delete this shipping zone? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                const res = await fetch(`/api/shipping-zones?id=${id}`, { method: 'DELETE' });
+                if ((await res.json()).success) { showToast('Zone deleted'); load(); }
+                else showToast('Failed to delete', 'error');
+            }
+        });
     };
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-        if (!confirm(`Are you sure you want to delete ${selectedIds.size} shipping zones?`)) return;
-
-        setIsBulkDeleting(true);
-        try {
-            const results = await Promise.all(
-                Array.from(selectedIds).map(id =>
-                    fetch(`/api/shipping-zones?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                )
-            );
-            const successCount = results.filter(r => r.success).length;
-            showToast(`${successCount} zones deleted successfully`);
-            load();
-            setSelectedIds(new Set());
-        } catch (err) {
-            showToast('Bulk delete failed', 'error');
-        } finally {
-            setIsBulkDeleting(false);
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Shipping Zones',
+            message: `Are you sure you want to delete ${selectedIds.size} shipping zones? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                try {
+                    const results = await Promise.all(
+                        Array.from(selectedIds).map(id =>
+                            fetch(`/api/shipping-zones?id=${id}`, { method: 'DELETE' }).then(res => res.json())
+                        )
+                    );
+                    const successCount = results.filter(r => r.success).length;
+                    showToast(`${successCount} zones deleted successfully`);
+                    load();
+                    setSelectedIds(new Set());
+                } catch (err) {
+                    showToast('Bulk delete failed', 'error');
+                } finally {
+                    setIsBulkDeleting(false);
+                }
+            }
+        });
     };
 
     const toggleSelectAll = () => {
@@ -165,6 +204,22 @@ export default function AdminShippingPage() {
                     }}
                 />
             }
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Zones</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{zones.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Active</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{zones.filter(z => z.is_active).length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Free Shipping Zones</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{zones.filter(z => z.rate === 0).length}</p>
+                    </div>
+                </>
+            }
             bulkActions={
                 <AdminBulkActionsBar
                     selectedCount={selectedIds.size}
@@ -174,32 +229,7 @@ export default function AdminShippingPage() {
                 />
             }
         >
-            {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {toast.text}
-                </div>
-            )}
-
-            <div className="flex flex-col h-full gap-6">
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 shrink-0">
-                    {[
-                        { label: 'Total Zones', value: zones.length, icon: 'public', color: 'text-blue-600' },
-                        { label: 'Active', value: zones.filter(z => z.is_active).length, icon: 'check_circle', color: 'text-green-600' },
-                        { label: 'Free Shipping Zones', value: zones.filter(z => z.rate === 0).length, icon: 'local_shipping', color: 'text-purple-600' },
-                    ].map(stat => (
-                        <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex items-center gap-4 shadow-sm">
-                            <div className={`p-3 rounded-xl bg-slate-50 dark:bg-slate-700 ${stat.color}`}><span className="material-symbols-outlined text-[22px]">{stat.icon}</span></div>
-                            <div>
-                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stat.value}</p>
-                                <p className="text-xs text-slate-400 font-semibold">{stat.label}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Zones Table */}
-                <AdminTable
+            <AdminTable
                     headers={['Zone Name', 'Regions', 'Rate', 'Delivery Time', 'Status', 'Actions']}
                     onSelectAll={toggleSelectAll}
                     isAllSelected={filteredZones.length > 0 && filteredZones.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(z => selectedIds.has(z.id))}
@@ -241,21 +271,29 @@ export default function AdminShippingPage() {
                                         {zone.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1 justify-end">
-                                        <button onClick={() => openEdit(zone)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
-                                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                                        </button>
-                                        <button onClick={() => handleDelete(zone.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
-                                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                                        </button>
-                                    </div>
+                                <td className="px-6 py-4 text-right relative">
+                                    <button
+                                        onClick={(e) => toggleMenu(zone.id, e)}
+                                        className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined">more_vert</span>
+                                    </button>
+                                    {activeMenu === zone.id && (
+                                        <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                            <button onClick={() => { openEdit(zone); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">edit</span> Edit
+                                            </button>
+                                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                            <button onClick={() => { handleDelete(zone.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))
                     )}
                 </AdminTable>
-            </div>
 
             {/* Modal */}
             {showModal && (
@@ -300,6 +338,13 @@ export default function AdminShippingPage() {
                     </div>
                 </div>
             )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </AdminPageLayout>
     );
 }

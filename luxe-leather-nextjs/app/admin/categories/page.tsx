@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface Category {
     id: string;
@@ -26,16 +28,40 @@ export default function AdminCategoriesPage() {
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const { showToast } = useToast();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
-    const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-        setToast({ text, type });
-        setTimeout(() => setToast(null), 3500);
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === id ? null : id);
     };
 
     const loadCategories = useCallback(async () => {
@@ -70,37 +96,50 @@ export default function AdminCategoriesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) { showToast('Category deleted'); loadCategories(); }
-        else showToast('Failed to delete', 'error');
-        setDeleteId(null);
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Category',
+            message: 'Products in this category won\'t be deleted, but they\'ll lose their category.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('Category deleted'); loadCategories(); }
+                else showToast('Failed to delete', 'error');
+            }
+        });
     };
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-        if (!confirm(`Are you sure you want to delete ${selectedIds.size} categories?`)) return;
-
-        setIsBulkDeleting(true);
-        try {
-            const results = await Promise.all(
-                Array.from(selectedIds).map(id =>
-                    fetch(`/api/categories?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                )
-            );
-            const successCount = results.filter(r => r.success).length;
-            showToast(`${successCount} categories deleted successfully`);
-            loadCategories();
-            setSelectedIds(new Set());
-        } catch (err) {
-            showToast('Bulk delete failed', 'error');
-        } finally {
-            setIsBulkDeleting(false);
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Categories',
+            message: `Are you sure you want to delete ${selectedIds.size} categories? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                try {
+                    const results = await Promise.all(
+                        Array.from(selectedIds).map(id =>
+                            fetch(`/api/categories?id=${id}`, { method: 'DELETE' }).then(res => res.json())
+                        )
+                    );
+                    const successCount = results.filter(r => r.success).length;
+                    showToast(`${successCount} categories deleted successfully`);
+                    loadCategories();
+                    setSelectedIds(new Set());
+                } catch (err) {
+                    showToast('Bulk delete failed', 'error');
+                } finally {
+                    setIsBulkDeleting(false);
+                }
+            }
+        });
     };
 
     const toggleSelectAll = () => {
-        const visibleItems = categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+        const visibleItems = filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
         const allVisibleSelected = visibleItems.every(c => selectedIds.has(c.id));
 
         setSelectedIds(prev => {
@@ -123,19 +162,47 @@ export default function AdminCategoriesPage() {
         });
     };
 
+    const filteredCategories = categories.filter(cat =>
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <AdminPageLayout
             title="Categories"
             subtitle="Manage product categories shown in the shop filters"
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{categories.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Visible</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{categories.filter(c => c.is_visible).length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Hidden</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{categories.filter(c => !c.is_visible).length}</p>
+                    </div>
+                </>
+            }
             actions={
                 <button onClick={openCreate} className="flex items-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm hover:shadow-md">
                     <span className="material-symbols-outlined text-[18px]">add</span> Add Category
                 </button>
             }
+            filters={
+                <div className="flex-1 min-w-[200px] relative">
+                    <span className="absolute left-3 top-2.5 text-black/40 dark:text-white/40 material-symbols-outlined text-[20px]">search</span>
+                    <input type="text" placeholder="Search categories..." value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] focus:ring-2 focus:ring-[#d41132] outline-none transition-all dark:text-white text-sm" />
+                </div>
+            }
             pagination={
                 <AdminPagination
                     currentPage={currentPage}
-                    totalItems={categories.length}
+                    totalItems={filteredCategories.length}
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                     onItemsPerPageChange={(val) => {
@@ -153,84 +220,87 @@ export default function AdminCategoriesPage() {
                 />
             }
         >
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {toast.text}
-                </div>
-            )}
-
-            {loading ? (
-                <div className="flex items-center justify-center py-32">
-                    <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">progress_activity</span>
-                </div>
-            ) : (
-                <AdminTable
-                    headers={['Image', 'Category Name', 'Slug', 'Order', 'Products', 'Status', 'Actions']}
-                    onSelectAll={toggleSelectAll}
-                    isAllSelected={categories.length > 0 && categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(c => selectedIds.has(c.id))}
-                >
-                    {categories.length === 0 ? (
-                        <tr>
-                            <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                                No categories found.
+            <AdminTable
+                headers={['Image', 'Category Name', 'Slug', 'Order', 'Products', 'Status', 'Actions']}
+                onSelectAll={toggleSelectAll}
+                isAllSelected={filteredCategories.length > 0 && filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(c => selectedIds.has(c.id))}
+            >
+                {loading ? (
+                    <tr>
+                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                Loading categories...
+                            </div>
+                        </td>
+                    </tr>
+                ) : filteredCategories.length === 0 ? (
+                    <tr>
+                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                            No categories found.
+                        </td>
+                    </tr>
+                ) : (
+                    filteredCategories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((cat) => (
+                        <tr key={cat.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(cat.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
+                                    checked={selectedIds.has(cat.id)}
+                                    onChange={() => toggleSelect(cat.id)}
+                                />
+                            </td>
+                            <td className="py-3 px-6">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                                    {cat.image_url ? <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" /> : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                            <span className="material-symbols-outlined text-xl">category</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </td>
+                            <td className="py-3 px-6">
+                                <div>
+                                    <p className="font-bold text-slate-900 dark:text-white leading-tight">{cat.name}</p>
+                                    {cat.description && <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px] mt-1">{cat.description}</p>}
+                                </div>
+                            </td>
+                            <td className="py-3 px-6">
+                                <span className="font-mono text-xs text-slate-500 uppercase font-bold tracking-wider">/{cat.slug}</span>
+                            </td>
+                            <td className="py-3 px-6">
+                                <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-xs font-black">{cat.display_order}</span>
+                            </td>
+                            <td className="py-3 px-6">
+                                <span className="text-sm font-black text-slate-900 dark:text-white">{cat.product_count || 0}</span>
+                            </td>
+                            <td className="py-3 px-6">
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cat.is_visible ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+                                    {cat.is_visible ? 'Visible' : 'Hidden'}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-right relative">
+                                <button onClick={(e) => toggleMenu(cat.id, e)}
+                                    className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                    <span className="material-symbols-outlined">more_vert</span>
+                                </button>
+                                {activeMenu === cat.id && (
+                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                        <button onClick={() => { openEdit(cat); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">edit</span> Edit
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <button onClick={() => { handleDelete(cat.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        </button>
+                                    </div>
+                                )}
                             </td>
                         </tr>
-                    ) : (
-                        categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((cat) => (
-                            <tr key={cat.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(cat.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
-                                <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
-                                        checked={selectedIds.has(cat.id)}
-                                        onChange={() => toggleSelect(cat.id)}
-                                    />
-                                </td>
-                                <td className="py-3 px-6">
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
-                                        {cat.image_url ? <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" /> : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                <span className="material-symbols-outlined text-xl">category</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="py-3 px-6">
-                                    <div>
-                                        <p className="font-bold text-slate-900 dark:text-white leading-tight">{cat.name}</p>
-                                        {cat.description && <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px] mt-1">{cat.description}</p>}
-                                    </div>
-                                </td>
-                                <td className="py-3 px-6">
-                                    <span className="font-mono text-xs text-slate-500 uppercase font-bold tracking-wider">/{cat.slug}</span>
-                                </td>
-                                <td className="py-3 px-6">
-                                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-xs font-black">{cat.display_order}</span>
-                                </td>
-                                <td className="py-3 px-6">
-                                    <span className="text-sm font-black text-slate-900 dark:text-white">{cat.product_count || 0}</span>
-                                </td>
-                                <td className="py-3 px-6">
-                                    <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cat.is_visible ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
-                                        {cat.is_visible ? 'Visible' : 'Hidden'}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-6 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button onClick={() => openEdit(cat)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                                        </button>
-                                        <button onClick={() => setDeleteId(cat.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
-                                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </AdminTable>
-            )}
+                    ))
+                )}
+            </AdminTable>
 
             {/* Create/Edit Modal */}
             {showModal && (
@@ -284,21 +354,13 @@ export default function AdminCategoriesPage() {
                 </div>
             )}
 
-            {deleteId && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="material-symbols-outlined text-red-500 text-3xl">delete</span>
-                        </div>
-                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Delete Category?</h3>
-                        <p className="text-slate-500 text-sm mb-6">Products in this category won't be deleted, but they'll lose their category.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel</button>
-                            <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors">Delete</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </AdminPageLayout>
     );
 }

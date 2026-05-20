@@ -6,6 +6,7 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
+import { useToast } from '@/contexts/ToastContext';
 import type { Order } from '@/lib/supabase';
 import AdminOrderModal from '@/components/admin/AdminOrderModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
@@ -22,6 +23,7 @@ interface OrderRow {
 }
 
 export default function AdminOrdersPage() {
+    const { showToast } = useToast();
     const [orders, setOrders] = useState<OrderRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -119,11 +121,11 @@ export default function AdminOrdersPage() {
                 await loadOrders();
                 setIsModalOpen(false);
             } else {
-                alert('Failed to create order: ' + (result.error || result.message));
+                showToast('Failed to create order: ' + (result.error || result.message), 'error');
             }
         } catch (error) {
             console.error('Error creating order:', error);
-            alert('An error occurred while creating/saving the order');
+            showToast('An error occurred while creating/saving the order', 'error');
         }
     };
 
@@ -148,10 +150,10 @@ export default function AdminOrdersPage() {
                             return next;
                         });
                     } else {
-                        alert('Failed to delete order: ' + (data.error || 'Unknown error'));
+                        showToast('Failed to delete order: ' + (data.error || 'Unknown error'), 'error');
                     }
                 } catch (err) {
-                    alert('An unexpected error occurred during deletion.');
+                    showToast('An unexpected error occurred during deletion.', 'error');
                     console.error('Failed to delete order:', err);
                 }
             }
@@ -190,7 +192,7 @@ export default function AdminOrdersPage() {
                     }
 
                     if (failCount > 0) {
-                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
@@ -257,7 +259,8 @@ export default function AdminOrdersPage() {
     // Close menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (activeMenu && !(event.target as Element).closest('.action-menu-trigger')) {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
                 setActiveMenu(null);
             }
         };
@@ -298,6 +301,22 @@ export default function AdminOrdersPage() {
         <AdminPageLayout
             title="Order Management"
             subtitle="View and manage all customer orders."
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Orders</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Pending</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.filter(o => o.status === 'PENDING').length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Revenue</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">${orders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</p>
+                    </div>
+                </>
+            }
             actions={
                 <>
                     <button

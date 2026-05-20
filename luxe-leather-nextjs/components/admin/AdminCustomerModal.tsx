@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Customer } from '@/lib/supabase';
+import { useToast } from '@/contexts/ToastContext';
 
 // Partial customer type for creation/editing
 export type pCustomer = Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'orders'>;
@@ -15,6 +16,7 @@ interface AdminCustomerModalProps {
 }
 
 export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialData }: AdminCustomerModalProps) {
+    const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -61,7 +63,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
             onClose();
         } catch (error) {
             console.error('Error submitting form:', error);
-            alert('Failed to save customer. Please try again.');
+            showToast('Failed to save customer. Please try again.', 'error');
         } finally {
             setIsLoading(false);
         }

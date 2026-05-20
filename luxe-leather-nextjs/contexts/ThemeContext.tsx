@@ -19,10 +19,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Load theme from localStorage on mount
     useEffect(() => {
         setMounted(true);
-        const initialTheme: Theme = "light"; // Always light mode
-        setThemeState(initialTheme);
-        applyTheme(initialTheme);
-        localStorage.setItem("theme", "light");
+        const stored = localStorage.getItem("theme") as Theme | null;
+        if (stored === "light" || stored === "dark") {
+            setThemeState(stored);
+            applyTheme(stored);
+            return;
+        }
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const systemTheme: Theme = prefersDark ? "dark" : "light";
+        setThemeState(systemTheme);
+        applyTheme(systemTheme);
+        localStorage.setItem("theme", systemTheme);
     }, []);
 
     const applyTheme = (newTheme: Theme) => {

@@ -25,7 +25,7 @@ export const getAll = async (query: { search?: string; category?: string; limit?
 
     // Apply Sorting at DB level
     if (query.sortBy === 'popularity') {
-        dbQuery = dbQuery.order('sales_count', { ascending: false });
+        dbQuery = dbQuery.order('salesCount', { ascending: false });
     } else if (query.sortBy === 'rating') {
         dbQuery = dbQuery.order('rating', { ascending: false, nullsFirst: false });
     } else if (query.sortBy === 'price-low') {

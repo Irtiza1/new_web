@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 
 
 export default function AdminSettingsPage() {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettingsState] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export default function AdminSettingsPage() {
             setSettingsState(prev => ({ ...prev, logo_url: data.url }));
         } catch (error) {
             console.error('Logo upload failed:', error);
-            alert('Failed to upload logo');
+            showToast('Failed to upload logo', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -67,13 +69,13 @@ export default function AdminSettingsPage() {
             const data = await res.json();
 
             if (data.success) {
-                alert('Settings saved successfully!');
+                showToast('Settings saved successfully!');
             } else {
-                alert('Failed to save settings');
+                showToast('Failed to save settings', 'error');
             }
         } catch (err) {
             console.error('Failed to save settings:', err);
-            alert('Failed to save settings');
+            showToast('Failed to save settings', 'error');
         } finally {
             setSaving(false);
         }

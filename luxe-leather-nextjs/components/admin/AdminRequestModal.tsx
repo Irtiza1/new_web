@@ -50,7 +50,6 @@ export default function AdminRequestModal({ isOpen, onClose, onSubmit }: AdminRe
             });
         } catch (error) {
             console.error('Error submitting request:', error);
-            alert('Failed to create request. Please try again.');
         } finally {
             setIsLoading(false);
         }

@@ -39,6 +39,18 @@ export default function BespokePage() {
         try {
             const form = e.currentTarget;
             const data = new FormData(form);
+
+            // Upload file to Supabase Storage if present
+            let imageUrl = '';
+            const file = data.get('project_image') as File | null;
+            if (file && file.size > 0) {
+                const imageFormData = new FormData();
+                imageFormData.append('file', file);
+                const mediaRes = await fetch('/api/media', { method: 'POST', body: imageFormData });
+                const mediaData = await mediaRes.json();
+                imageUrl = mediaData.url || '';
+            }
+
             const res = await fetch('/api/requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -50,6 +62,7 @@ export default function BespokePage() {
                     description: data.get('description') as string,
                     budget: data.get('budget_range') as string,
                     deadline: data.get('deadline') as string,
+                    inspiration: imageUrl,
                 }),
             });
             const result = await res.json();

@@ -40,7 +40,7 @@ export async function update(settings: Record<string, string>) {
 
     const upserts = Object.entries(settings).map(([key, value]) => {
         // Reuse existing ID if available, otherwise generate a cuid-style one
-        const id = existingMap[key] || `setting_${key.replace(/[^a-z0-9]/gi, '_')}`;
+        const id = existingMap[key] || crypto.randomUUID();
         return {
             id,
             key,

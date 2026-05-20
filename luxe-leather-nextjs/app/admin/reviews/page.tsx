@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface Review {
     id: string;
@@ -25,15 +27,56 @@ export default function AdminReviewsPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-    const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const { showToast } = useToast();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkUpdating, setIsBulkUpdating] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+    const [createForm, setCreateForm] = useState({
+        product_id: '',
+        customer_name: '',
+        customer_email: '',
+        rating: '5',
+        comment: '',
+        status: 'pending' as const,
+    });
+    const [createSaving, setCreateSaving] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
-    const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-        setToast({ text, type });
-        setTimeout(() => setToast(null), 3000);
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    useEffect(() => {
+        fetch('/api/products').then(r => r.json()).then(d => {
+            if (d.success) setProducts(d.data.map((p: any) => ({ id: p.id, name: p.name })));
+        }).catch(() => {});
+    }, []);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === id ? null : id);
     };
 
     const load = useCallback(async () => {
@@ -59,32 +102,45 @@ export default function AdminReviewsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this review permanently?')) return;
-        const res = await fetch(`/api/reviews?id=${id}`, { method: 'DELETE' });
-        if ((await res.json()).success) { showToast('Review deleted'); load(); }
-        else showToast('Failed to delete', 'error');
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Review',
+            message: 'Delete this review permanently? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                const res = await fetch(`/api/reviews?id=${id}`, { method: 'DELETE' });
+                if ((await res.json()).success) { showToast('Review deleted'); load(); }
+                else showToast('Failed to delete', 'error');
+            }
+        });
     };
 
     const handleBulkDelete = async () => {
         if (isBulkUpdating || selectedIds.size === 0) return;
-        if (!confirm(`Are you sure you want to delete ${selectedIds.size} reviews?`)) return;
-
-        setIsBulkUpdating(true);
-        try {
-            const results = await Promise.all(
-                Array.from(selectedIds).map(id =>
-                    fetch(`/api/reviews?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                )
-            );
-            const successCount = results.filter(r => r.success).length;
-            showToast(`${successCount} reviews deleted successfully`);
-            load();
-            setSelectedIds(new Set());
-        } catch (err) {
-            showToast('Bulk delete failed', 'error');
-        } finally {
-            setIsBulkUpdating(false);
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Reviews',
+            message: `Are you sure you want to delete ${selectedIds.size} reviews? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkUpdating(true);
+                try {
+                    const results = await Promise.all(
+                        Array.from(selectedIds).map(id =>
+                            fetch(`/api/reviews?id=${id}`, { method: 'DELETE' }).then(res => res.json())
+                        )
+                    );
+                    const successCount = results.filter(r => r.success).length;
+                    showToast(`${successCount} reviews deleted successfully`);
+                    load();
+                    setSelectedIds(new Set());
+                } catch (err) {
+                    showToast('Bulk delete failed', 'error');
+                } finally {
+                    setIsBulkUpdating(false);
+                }
+            }
+        });
     };
 
     const toggleSelectAll = () => {
@@ -111,6 +167,33 @@ export default function AdminReviewsPage() {
         });
     };
 
+    const handleCreateReview = async () => {
+        setCreateSaving(true);
+        try {
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...createForm,
+                    rating: parseInt(createForm.rating),
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Review created!');
+                setShowCreateModal(false);
+                setCreateForm({ product_id: '', customer_name: '', customer_email: '', rating: '5', comment: '', status: 'pending' });
+                load();
+            } else {
+                showToast(data.message || 'Failed to create review', 'error');
+            }
+        } catch (err) {
+            showToast('Failed to create review', 'error');
+        } finally {
+            setCreateSaving(false);
+        }
+    };
+
     const filtered = filter === 'all' ? reviews : reviews.filter(r => r.status === filter);
     const counts = { all: reviews.length, pending: reviews.filter(r => r.status === 'pending').length, approved: reviews.filter(r => r.status === 'approved').length, rejected: reviews.filter(r => r.status === 'rejected').length };
     const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -128,6 +211,35 @@ export default function AdminReviewsPage() {
         <AdminPageLayout
             title="Reviews"
             subtitle="Moderate customer reviews and control what appears on your storefront"
+            actions={
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg shadow-md transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    Add Review
+                </button>
+            }
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">All</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{counts.all}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Pending</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{counts.pending}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Approved</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{counts.approved}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Rejected</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{counts.rejected}</p>
+                    </div>
+                </>
+            }
             filters={
                 <AdminFilterTabs
                     tabs={[
@@ -161,33 +273,7 @@ export default function AdminReviewsPage() {
                 />
             }
         >
-            {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {toast.text}
-                </div>
-            )}
-
-            <div className="flex flex-col h-full gap-6">
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
-                    {[
-                        { label: 'All', key: 'all', icon: 'reviews', color: 'text-blue-600' },
-                        { label: 'Pending', key: 'pending', icon: 'pending', color: 'text-amber-500' },
-                        { label: 'Approved', key: 'approved', icon: 'check_circle', color: 'text-green-600' },
-                        { label: 'Rejected', key: 'rejected', icon: 'cancel', color: 'text-red-500' },
-                    ].map(s => (
-                        <div key={s.key} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-1">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p>
-                                <span className={`material-symbols-outlined text-[18px] ${s.color}`}>{s.icon}</span>
-                            </div>
-                            <p className="text-2xl font-black text-slate-900 dark:text-white">{counts[s.key as keyof typeof counts]}</p>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Reviews Table */}
-                <AdminTable
+            <AdminTable
                     headers={['Customer', 'Rating', 'Comment', 'Product', 'Status', 'Actions']}
                     onSelectAll={toggleSelectAll}
                     isAllSelected={filtered.length > 0 && paginatedReviews.every(r => selectedIds.has(r.id))}
@@ -253,31 +339,90 @@ export default function AdminReviewsPage() {
                                         )}
                                     </div>
                                 </td>
-                                <td className="py-3 px-6 text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                        {review.status !== 'approved' && (
-                                            <button onClick={() => updateStatus(review.id, 'approved')} className="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 hover:text-green-600 transition-colors" title="Approve">
-                                                <span className="material-symbols-outlined text-[18px]">check</span>
+                                <td className="px-6 py-4 text-right relative">
+                                    <button onClick={(e) => toggleMenu(review.id, e)}
+                                        className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                        <span className="material-symbols-outlined">more_vert</span>
+                                    </button>
+                                    {activeMenu === review.id && (
+                                        <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                            {review.status !== 'approved' && (
+                                                <button onClick={() => { updateStatus(review.id, 'approved'); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-lg">check</span> Approve
+                                                </button>
+                                            )}
+                                            {review.status !== 'rejected' && (
+                                                <button onClick={() => { updateStatus(review.id, 'rejected'); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-lg">close</span> Reject
+                                                </button>
+                                            )}
+                                            <button onClick={() => { toggleFeatured(review); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">star</span> {review.is_featured ? 'Unfeature' : 'Mark Featured'}
                                             </button>
-                                        )}
-                                        {review.status !== 'rejected' && (
-                                            <button onClick={() => updateStatus(review.id, 'rejected')} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 transition-colors" title="Reject">
-                                                <span className="material-symbols-outlined text-[18px]">close</span>
+                                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                            <button onClick={() => { handleDelete(review.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">delete</span> Delete
                                             </button>
-                                        )}
-                                        <button onClick={() => toggleFeatured(review)} className={`p-1.5 rounded-lg transition-colors ${review.is_featured ? 'text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`} title={review.is_featured ? 'Unfeature' : 'Feature'}>
-                                            <span className="material-symbols-outlined text-[18px]" style={review.is_featured ? { fontVariationSettings: "'FILL' 1" } : {}}>star</span>
-                                        </button>
-                                        <button onClick={() => handleDelete(review.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors" title="Delete">
-                                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                                        </button>
-                                    </div>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))
                     )}
                 </AdminTable>
-            </div>
+            {showCreateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white">Add Review</h2>
+                            <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Product</label>
+                                <select value={createForm.product_id} onChange={e => setCreateForm(f => ({ ...f, product_id: e.target.value }))}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white">
+                                    <option value="">Select product...</option>
+                                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Customer Name *</label>
+                                <input value={createForm.customer_name} onChange={e => setCreateForm(f => ({ ...f, customer_name: e.target.value }))}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Rating *</label>
+                                <select value={createForm.rating} onChange={e => setCreateForm(f => ({ ...f, rating: e.target.value }))}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white">
+                                    {[5,4,3,2,1].map(n => <option key={n} value={String(n)}>{n} Star{n > 1 ? 's' : ''}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Comment</label>
+                                <textarea value={createForm.comment} onChange={e => setCreateForm(f => ({ ...f, comment: e.target.value }))} rows={3}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white resize-none" />
+                            </div>
+                        </div>
+                        <div className="flex gap-3 p-6 border-t border-slate-200 dark:border-slate-700">
+                            <button onClick={() => setShowCreateModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 transition-colors">Cancel</button>
+                            <button onClick={handleCreateReview} disabled={createSaving || !createForm.customer_name}
+                                className="flex-1 py-2.5 rounded-xl bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold text-sm transition-colors disabled:opacity-50">
+                                {createSaving ? 'Creating...' : 'Create Review'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </AdminPageLayout>
     );
 }

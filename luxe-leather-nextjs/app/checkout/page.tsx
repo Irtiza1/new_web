@@ -1,25 +1,31 @@
 'use client';
 
 import { useState } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
 import { useCart } from '@/contexts/CartContext';
+import { getStripe } from '@/lib/stripe-client';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
+import StripePaymentForm from '@/components/storefront/StripePaymentForm';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-    const { cartItems, cartTotal, checkout } = useCart();
+    const { cartItems, cartTotal, totalAfterDiscount, checkout } = useCart();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phone: '',
         address: '',
         city: '',
-        country: 'Pakistan',
+        country: '',
         notes: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [orderId, setOrderId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -27,22 +33,26 @@ export default function CheckoutPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError(null);
 
-        // Enhance: We'll wrap the existing checkout logic but add 'Notes' support
-        // For now using existing checkout which handles API calls
-        try {
-            await checkout({
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
-                address: formData.address,
-                city: formData.city,
-                country: formData.country,
-            });
-            // Note: In a real app, we'd also send formData.notes to the API
-        } finally {
-            setIsSubmitting(false);
+        const result = await checkout({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            country: formData.country,
+            notes: formData.notes,
+        });
+
+        if (result.success && result.clientSecret) {
+            setClientSecret(result.clientSecret);
+            setOrderId(result.orderId || null);
+        } else {
+            setError(result.message || 'Failed to initialize payment. Please try again.');
         }
+
+        setIsSubmitting(false);
     };
 
     if (cartItems.length === 0) {
@@ -69,71 +79,133 @@ export default function CheckoutPage() {
             <main className="flex-grow w-full max-w-[1200px] mx-auto px-6 lg:px-12 py-12 md:py-20">
                 <div className="flex flex-col lg:flex-row gap-12 items-start">
 
-                    {/* Left Column: Checkout Form */}
+                    {/* Left Column */}
                     <div className="w-full lg:w-3/5 space-y-8">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#1c140d] dark:text-white uppercase">Checkout</h1>
-                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-2">Billing & Shipping Details</p>
+                            <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-2">
+                                {clientSecret ? 'Payment Details' : 'Billing & Shipping Details'}
+                            </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Full Name*</label>
-                                    <input required name="name" value={formData.name} onChange={handleInputChange} type="text" placeholder="John Doe" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                        {/* Show payment form if clientSecret is ready, otherwise show address form */}
+                        {clientSecret && orderId ? (
+                            <div className="space-y-6">
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
+                                    <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg">check_circle</span>
+                                        Shipping details saved. Enter your payment information below.
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Email Address*</label>
-                                    <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="john@example.com" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
-                                </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Phone Number*</label>
-                                <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" placeholder="+92 300 1234567" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Shipping Address*</label>
-                                <input required name="address" value={formData.address} onChange={handleInputChange} type="text" placeholder="House #, Street Name" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">City*</label>
-                                    <input required name="city" value={formData.city} onChange={handleInputChange} type="text" placeholder="Lahore" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Country</label>
-                                    <input name="country" value={formData.country} readOnly type="text" className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none text-gray-400 cursor-not-allowed" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 pt-4">
-                                <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Order Notes (Optional)</label>
-                                <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Special measurements or delivery requests..." rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors resize-none" />
-                            </div>
-
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="w-full bg-[#c27a2a] text-white py-5 rounded-lg font-black text-lg uppercase tracking-widest shadow-xl shadow-[#c27a2a]/20 hover:bg-[#a35508] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                <Elements
+                                    stripe={getStripe()}
+                                    options={{
+                                        clientSecret,
+                                        appearance: {
+                                            theme: 'stripe',
+                                            variables: {
+                                                colorPrimary: '#c27a2a',
+                                                borderRadius: '8px',
+                                            },
+                                        },
+                                    }}
                                 >
-                                    {isSubmitting ? (
-                                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                    ) : (
-                                        <>
-                                            Place Order via Concierge
-                                            <span className="material-symbols-outlined">arrow_forward</span>
-                                        </>
-                                    )}
-                                </button>
-                                <p className="text-[10px] text-center text-gray-400 mt-4 uppercase font-bold tracking-tighter">
-                                    Trusted by 5,000+ Customers Worldwide • Secure Concierge Service
-                                </p>
+                                    <StripePaymentForm
+                                        orderId={orderId}
+                                        total={totalAfterDiscount}
+                                        onSuccess={() => {}}
+                                        onError={(msg) => setError(msg)}
+                                    />
+                                </Elements>
                             </div>
-                        </form>
+                        ) : (
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Full Name*</label>
+                                        <input required name="name" value={formData.name} onChange={handleInputChange} type="text" placeholder="John Doe" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Email Address*</label>
+                                        <input required name="email" value={formData.email} onChange={handleInputChange} type="email" placeholder="john@example.com" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Phone Number*</label>
+                                    <input required name="phone" value={formData.phone} onChange={handleInputChange} type="tel" placeholder="+92 300 1234567" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Shipping Address*</label>
+                                    <input required name="address" value={formData.address} onChange={handleInputChange} type="text" placeholder="House #, Street Name" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">City*</label>
+                                        <input required name="city" value={formData.city} onChange={handleInputChange} type="text" placeholder="Lahore" className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Country*</label>
+                                        <select required name="country" value={formData.country} onChange={handleInputChange} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors dark:text-white">
+                                            <option value="" disabled>Select your country</option>
+                                            <option value="Pakistan">Pakistan</option>
+                                            <option value="United States">United States</option>
+                                            <option value="United Kingdom">United Kingdom</option>
+                                            <option value="Canada">Canada</option>
+                                            <option value="Australia">Australia</option>
+                                            <option value="UAE">UAE</option>
+                                            <option value="Saudi Arabia">Saudi Arabia</option>
+                                            <option value="India">India</option>
+                                            <option value="Germany">Germany</option>
+                                            <option value="France">France</option>
+                                            <option value="Turkey">Turkey</option>
+                                            <option value="Malaysia">Malaysia</option>
+                                            <option value="Singapore">Singapore</option>
+                                            <option value="South Korea">South Korea</option>
+                                            <option value="Japan">Japan</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 pt-4">
+                                    <label className="text-xs font-black uppercase text-gray-500 tracking-tighter">Order Notes (Optional)</label>
+                                    <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Special measurements or delivery requests..." rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#c27a2a] transition-colors resize-none" />
+                                </div>
+
+                                {error && (
+                                    <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg">error</span>
+                                        {error}
+                                    </div>
+                                )}
+
+                                <div className="pt-4">
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="w-full bg-[#c27a2a] text-white py-5 rounded-lg font-black text-lg uppercase tracking-widest shadow-xl shadow-[#c27a2a]/20 hover:bg-[#a35508] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                                Preparing Payment...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Continue to Payment
+                                                <span className="material-symbols-outlined">lock</span>
+                                            </>
+                                        )}
+                                    </button>
+                                    <p className="text-[10px] text-center text-gray-400 mt-4 uppercase font-bold tracking-tighter">
+                                        You&apos;ll enter card details on the next step · Secured by Stripe
+                                    </p>
+                                </div>
+                            </form>
+                        )}
                     </div>
 
                     {/* Right Column: Order Summary */}
@@ -170,7 +242,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="flex justify-between text-xl font-black text-[#1c140d] dark:text-white pt-4">
                                     <span className="uppercase tracking-tighter">Total</span>
-                                    <span>${cartTotal.toFixed(2)}</span>
+                                    <span>${totalAfterDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -187,11 +259,9 @@ export default function CheckoutPage() {
                             </div>
                         </div>
 
-                        {/* Payment Icons */}
                         <div className="flex justify-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-4" alt="Visa" />
                             <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-6" alt="Mastercard" />
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="h-5" alt="PayPal" />
                         </div>
                     </div>
                 </div>

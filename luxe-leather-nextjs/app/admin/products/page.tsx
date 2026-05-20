@@ -6,6 +6,7 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
+import { useToast } from '@/contexts/ToastContext';
 import { Product } from '@/lib/supabase';
 
 // Extend Product to handle potential array of images from legacy/API difference
@@ -19,6 +20,7 @@ import ConfirmModal from '@/components/admin/ConfirmModal';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 
 export default function AdminProductsPage() {
+    const { showToast } = useToast();
     const [products, setProducts] = useState<ExtendedProduct[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<ExtendedProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +35,7 @@ export default function AdminProductsPage() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
         title: string;
@@ -48,6 +51,23 @@ export default function AdminProductsPage() {
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (productId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === productId ? null : productId);
+    };
 
     // Fetch categories
     useEffect(() => {
@@ -160,7 +180,7 @@ export default function AdminProductsPage() {
                     });
                 } catch (error) {
                     console.error('Error deleting product:', error);
-                    alert('Failed to delete product. Please try again.');
+                    showToast('Failed to delete product. Please try again.', 'error');
                     fetchProducts(); // Revert on error
                 }
             }
@@ -199,11 +219,11 @@ export default function AdminProductsPage() {
                     }
 
                     if (failCount > 0) {
-                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
-                    alert('An error occurred during bulk deletion.');
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
                     fetchProducts(); // Refresh to ensure sync
@@ -398,23 +418,24 @@ export default function AdminProductsPage() {
                                     </span>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2 transition-opacity">
-                                    <button
-                                        onClick={() => openEditModal(product)}
-                                        className="p-1.5 text-gray-500 hover:text-[#0d141b] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                                        title="Edit"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteProduct(product.id)}
-                                        className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                                        title="Delete"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                    </button>
-                                </div>
+                            <td className="px-6 py-4 text-right relative">
+                                <button
+                                    onClick={(e) => toggleMenu(product.id, e)}
+                                    className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">more_vert</span>
+                                </button>
+                                {activeMenu === product.id && (
+                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                        <button onClick={() => { openEditModal(product); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">edit</span> Edit Product
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <button onClick={() => { handleDeleteProduct(product.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        </button>
+                                    </div>
+                                )}
                             </td>
                         </tr>
                     ))

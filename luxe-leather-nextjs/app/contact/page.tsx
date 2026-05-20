@@ -180,7 +180,7 @@ export default function ContactPage() {
                                                 )}
                                             </button>
                                             <p className="text-center text-xs text-slate-400 mt-4">
-                                                By submitting this form, you agree to our <a className="underline hover:text-slate-600 dark:hover:text-slate-300" href="#">Privacy Policy</a>.
+                                                By submitting this form, you agree to our <Link href="/shipping" className="underline hover:text-slate-600 dark:hover:text-slate-300">Terms & Policies</Link>.
                                             </p>
                                         </div>
                                     </form>

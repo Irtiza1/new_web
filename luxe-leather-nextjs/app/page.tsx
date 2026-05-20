@@ -205,11 +205,9 @@ export default async function HomePage() {
                         BESTSELLER
                       </div>
                     )}
-                    <button className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#d41132] hover:text-white">
-                      <span className="material-symbols-outlined text-[20px] block">
-                        shopping_bag
-                      </span>
-                    </button>
+                    <span className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 group-hover:bg-[#d41132] group-hover:text-white">
+                      <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
+                    </span>
                   </div>
                   <div className="space-y-1">
                     <h3 className="font-bold text-lg text-[#1A1A1A] dark:text-white">

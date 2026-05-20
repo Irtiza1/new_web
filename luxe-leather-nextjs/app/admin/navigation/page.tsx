@@ -1,6 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
+import AdminTable from '@/components/admin/shared/AdminTable';
+import AdminPagination from '@/components/admin/shared/AdminPagination';
+import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+
+import { useToast } from '@/contexts/ToastContext';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface NavItem {
     id: string;
@@ -14,17 +21,49 @@ interface NavItem {
 const emptyForm = { label: '', url: '', display_order: '0', is_visible: true, opens_in_new_tab: false };
 
 export default function AdminNavigationPage() {
+    const { showToast } = useToast();
     const [items, setItems] = useState<NavItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState<NavItem | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
-    const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-    const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-        setToast({ text, type });
-        setTimeout(() => setToast(null), 3000);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (itemId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === itemId ? null : itemId);
     };
 
     const load = useCallback(async () => {
@@ -57,10 +96,80 @@ export default function AdminNavigationPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Remove this nav item?')) return;
-        const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
-        if ((await res.json()).success) { showToast('Nav item removed'); load(); }
-        else showToast('Failed to delete', 'error');
+        if (isBulkDeleting) return;
+
+        setConfirmModal({
+            isOpen: true,
+            title: 'Remove Nav Item',
+            message: 'Remove this nav item? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                try {
+                    const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
+                    if ((await res.json()).success) {
+                        showToast('Nav item removed');
+                        setItems(prev => prev.filter(i => i.id !== id));
+                        setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(id);
+                            return next;
+                        });
+                    } else {
+                        showToast('Failed to delete', 'error');
+                        load();
+                    }
+                } catch (error) {
+                    console.error('Error deleting nav item:', error);
+                    showToast('Failed to delete nav item. Please try again.', 'error');
+                    load();
+                }
+            }
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        if (isBulkDeleting || selectedIds.size === 0) return;
+
+        const count = selectedIds.size;
+        setConfirmModal({
+            isOpen: true,
+            title: `Delete ${count} Nav Items`,
+            message: `Are you sure you want to delete ${count} nav items? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                const idsToDelete = Array.from(selectedIds);
+                let successCount = 0;
+                let failCount = 0;
+
+                try {
+                    await Promise.all(idsToDelete.map(async (id) => {
+                        try {
+                            const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
+                            if (res.ok) successCount++;
+                            else failCount++;
+                        } catch (err) {
+                            failCount++;
+                        }
+                    }));
+
+                    if (successCount > 0) {
+                        setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
+                        setSelectedIds(new Set());
+                    }
+
+                    if (failCount > 0) {
+                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                    }
+                } catch (error) {
+                    console.error('Bulk delete error:', error);
+                    showToast('An error occurred during bulk deletion.', 'error');
+                } finally {
+                    setIsBulkDeleting(false);
+                    load();
+                }
+            }
+        });
     };
 
     const toggleVisibility = async (item: NavItem) => {
@@ -68,86 +177,171 @@ export default function AdminNavigationPage() {
         load();
     };
 
+    const toggleSelectAll = () => {
+        const visibleIds = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(i => i.id);
+        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
+
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (allVisibleSelected) {
+                visibleIds.forEach(id => next.delete(id));
+            } else {
+                visibleIds.forEach(id => next.add(id));
+            }
+            return next;
+        });
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const filteredItems = items.filter(item =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.url.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Calculate stats
+    const visibleCount = items.filter(i => i.is_visible).length;
+    const hiddenCount = items.filter(i => !i.is_visible).length;
+
     return (
-        <main className="flex-1 overflow-y-auto bg-[#f6f7f8] dark:bg-[#101922] p-6 md:p-8">
-            {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {toast.text}
-                </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white">Navigation Editor</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Control what links appear in your storefront header</p>
-                </div>
-                <button onClick={openCreate} className="flex items-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm">
-                    <span className="material-symbols-outlined text-[18px]">add</span> Add Link
+        <AdminPageLayout
+            title="Navigation Editor"
+            subtitle="Control what links appear in your storefront header"
+            actions={
+                <button
+                    onClick={openCreate}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg shadow-md transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    Add Link
                 </button>
-            </div>
-
-            <div className="grid lg:grid-cols-1 sm:grid-cols-3 gap-6">
-                {/* Nav Items List */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-slate-400">drag_indicator</span>
-                            <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Menu Items (ordered by display order)</p>
-                        </div>
-                        {loading ? (
-                            <div className="flex items-center justify-center py-20">
-                                <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">progress_activity</span>
+            }
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Items</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{items.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Visible</p>
+                        <p className="text-base font-black text-emerald-500 leading-none mt-0.5">{visibleCount}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Hidden</p>
+                        <p className={`text-base font-black leading-none mt-0.5 ${hiddenCount > 0 ? 'text-[#d41132]' : 'text-[#0d141b] dark:text-white'}`}>{hiddenCount}</p>
+                    </div>
+                </>
+            }
+            filters={
+                <div className="flex-1 min-w-[200px] relative">
+                    <span className="absolute left-3 top-2.5 text-black/40 dark:text-white/40 material-symbols-outlined text-[20px]">search</span>
+                    <input type="text" placeholder="Search navigation..." value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] focus:ring-2 focus:ring-[#d41132] outline-none transition-all dark:text-white text-sm" />
+                </div>
+            }
+            pagination={
+                <AdminPagination
+                    currentPage={currentPage}
+                    totalItems={filteredItems.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(val) => {
+                        setItemsPerPage(val);
+                        setCurrentPage(1);
+                    }}
+                />
+            }
+            bulkActions={
+                <AdminBulkActionsBar
+                    selectedCount={selectedIds.size}
+                    onCancel={() => setSelectedIds(new Set())}
+                    onDelete={handleBulkDelete}
+                    isDeleting={isBulkDeleting}
+                />
+            }
+        >
+            <AdminTable
+                headers={['Label', 'URL', 'Order', 'Status', 'Actions']}
+                onSelectAll={toggleSelectAll}
+                isAllSelected={filteredItems.length > 0 && filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(i => selectedIds.has(i.id))}
+            >
+                {loading ? (
+                    <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                Loading navigation items...
                             </div>
-                        ) : items.length === 0 ? (
-                            <div className="text-center py-16 text-slate-400">
-                                <span className="material-symbols-outlined text-4xl mb-2 block">menu</span>
-                                <p>No navigation items. Run DB migration first.</p>
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                                {items.map((item, idx) => (
-                                    <div key={item.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${!item.is_visible ? 'opacity-50' : ''}`}>
-                                        <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-black text-slate-500 flex-shrink-0">
-                                            {item.display_order}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{item.label}</p>
-                                            <p className="text-xs text-slate-400 font-mono truncate">{item.url}{item.opens_in_new_tab && <span className="ml-2 text-blue-400">↗ new tab</span>}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => toggleVisibility(item)} className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full transition-all ${item.is_visible ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200' : 'bg-slate-100 text-slate-400 dark:bg-slate-700 hover:bg-slate-200'}`}>
-                                                {item.is_visible ? 'Visible' : 'Hidden'}
-                                            </button>
-                                            <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 transition-colors">
-                                                <span className="material-symbols-outlined text-[18px]">edit</span>
-                                            </button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
-                                                <span className="material-symbols-outlined text-[18px]">delete</span>
-                                            </button>
-                                        </div>
+                        </td>
+                    </tr>
+                ) : filteredItems.length === 0 ? (
+                    <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                            No navigation items found. Add your first link to get started.
+                        </td>
+                    </tr>
+                ) : (
+                    filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
+                        <tr key={item.id} className={`hover:bg-[#f6f7f8] dark:hover:bg-[#17202b] transition-colors group ${selectedIds.has(item.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
+                            <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                    type="checkbox"
+                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
+                                    checked={selectedIds.has(item.id)}
+                                    onChange={() => toggleSelect(item.id)}
+                                />
+                            </td>
+                            <td className="px-6 py-4">
+                                <p className="font-bold text-slate-900 dark:text-white text-sm">{item.label}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                                <p className="text-sm text-slate-500 font-mono truncate">
+                                    {item.url}
+                                    {item.opens_in_new_tab && <span className="ml-2 text-blue-400">&#8599; new tab</span>}
+                                </p>
+                            </td>
+                            <td className="px-6 py-4 text-sm font-bold text-[#0d141b] dark:text-white">
+                                {item.display_order}
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${item.is_visible ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-700'}`}>
+                                    {item.is_visible ? 'Visible' : 'Hidden'}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-right relative">
+                                <button
+                                    onClick={(e) => toggleMenu(item.id, e)}
+                                    className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">more_vert</span>
+                                </button>
+                                {activeMenu === item.id && (
+                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                        <button onClick={() => { toggleVisibility(item); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">{item.is_visible ? 'visibility_off' : 'visibility'}</span> {item.is_visible ? 'Hide' : 'Show'}
+                                        </button>
+                                        <button onClick={() => { openEdit(item); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">edit</span> Edit
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <button onClick={() => { handleDelete(item.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        </button>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Live Preview */}
-                <div>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm sticky top-6">
-                        <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Live Header Preview</p>
-                        <div className="bg-slate-900 rounded-xl p-3 flex items-center gap-4 overflow-x-auto">
-                            <div className="text-white font-black text-xs flex-shrink-0">Luxe Leather</div>
-                            <div className="flex gap-3 flex-wrap">
-                                {items.filter(i => i.is_visible).map(i => (
-                                    <span key={i.id} className="text-slate-300 text-[11px] font-medium whitespace-nowrap">{i.label}</span>
-                                ))}
-                            </div>
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-3 text-center">Only visible items appear in header</p>
-                    </div>
-                </div>
-            </div>
+                                )}
+                            </td>
+                        </tr>
+                    ))
+                )}
+            </AdminTable>
 
             {/* Modal */}
             {showModal && (
@@ -194,6 +388,14 @@ export default function AdminNavigationPage() {
                     </div>
                 </div>
             )}
-        </main>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
+        </AdminPageLayout>
     );
 }

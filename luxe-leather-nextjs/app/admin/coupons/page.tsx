@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+import ConfirmModal from '@/components/admin/ConfirmModal';
 
 interface Coupon {
     id: string;
@@ -31,17 +33,40 @@ export default function AdminCouponsPage() {
     const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const { showToast } = useToast();
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
-    const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-        setToast({ text, type });
-        setTimeout(() => setToast(null), 3500);
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === id ? null : id);
     };
 
     const loadCoupons = useCallback(async () => {
@@ -88,11 +113,18 @@ export default function AdminCouponsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        const res = await fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) { showToast('Coupon deleted'); loadCoupons(); }
-        else showToast('Failed to delete', 'error');
-        setDeleteId(null);
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Coupon',
+            message: 'Are you sure you want to delete this coupon? This action cannot be undone.',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                const res = await fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { showToast('Coupon deleted'); loadCoupons(); }
+                else showToast('Failed to delete', 'error');
+            }
+        });
     };
 
     const toggleActive = async (c: Coupon) => {
@@ -111,24 +143,30 @@ export default function AdminCouponsPage() {
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-        if (!confirm(`Are you sure you want to delete ${selectedIds.size} coupons?`)) return;
-
-        setIsBulkDeleting(true);
-        try {
-            const results = await Promise.all(
-                Array.from(selectedIds).map(id =>
-                    fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                )
-            );
-            const successCount = results.filter(r => r.success).length;
-            showToast(`${successCount} coupons deleted successfully`);
-            loadCoupons();
-            setSelectedIds(new Set());
-        } catch (err) {
-            showToast('Bulk delete failed', 'error');
-        } finally {
-            setIsBulkDeleting(false);
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Coupons',
+            message: `Are you sure you want to delete ${selectedIds.size} coupons? This action cannot be undone.`,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                setIsBulkDeleting(true);
+                try {
+                    const results = await Promise.all(
+                        Array.from(selectedIds).map(id =>
+                            fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' }).then(res => res.json())
+                        )
+                    );
+                    const successCount = results.filter(r => r.success).length;
+                    showToast(`${successCount} coupons deleted successfully`);
+                    loadCoupons();
+                    setSelectedIds(new Set());
+                } catch (err) {
+                    showToast('Bulk delete failed', 'error');
+                } finally {
+                    setIsBulkDeleting(false);
+                }
+            }
+        });
     };
 
     const toggleSelectAll = () => {
@@ -187,6 +225,26 @@ export default function AdminCouponsPage() {
                     }}
                 />
             }
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Coupons</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{coupons.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Active</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{coupons.filter(c => c.is_active).length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Inactive</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{coupons.filter(c => !c.is_active).length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Uses</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{coupons.reduce((sum, c) => sum + (c.uses_count || 0), 0)}</p>
+                    </div>
+                </>
+            }
             bulkActions={
                 <AdminBulkActionsBar
                     selectedCount={selectedIds.size}
@@ -196,32 +254,6 @@ export default function AdminCouponsPage() {
                 />
             }
         >
-            {/* Toast */}
-            {toast && (
-                <div className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                    {toast.text}
-                </div>
-            )}
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {[
-                    { label: 'Total Coupons', value: coupons.length, icon: 'local_offer', color: 'text-blue-600' },
-                    { label: 'Active', value: coupons.filter(c => c.is_active).length, icon: 'check_circle', color: 'text-green-600' },
-                    { label: 'Inactive', value: coupons.filter(c => !c.is_active).length, icon: 'unpublished', color: 'text-red-600' },
-                    { label: 'Total Uses', value: coupons.reduce((sum, c) => sum + (c.uses_count || 0), 0), icon: 'confirmation_number', color: 'text-amber-600' },
-                ].map(s => (
-                    <div key={s.label} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center justify-between gap-4 mb-2">
-                            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">{s.label}</p>
-                            <span className={`material-symbols-outlined text-lg ${s.color}`}>{s.icon}</span>
-                        </div>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">{s.value}</p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Table */}
             <AdminTable
                 headers={['Code', 'Type', 'Value', 'Min. Order', 'Uses', 'Expiry', 'Status', 'Actions']}
                 onSelectAll={toggleSelectAll}
@@ -264,15 +296,27 @@ export default function AdminCouponsPage() {
                                     {c.is_active ? 'Active' : 'Inactive'}
                                 </button>
                             </td>
-                            <td className="px-4 py-4">
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-                                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                                    </button>
-                                    <button onClick={() => setDeleteId(c.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
-                                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                                    </button>
-                                </div>
+                            <td className="px-4 py-4 text-right relative">
+                                <button
+                                    onClick={(e) => toggleMenu(c.id, e)}
+                                    className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">more_vert</span>
+                                </button>
+                                {activeMenu === c.id && (
+                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                        <button onClick={() => { toggleActive(c); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">{c.is_active ? 'toggle_off' : 'toggle_on'}</span> {c.is_active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button onClick={() => { openEdit(c); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">edit</span> Edit
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <button onClick={() => { handleDelete(c.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        </button>
+                                    </div>
+                                )}
                             </td>
                         </tr>
                     ))
@@ -340,22 +384,13 @@ export default function AdminCouponsPage() {
                 </div>
             )}
 
-            {/* Delete Confirm */}
-            {deleteId && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="material-symbols-outlined text-red-500 text-3xl">delete</span>
-                        </div>
-                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Delete Coupon?</h3>
-                        <p className="text-slate-500 text-sm mb-6">This action cannot be undone.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancel</button>
-                            <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors">Delete</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
         </AdminPageLayout>
     );
 }

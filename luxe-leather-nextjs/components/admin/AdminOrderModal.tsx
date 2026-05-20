@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Order } from '@/lib/supabase';
+import { useToast } from '@/contexts/ToastContext';
 
 interface AdminOrderModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ type SimpleCustomer = { id: string; name: string; email: string };
 type SimpleProduct = { id: string; name: string; price: number; stock: number };
 
 export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrderModalProps) {
+    const { showToast } = useToast();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -104,8 +106,8 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!customerId) return alert('Please select a customer');
-        if (items.length === 0) return alert('Please add at least one item');
+        if (!customerId) { showToast('Please select a customer', 'error'); return; }
+        if (items.length === 0) { showToast('Please add at least one item', 'error'); return; }
 
         setIsLoading(true);
         try {
@@ -119,7 +121,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
             onClose();
         } catch (error) {
             console.error('Error submitting order:', error);
-            alert('Failed to create order');
+            showToast('Failed to create order', 'error');
         } finally {
             setIsLoading(false);
         }

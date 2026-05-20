@@ -5,6 +5,7 @@ import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
+import { useToast } from '@/contexts/ToastContext';
 import { Customer } from '@/lib/supabase';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 
@@ -17,8 +18,10 @@ interface CustomerWithStats extends Customer {
 
 import AdminCustomerModal, { pCustomer } from '@/components/admin/AdminCustomerModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import CustomerViewDrawer from '@/components/admin/CustomerViewDrawer';
 
 export default function AdminCustomersPage() {
+    const { showToast } = useToast();
     const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +32,7 @@ export default function AdminCustomersPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [viewingCustomer, setViewingCustomer] = useState<CustomerWithStats | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -151,7 +155,7 @@ export default function AdminCustomersPage() {
                     });
                 } catch (error) {
                     console.error('Error deleting customer:', error);
-                    alert('Failed to delete customer. They might still have orders that could not be removed.');
+                    showToast('Failed to delete customer. They might still have orders that could not be removed.', 'error');
                     loadCustomers(); // Refresh on error
                 }
             }
@@ -190,7 +194,7 @@ export default function AdminCustomersPage() {
                     }
 
                     if (failCount > 0) {
-                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
@@ -239,11 +243,11 @@ export default function AdminCustomersPage() {
                 await loadCustomers();
                 setIsModalOpen(false);
             } else {
-                alert('Failed to create customer: ' + (result.error || result.message));
+                showToast('Failed to create customer: ' + (result.error || result.message), 'error');
             }
         } catch (error) {
             console.error('Error creating customer:', error);
-            alert('An error occurred while creating the customer.');
+            showToast('An error occurred while creating the customer.', 'error');
         }
     };
 
@@ -262,11 +266,11 @@ export default function AdminCustomersPage() {
                 setIsModalOpen(false);
                 setEditingCustomer(null);
             } else {
-                alert('Failed to update customer: ' + result.error);
+                showToast('Failed to update customer: ' + result.error, 'error');
             }
         } catch (error) {
             console.error('Error updating customer:', error);
-            alert('An error occurred while updating the customer.');
+            showToast('An error occurred while updating the customer.', 'error');
         }
     };
 
@@ -289,6 +293,22 @@ export default function AdminCustomersPage() {
         <AdminPageLayout
             title="Customer Management"
             subtitle="Manage and view your customer database, track spending, and segment users."
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Customers</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{customers.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">VIP (&gt;$500)</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{customers.filter(c => c.totalSpent > 500).length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Repeat Buyers</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{customers.filter(c => c.ordersCount > 1).length}</p>
+                    </div>
+                </>
+            }
             actions={
                 <div className="flex gap-3">
                     <button
@@ -433,7 +453,7 @@ export default function AdminCustomersPage() {
                                 </button>
                                 {activeMenu === customer.id && (
                                     <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
-                                        <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                        <button onClick={() => { setViewingCustomer(customer); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">visibility</span> View Profile
                                         </button>
                                         <button onClick={() => { openEditModal(customer); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
@@ -464,6 +484,14 @@ export default function AdminCustomersPage() {
                 onConfirm={confirmModal.onConfirm}
                 onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
             />
+            {viewingCustomer && (
+                <CustomerViewDrawer
+                    customer={viewingCustomer}
+                    onClose={() => setViewingCustomer(null)}
+                    onEdit={() => { openEditModal(viewingCustomer); setViewingCustomer(null); }}
+                    onDelete={() => { handleDeleteCustomer(viewingCustomer.id); setViewingCustomer(null); }}
+                />
+            )}
         </AdminPageLayout>
     );
 }

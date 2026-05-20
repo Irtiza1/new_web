@@ -20,6 +20,7 @@ export default function Header() {
     const { cartCount, cartTotal, openCart } = useCart();
     const router = useRouter();
     const [navItems, setNavItems] = useState<NavItem[]>([]);
+    const [showAccountToast, setShowAccountToast] = useState(false);
 
     useEffect(() => {
         const homeItem: NavItem = { id: 'home', label: 'Home', url: '/', is_visible: true, opens_in_new_tab: false, display_order: -1 };
@@ -86,14 +87,22 @@ export default function Header() {
                                 search
                             </span>
                         </button>
-                        <button
-                            aria-label="Account"
-                            className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors hidden md:flex items-center justify-center"
-                        >
-                            <span className="material-symbols-outlined text-[24px]">
-                                person
-                            </span>
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => { setShowAccountToast(true); setTimeout(() => setShowAccountToast(false), 2000); }}
+                                aria-label="Account"
+                                className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors hidden md:flex items-center justify-center"
+                            >
+                                <span className="material-symbols-outlined text-[24px]">
+                                    person
+                                </span>
+                            </button>
+                            {showAccountToast && (
+                                <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg z-50">
+                                    Coming soon
+                                </div>
+                            )}
+                        </div>
                         <button
                             onClick={openCart}
                             aria-label="Cart"

@@ -1,5 +1,6 @@
 -- Migration: Create customers table
 -- Created: 2026-02-10
+-- Updated: 2026-04-09 (aligned with actual DB schema — camelCase columns)
 -- Description: Customer information and contact details
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -10,7 +11,8 @@ CREATE TABLE IF NOT EXISTS customers (
   address TEXT,
   city VARCHAR(100),
   country VARCHAR(100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index for email lookups

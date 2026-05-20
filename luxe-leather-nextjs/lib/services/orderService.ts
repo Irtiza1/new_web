@@ -78,7 +78,7 @@ export const create = async (orderData: any) => {
     // Insert the main Order record
     const { data, error } = await supabase
         .from('orders')
-        .insert([{ ...orderPayload, id: orderId, createdAt: now, updatedAt: now, subtotal: orderPayload.total ?? 0, shipping: orderPayload.shipping ?? 0, customer_id: orderPayload.customer_id || orderPayload.customerId }])
+        .insert([{ ...orderPayload, id: orderId, items: JSON.stringify(items), createdAt: now, updatedAt: now, subtotal: orderPayload.total ?? 0, shipping: orderPayload.shipping ?? 0, customer_id: orderPayload.customer_id || orderPayload.customerId }])
         .select()
         .single();
 
@@ -88,23 +88,20 @@ export const create = async (orderData: any) => {
 
     // orderId already declared above; data.id will match it
 
-    // Insert the associated OrderItems if provided
+    // Insert the associated OrderItems if provided (non-fatal — order data is in JSONB items column)
     if (items && Array.isArray(items) && items.length > 0) {
-        const orderItems = items.map((item: any) => ({
-            id: crypto.randomUUID(),
-            order_id: orderId,
-            product_id: item.product_id || item.productId,
-            quantity: item.quantity,
-            price: item.price,
-        }));
+        try {
+            const orderItems = items.map((item: any) => ({
+                id: crypto.randomUUID(),
+                order_id: orderId,
+                product_id: item.product_id || item.productId,
+                quantity: item.quantity,
+                price: item.price,
+            }));
 
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderItems);
-
-        if (itemsError) {
-            console.error('Failed to insert order items:', itemsError);
-            throw new AppError(`Order created but items failed to save: ${itemsError.message}`, 500, 'DB_ERROR');
+            await supabase.from('order_items').insert(orderItems);
+        } catch (e) {
+            console.warn('order_items insert failed (non-fatal):', e);
         }
     }
 

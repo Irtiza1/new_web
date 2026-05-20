@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/contexts/ToastContext';
 
 import type { AnalyticsSummary, TopProduct, CustomerCountry } from '@/lib/services/analyticsService';
 
 export default function AdminAnalyticsPage() {
+    const { showToast } = useToast();
     const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
     const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
     const [countries, setCountries] = useState<CustomerCountry[]>([]);
@@ -69,7 +71,7 @@ export default function AdminAnalyticsPage() {
             pdf.save('analytics-report.pdf');
         } catch (err) {
             console.error('PDF Export failed:', err);
-            alert('Failed to generate PDF');
+            showToast('Failed to generate PDF', 'error');
         }
     };
 

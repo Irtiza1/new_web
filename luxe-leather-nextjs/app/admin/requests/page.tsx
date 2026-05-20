@@ -6,17 +6,20 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
+import { useToast } from '@/contexts/ToastContext';
 import type { CustomRequest } from '@/lib/services/requestService';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminRequestModal, { pRequest } from '@/components/admin/AdminRequestModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 
 export default function AdminRequestsPage() {
+    const { showToast } = useToast();
     const [requests, setRequests] = useState<CustomRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<CustomRequest | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -43,6 +46,23 @@ export default function AdminRequestsPage() {
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (activeMenu && !target.closest('.action-menu-trigger') && !target.closest('.action-menu')) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeMenu]);
+
+    const toggleMenu = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setActiveMenu(activeMenu === id ? null : id);
+    };
 
     // Filtered requests for display
     const filteredRequests = requests.filter(req => {
@@ -118,7 +138,7 @@ export default function AdminRequestsPage() {
                 if (selectedRequest?.id === id) {
                     setSelectedRequest({ ...selectedRequest, status: newStatus as any });
                 }
-                alert(`Status updated to ${newStatus}`);
+                showToast(`Status updated to ${newStatus}`);
             }
         } catch (error) {
             console.error('Failed to update status:', error);
@@ -148,11 +168,11 @@ export default function AdminRequestsPage() {
                             setSelectedRequest(null);
                         }
                     } else {
-                        alert('Failed to delete request.');
+                        showToast('Failed to delete request.', 'error');
                     }
                 } catch (err) {
                     console.error('Delete error:', err);
-                    alert('An unexpected error occurred.');
+                    showToast('An unexpected error occurred.', 'error');
                 }
             }
         });
@@ -193,7 +213,7 @@ export default function AdminRequestsPage() {
                     }
 
                     if (failCount > 0) {
-                        alert(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`);
+                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
@@ -242,11 +262,11 @@ export default function AdminRequestsPage() {
                 await fetchRequests();
                 setIsModalOpen(false);
             } else {
-                alert('Failed to create request: ' + (result.error || result.message));
+                showToast('Failed to create request: ' + (result.error || result.message), 'error');
             }
         } catch (error) {
             console.error('Error creating request:', error);
-            alert('An error occurred while creating the request');
+            showToast('An error occurred while creating the request', 'error');
         }
     };
 
@@ -276,6 +296,22 @@ export default function AdminRequestsPage() {
         <AdminPageLayout
             title="Custom Request Pipeline"
             subtitle="Manage and track incoming custom inquiries."
+            stats={
+                <>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Requests</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{requests.length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">New</p>
+                        <p className="text-base font-black text-blue-600 leading-none mt-0.5">{newRequestCount}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Completed</p>
+                        <p className="text-base font-black text-emerald-500 leading-none mt-0.5">{requests.filter(r => r.status?.toLowerCase() === 'completed').length}</p>
+                    </div>
+                </>
+            }
             actions={
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -334,13 +370,13 @@ export default function AdminRequestsPage() {
             }
         >
             <AdminTable
-                headers={['Customer', 'Project', 'Budget', 'Status', 'Date']}
+                headers={['Customer', 'Project', 'Budget', 'Status', 'Date', 'Actions']}
                 onSelectAll={toggleSelectAll}
                 isAllSelected={filteredRequests.length > 0 && filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(r => selectedIds.has(r.id))}
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
+                        <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
                             <div className="flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
                                 Loading requests...
@@ -349,7 +385,7 @@ export default function AdminRequestsPage() {
                     </tr>
                 ) : filteredRequests.length === 0 ? (
                     <tr>
-                        <td colSpan={6} className="py-12 text-center text-slate-500 dark:text-slate-400">
+                        <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400">
                             No requests found.
                         </td>
                     </tr>
@@ -386,6 +422,28 @@ export default function AdminRequestsPage() {
                             </td>
                             <td className="py-4 px-6 text-sm text-slate-500 dark:text-slate-400 font-medium tabular-nums">
                                 {isMounted ? new Date(req.createdAt).toLocaleDateString() : '...'}
+                            </td>
+                            <td className="py-4 px-6 text-right relative" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    onClick={(e) => toggleMenu(req.id, e)}
+                                    className="action-menu-trigger text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">more_vert</span>
+                                </button>
+                                {activeMenu === req.id && (
+                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                        <button onClick={() => { setSelectedRequest(req); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">visibility</span> View Details
+                                        </button>
+                                        <button onClick={() => { handleStatusUpdate(req.id, 'quoted'); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">request_quote</span> Approve & Quote
+                                        </button>
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <button onClick={() => { handleDelete(req.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        </button>
+                                    </div>
+                                )}
                             </td>
                         </tr>
                     ))

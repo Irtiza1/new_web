@@ -1,4 +1,5 @@
 import { supabase, type CustomRequest } from '@/lib/supabase';
+import { AppError } from '@/lib/utils/AppError';
 
 export type { CustomRequest };
 
@@ -49,7 +50,7 @@ export const getAll = async (query: {
 
     const { data, error, count } = await dbQuery;
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
     let results = (data as CustomRequest[]) || [];
 
@@ -85,7 +86,7 @@ export const getById = async (id: string) => {
         .eq('id', id)
         .single();
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
     return data as CustomRequest;
 };
 
@@ -102,7 +103,7 @@ export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | '
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
     return data as CustomRequest;
 };
 
@@ -118,7 +119,7 @@ export const updateStatus = async (id: string, status: string) => {
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
     return data as CustomRequest;
 };
 
@@ -143,7 +144,7 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
 
         if (updateError) {
             console.error('Supabase update error for CustomRequest:', JSON.stringify(updateError));
-            throw updateError;
+            throw new AppError(updateError.message, 500, 'DB_ERROR');
         }
 
         // Step 2: Re-fetch the updated record
@@ -153,11 +154,12 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
             .eq('id', id)
             .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) throw new AppError(fetchError.message, 500, 'DB_ERROR');
         return data as CustomRequest;
     } catch (err) {
         console.error('Failed to update request:', err);
-        throw err;
+        if (err instanceof AppError) throw err;
+        throw new AppError(err instanceof Error ? err.message : 'Failed to update request', 500, 'DB_ERROR');
     }
 };
 
@@ -170,7 +172,7 @@ export const remove = async (id: string) => {
         .delete()
         .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
     return { success: true };
 };
 
@@ -182,7 +184,7 @@ export const getStats = async (): Promise<RequestStats> => {
         .from('custom_requests')
         .select('status');
 
-    if (error) throw error;
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
     const stats = (data || []).reduce(
         (acc: RequestStats, curr) => {

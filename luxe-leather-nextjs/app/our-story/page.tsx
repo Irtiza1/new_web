@@ -24,12 +24,6 @@ export default function OurStoryPage() {
                         <p className="text-[#1b0e10]/60 dark:text-gray-400 text-base md:text-lg font-normal leading-relaxed">
                             Every piece tells a story of patience, skill, and an unwavering commitment to excellence. We don&apos;t just make leather goods; we create heirlooms meant to be passed down.
                         </p>
-                        <div className="pt-6">
-                            <button className="inline-flex items-center gap-2 px-8 py-3 rounded-sm border border-[#cf1736] text-[#cf1736] hover:bg-[#cf1736] hover:text-white transition-all duration-300 font-bold text-sm tracking-wide uppercase group">
-                                Read Our History
-                                <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                            </button>
-                        </div>
                     </div>
                 </section>
 
@@ -52,7 +46,7 @@ export default function OurStoryPage() {
                     <div className="max-w-[1200px] mx-auto">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-300 dark:divide-gray-700/50">
                             {[
-                                { value: '10+', label: 'Years of Experience', sub: 'Refining our craft daily' },
+                                { value: '30+', label: 'Years of Experience', sub: 'Refining our craft daily' },
                                 { value: '5k+', label: 'Unique Products', sub: 'Created for clients globally' },
                                 { value: '40+', label: 'Countries Served', sub: 'Shipping worldwide' },
                                 { value: '100%', label: 'Handcrafted Quality', sub: 'No shortcuts taken' },

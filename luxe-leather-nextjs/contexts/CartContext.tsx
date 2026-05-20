@@ -20,6 +20,7 @@ interface CheckoutData {
     address?: string;
     city?: string;
     country?: string;
+    notes?: string;
 }
 
 interface CartContextType {
@@ -37,7 +38,8 @@ interface CartContextType {
     updateQuantity: (id: number, delta: number, variant?: string) => void;
     applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
     removeCoupon: () => void;
-    checkout: (data: CheckoutData) => Promise<void>;
+    checkout: (data: CheckoutData) => Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string }>;
+    clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -155,80 +157,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const checkout = async (data: CheckoutData) => {
-        // Find or create the customer
-        let customerId: string;
+    const checkout = async (data: CheckoutData): Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string }> => {
         try {
-            // Check if customer exists
-            const resFn = await fetch(`/api/customers?email=${encodeURIComponent(data.email)}`);
-            const resData = await resFn.json();
-
-            if (resData.success && resData.data && resData.data.length > 0) {
-                customerId = resData.data[0].id;
-            } else {
-                // Create new customer
-                const createRes = await fetch('/api/customers', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: data.name,
-                        email: data.email,
-                        phone: data.phone,
-                        location: [data.city, data.country].filter(Boolean).join(', '),
-                    }),
-                });
-                const createData = await createRes.json();
-
-                if (!createData.success) {
-                    throw new Error(createData.message || 'Failed to create customer');
-                }
-                customerId = createData.data.id;
-            }
-        } catch (error) {
-            console.error('Checkout error (Customer):', error);
-            alert('Failed to process customer information');
-            return;
-        }
-
-        // Create the order
-        const orderItems = cartItems.map((item) => ({
-            product_id: String(item.id),
-            quantity: item.quantity,
-            price: item.price,
-            size: item.variant?.match(/Size: ([^,]+)/)?.[1],
-            color: item.variant?.match(/Color: (.+)/)?.[1],
-        }));
-
-        try {
-            const orderRes = await fetch('/api/orders', {
+            const res = await fetch('/api/checkout/payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    customer_id: customerId,
-                    status: 'PENDING',
-                    total: cartTotal,
-                    items: orderItems,
+                    customer: data,
+                    items: cartItems,
+                    total: totalAfterDiscount,
                 }),
             });
-            const orderData = await orderRes.json();
+            const result = await res.json();
 
-            if (!orderData.success) {
-                throw new Error(orderData.message || 'Failed to create order');
+            if (!result.success) {
+                return { success: false, message: result.message || 'Failed to create payment' };
             }
 
-            // Clear the cart
-            setCartItems([]);
-            localStorage.removeItem("luxeCart");
-            setIsOpen(false);
-
-            // Redirect or show success
-            alert('Order placed successfully!');
-            window.location.href = '/shop'; // Or order success page
-
-        } catch (error) {
-            console.error('Checkout error (Order):', error);
-            alert('Failed to place order. Please try again.');
+            return {
+                success: true,
+                clientSecret: result.clientSecret,
+                orderId: result.orderId,
+            };
+        } catch (error: any) {
+            console.error('Checkout error:', error);
+            return { success: false, message: error.message || 'Checkout failed' };
         }
+    };
+
+    const clearCart = () => {
+        setCartItems([]);
+        setAppliedCoupon(null);
+        localStorage.removeItem("luxeCart");
+        localStorage.removeItem("luxeCoupon");
+        setIsOpen(false);
     };
 
     return (
@@ -249,6 +211,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 applyCoupon,
                 removeCoupon,
                 checkout,
+                clearCart,
             }}
         >
             {children}

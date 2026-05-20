@@ -53,6 +53,10 @@ export type Order = {
     customerId: string;
     status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
     total: number;
+    notes?: string | null;
+    stripe_session_id?: string | null;
+    stripe_payment_intent_id?: string | null;
+    payment_status?: 'unpaid' | 'paid' | 'failed' | 'refunded';
     items?: OrderItem[];
     createdAt: string;
     updatedAt?: string;
