@@ -69,7 +69,7 @@ export async function GET() {
             ('Shop', '/shop', 1, true),
             ('Bespoke', '/bespoke', 2, true),
             ('Shipping & Sizing', '/shipping', 3, true),
-            ('Our Story', '/our-story', 4, true),
+            ('Our Story', '/story', 4, true),
             ('Contact', '/contact', 5, true)
         ) AS t(label, url, display_order, is_visible)
         WHERE NOT EXISTS (SELECT 1 FROM nav_items LIMIT 1)`,
