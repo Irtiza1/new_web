@@ -176,9 +176,15 @@ export default async function HomePage() {
                         {badgeText}
                       </div>
                     )}
-                    <span className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 group-hover:bg-[#d41132] group-hover:text-white">
-                      <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
-                    </span>
+                    {product.stock !== undefined && product.stock === 0 ? (
+                      <span className="absolute bottom-4 right-4 bg-white text-red-500 font-bold text-[10px] uppercase tracking-widest px-3 py-2 rounded shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        Out of Stock
+                      </span>
+                    ) : (
+                      <span className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 group-hover:bg-[#d41132] group-hover:text-white">
+                        <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <h3 className="font-bold text-lg text-[#1A1A1A] dark:text-white">

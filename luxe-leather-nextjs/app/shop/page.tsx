@@ -219,21 +219,27 @@ function ShopContent() {
                                                 {product.badge}
                                             </span>
                                         )}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                addToCart({
-                                                    id: typeof product.id === 'string' ? parseInt(product.id, 16) % 100000 : product.id,
-                                                    name: product.name,
-                                                    price: product.price,
-                                                    image: getProductImage(product),
-                                                    variant: product.sizes ? `Size: ${product.sizes[0]}` : 'Standard'
-                                                });
-                                            }}
-                                            className="absolute bottom-4 right-4 bg-white text-[#0e121b] p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#0e121b] hover:text-white"
-                                        >
-                                            <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
-                                        </button>
+                                        {product.stock !== undefined && product.stock === 0 ? (
+                                            <span className="absolute bottom-4 right-4 bg-white text-red-500 font-bold text-[10px] uppercase tracking-widest px-3 py-2 rounded shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                                                Out of Stock
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    addToCart({
+                                                        id: product.id,
+                                                        name: product.name,
+                                                        price: product.price,
+                                                        image: getProductImage(product),
+                                                        variant: product.sizes ? `Size: ${product.sizes[0]}` : 'Standard'
+                                                    });
+                                                }}
+                                                className="absolute bottom-4 right-4 bg-white text-[#0e121b] p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#0e121b] hover:text-white"
+                                            >
+                                                <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
+                                            </button>
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-lg group-hover:text-[#4e6797] transition-colors">{product.name}</h3>

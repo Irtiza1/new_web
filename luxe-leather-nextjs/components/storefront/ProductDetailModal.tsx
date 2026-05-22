@@ -209,7 +209,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
             : `Size: ${productSizes[selectedSize]}, Color: ${defaultColors[selectedColor].name}`;
 
         addToCart({
-            id: typeof product.id === 'string' ? parseInt(product.id, 16) % 100000 : Number(product.id),
+            id: String(product.id),
             name: product.name,
             price: displayPrice,
             image: productImage,

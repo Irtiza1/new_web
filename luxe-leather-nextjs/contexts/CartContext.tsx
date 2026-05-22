@@ -5,7 +5,7 @@ import { Coupon } from "@/lib/supabase";
 
 export interface CartItem {
     // ... same ...
-    id: number;
+    id: string;
     name: string;
     variant?: string;
     quantity: number;
@@ -21,6 +21,7 @@ interface CheckoutData {
     city?: string;
     country?: string;
     notes?: string;
+    dummyPayment?: boolean;
 }
 
 interface CartContextType {
@@ -34,12 +35,13 @@ interface CartContextType {
     discount: number;
     totalAfterDiscount: number;
     addToCart: (item: Omit<CartItem, "quantity">) => void;
-    removeFromCart: (id: number, variant?: string) => void;
-    updateQuantity: (id: number, delta: number, variant?: string) => void;
+    removeFromCart: (id: string, variant?: string) => void;
+    updateQuantity: (id: string, delta: number, variant?: string) => void;
     applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
     removeCoupon: () => void;
-    checkout: (data: CheckoutData) => Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string }>;
+    checkout: (data: CheckoutData) => Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string; dummyMode?: boolean }>;
     clearCart: () => void;
+    validateCheckoutStock: () => Promise<{ success: boolean; message?: string }>;
     removedItems: string[]; // names of items removed during last validation
     clearRemovedItems: () => void;
 }
@@ -196,11 +198,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsOpen(true); // Open cart when adding an item
     };
 
-    const removeFromCart = (id: number, variant?: string) => {
+    const removeFromCart = (id: string, variant?: string) => {
         setCartItems((prevItems) => prevItems.filter((item) => !(item.id === id && item.variant === variant)));
     };
 
-    const updateQuantity = (id: number, delta: number, variant?: string) => {
+    const updateQuantity = (id: string, delta: number, variant?: string) => {
         setCartItems((prevItems) =>
             prevItems.map((item) => {
                 if (item.id === id && item.variant === variant) {
@@ -221,6 +223,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     customer: data,
                     items: cartItems,
                     total: totalAfterDiscount,
+                    dummyPayment: data.dummyPayment,
                 }),
             });
             const result = await res.json();
@@ -233,6 +236,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 success: true,
                 clientSecret: result.clientSecret,
                 orderId: result.orderId,
+                dummyMode: result.dummyMode,
             };
         } catch (error: any) {
             console.error('Checkout error:', error);
@@ -240,13 +244,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const clearCart = () => {
+    const validateCheckoutStock = async (): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const res = await fetch('/api/products/validate-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: cartItems })
+            });
+            return await res.json();
+        } catch (error) {
+            console.error('[validateCheckoutStock] error:', error);
+            return { success: false, message: 'Failed to validate stock.' };
+        }
+    };
+
+    const clearCart = useCallback(() => {
         setCartItems([]);
         setAppliedCoupon(null);
         localStorage.removeItem("luxeCart");
         localStorage.removeItem("luxeCoupon");
         setIsOpen(false);
-    };
+    }, []);
 
     return (
         <CartContext.Provider
@@ -266,6 +284,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 applyCoupon,
                 removeCoupon,
                 checkout,
+                validateCheckoutStock,
                 clearCart,
                 removedItems,
                 clearRemovedItems,

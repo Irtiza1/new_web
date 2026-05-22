@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import Header from "@/components/storefront/Header";
 import Footer from "@/components/storefront/Footer";
@@ -22,6 +23,23 @@ export default function CartPage() {
     const [couponCode, setCouponCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ text: string, type: 'error' | 'success' } | null>(null);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const router = useRouter();
+    const { validateCheckoutStock } = useCart();
+
+    const handleCheckout = async () => {
+        setCheckoutError(null);
+        setIsCheckingOut(true);
+        const result = await validateCheckoutStock();
+        setIsCheckingOut(false);
+
+        if (result.success) {
+            router.push('/checkout');
+        } else {
+            setCheckoutError(result.message || 'Failed to validate stock.');
+        }
+    };
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return;
@@ -180,13 +198,29 @@ export default function CartPage() {
                                 </div>
                             ) : null}
 
-                            <Link
-                                href="/checkout"
-                                className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10 hover:-translate-y-1 mb-8"
+                            {checkoutError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2">
+                                    <span className="material-symbols-outlined text-red-500 text-[18px] shrink-0 mt-0.5">error</span>
+                                    <p className="text-xs font-bold text-red-700 leading-tight">
+                                        {checkoutError}
+                                    </p>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handleCheckout}
+                                disabled={isCheckingOut}
+                                className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10 hover:-translate-y-1 mb-8 disabled:opacity-50"
                             >
-                                Secure Checkout
-                                <span className="material-symbols-outlined text-[20px]">lock</span>
-                            </Link>
+                                {isCheckingOut ? (
+                                    <span className="animate-spin material-symbols-outlined text-[20px]">progress_activity</span>
+                                ) : (
+                                    <>
+                                        Secure Checkout
+                                        <span className="material-symbols-outlined text-[20px]">lock</span>
+                                    </>
+                                )}
+                            </button>
 
                             <div className="space-y-6">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">We Accept</p>

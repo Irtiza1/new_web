@@ -183,8 +183,8 @@ export default function BespokePage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Object Type <span className="text-red-500">*</span></p>
-                                            <select name="item_type" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white appearance-none cursor-pointer">
-                                                <option value="" disabled selected>Select Item Category</option>
+                                            <select name="item_type" required defaultValue="" className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white appearance-none cursor-pointer">
+                                                <option value="" disabled>Select Item Category</option>
                                                 <option value="briefcase">Luxury Briefcase</option>
                                                 <option value="duffle">Travel Duffle</option>
                                                 <option value="jacket">Bespoke Jacket</option>

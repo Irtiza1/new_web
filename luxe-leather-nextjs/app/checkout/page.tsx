@@ -8,9 +8,11 @@ import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 import StripePaymentForm from '@/components/storefront/StripePaymentForm';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage() {
-    const { cartItems, cartTotal, totalAfterDiscount, checkout } = useCart();
+    const router = useRouter();
+    const { cartItems, cartTotal, totalAfterDiscount, checkout, clearCart } = useCart();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -53,6 +55,30 @@ export default function CheckoutPage() {
         }
 
         setIsSubmitting(false);
+    };
+
+    const handleDummySubmit = async () => {
+        setIsSubmitting(true);
+        setError(null);
+
+        const result = await checkout({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            country: formData.country,
+            notes: formData.notes,
+            dummyPayment: true,
+        });
+
+        if (result.success && result.dummyMode && result.orderId) {
+            clearCart();
+            router.push(`/order-success?order_id=${result.orderId}&redirect_status=succeeded`);
+        } else {
+            setError(result.message || 'Failed to process dummy payment.');
+            setIsSubmitting(false);
+        }
     };
 
     if (cartItems.length === 0) {
@@ -203,6 +229,18 @@ export default function CheckoutPage() {
                                     <p className="text-[10px] text-center text-gray-400 mt-4 uppercase font-bold tracking-tighter">
                                         You&apos;ll enter card details on the next step · Secured by Stripe
                                     </p>
+
+                                    {process.env.NODE_ENV === 'development' && (
+                                        <button
+                                            type="button"
+                                            onClick={handleDummySubmit}
+                                            disabled={isSubmitting}
+                                            className="w-full mt-4 bg-slate-800 text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest shadow-md hover:bg-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">bug_report</span>
+                                            Bypass Payment (Test Mode)
+                                        </button>
+                                    )}
                                 </div>
                             </form>
                         )}

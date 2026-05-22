@@ -25,19 +25,44 @@ const paymentIntentSchema = z.object({
         variant: z.string().optional(),
     })).min(1, "At least one item is required"),
     total: z.number().min(0.5),
+    dummyPayment: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest){
-    if (!isStripeConfigured() || !stripe){
-        return NextResponse.json({
-            success: false,
-            message: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.',
-        }, {status: 503, statusText: "Stripe is not configured"});
-    }
-
-    try{
+    try {
         const body = await req.json();
         const data = paymentIntentSchema.parse(body);
+
+        if (!data.dummyPayment && (!isStripeConfigured() || !stripe)) {
+            return NextResponse.json({
+                success: false,
+                message: 'Stripe is not configured. Please add STRIPE_SECRET_KEY to your environment variables.',
+            }, { status: 503, statusText: "Stripe is not configured" });
+        }
+
+        // Step 0: Pre-flight Stock Check
+        for (const item of data.items) {
+            const productId = String(item.id);
+            const { data: productData, error: productError } = await supabase
+                .from('products')
+                .select('stock, name')
+                .eq('id', productId)
+                .single();
+                
+            if (productError || !productData) {
+                return NextResponse.json({
+                    success: false,
+                    message: `Product ${item.name} not found.`,
+                }, { status: 400 });
+            }
+            
+            if (productData.stock < item.quantity) {
+                return NextResponse.json({
+                    success: false,
+                    message: `Insufficient stock for ${productData.name}. Only ${productData.stock} available.`,
+                }, { status: 400 });
+            }
+        }
 
         // Step 1: Find or create customer
         let customerId: string ;
@@ -74,14 +99,15 @@ export async function POST(req: NextRequest){
             customerId = created.id;
         }
             //step2: create pending order in database
+            const isDummy = !!data.dummyPayment;
             const order = await orderService.create({
                 customer_id: customerId,
-                status: 'PENDING',
+                status: isDummy ? 'PROCESSING' : 'PENDING',
                 total: data.total,
                 subtotal: data.total,
                 shipping: 0,
                 notes: data.customer.notes || null,
-                payment_status: 'unpaid',
+                payment_status: isDummy ? 'paid' : 'unpaid',
                 items: data.items.map((item) => ({
                     product_id: String(item.id),
                     quantity: item.quantity,
@@ -90,6 +116,24 @@ export async function POST(req: NextRequest){
                     variant: item.variant,
                 })),
             });
+
+            // Step 2.5: Stock Deduction
+            for (const item of data.items) {
+                const productId = String(item.id);
+                const { data: currentProduct } = await supabase.from('products').select('stock').eq('id', productId).single();
+                if (currentProduct) {
+                    await supabase.from('products').update({ stock: Math.max(0, currentProduct.stock - item.quantity) }).eq('id', productId);
+                }
+            }
+
+            if (isDummy) {
+                return NextResponse.json({
+                    success: true,
+                    dummyMode: true,
+                    orderId: order.id,
+                    message: "Test order placed successfully",
+                });
+            }
 
             // Step 3: Create Stripe Payment Intent
             const paymentIntent = await stripe.paymentIntents.create({

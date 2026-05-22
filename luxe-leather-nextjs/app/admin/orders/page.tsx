@@ -368,6 +368,7 @@ export default function AdminOrdersPage() {
                             { label: 'Pending', value: 'PENDING' },
                             { label: 'Processing', value: 'PROCESSING' },
                             { label: 'Shipped', value: 'SHIPPED' },
+                            { label: 'Delivered', value: 'DELIVERED' },
                         ]}
                         activeTab={statusFilter}
                         onTabChange={setStatusFilter}

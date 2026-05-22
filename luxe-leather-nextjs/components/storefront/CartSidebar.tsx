@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
@@ -10,8 +11,24 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount, removedItems } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount, removedItems, validateCheckoutStock } = useCart();
     const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+    const [isValidating, setIsValidating] = useState(false);
+
+    const handleCheckoutRoute = async (route: string) => {
+        setError(null);
+        setIsValidating(true);
+        const result = await validateCheckoutStock();
+        setIsValidating(false);
+        
+        if (result.success) {
+            onClose();
+            router.push(route);
+        } else {
+            setError(result.message || "Failed to validate stock.");
+        }
+    };
 
     return (
         <>
@@ -125,25 +142,40 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3">
-                            <Link
-                                href="/cart"
-                                onClick={onClose}
+                        {error && (
+                            <div className="mx-0 mt-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2">
+                                <span className="material-symbols-outlined text-red-500 text-[18px] shrink-0 mt-0.5">error</span>
+                                <p className="text-xs font-bold text-red-700 leading-tight">
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-3 mt-4">
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    router.push('/cart');
+                                }}
                                 className="w-full h-14 flex items-center justify-center gap-3 rounded-xl border-2 border-[#1c140d] dark:border-[#c27a2a] text-[#1c140d] dark:text-[#c27a2a] font-black uppercase tracking-widest transition-all hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
                                 <span>View Full Cart</span>
-                            </Link>
+                            </button>
 
                             <button
-                                onClick={() => {
-                                    onClose();
-                                    router.push('/checkout');
-                                }}
-                                className="w-full h-14 flex items-center justify-center gap-3 rounded-xl bg-[#c27a2a] hover:bg-[#a35508] text-white font-black uppercase tracking-widest transition-all shadow-xl shadow-[#c27a2a]/20 hover:shadow-[#c27a2a]/30 active:scale-[0.98]"
+                                onClick={() => handleCheckoutRoute('/checkout')}
+                                disabled={isValidating}
+                                className="w-full h-14 flex items-center justify-center gap-3 rounded-xl bg-[#c27a2a] hover:bg-[#a35508] text-white font-black uppercase tracking-widest transition-all shadow-xl shadow-[#c27a2a]/20 hover:shadow-[#c27a2a]/30 active:scale-[0.98] disabled:opacity-50"
                             >
-                                <span>Proceed to Checkout</span>
-                                <span className="material-symbols-outlined text-[20px]">lock</span>
+                                {isValidating ? (
+                                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                                ) : (
+                                    <>
+                                        <span>Proceed to Checkout</span>
+                                        <span className="material-symbols-outlined text-[20px]">lock</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                         <p className="text-[10px] text-center text-gray-400 font-bold uppercase tracking-tighter mt-4">
