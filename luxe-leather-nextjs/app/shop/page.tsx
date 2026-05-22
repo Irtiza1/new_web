@@ -228,7 +228,7 @@ function ShopContent() {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     addToCart({
-                                                        id: product.id,
+                                                        id: String(product.id),
                                                         name: product.name,
                                                         price: product.price,
                                                         image: getProductImage(product),

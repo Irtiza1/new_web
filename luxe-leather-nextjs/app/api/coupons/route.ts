@@ -38,7 +38,9 @@ export async function GET(request: Request) {
                 minOrderAmount: parseFloat(data.min_order_amount || 0)
             }
         });
-    } catch (error: any) {
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    } catch (error) {
+        console.error('[GET /api/coupons] Error validating coupon:', error);
+        const errMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+        return NextResponse.json({ success: false, message: errMessage }, { status: 500 });
     }
 }

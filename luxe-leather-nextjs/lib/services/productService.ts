@@ -77,11 +77,11 @@ export const getById = async (id: string) => {
  * @param {Omit<Product, 'id' | 'createdAt' | 'updatedAt'>} productData
  * @returns {Promise<Product>}
  */
-export const create = async (productData: any) => {
+export const create = async (productData: Partial<Product> & Record<string, unknown>) => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
         id,
         createdAt: now,
         updatedAt: now,
@@ -137,8 +137,8 @@ export const update = async (id: string, updates: Partial<Product>) => {
     if (before) {
         const changedFields: Record<string, { from: unknown; to: unknown }> = {};
         for (const key of Object.keys(updates) as (keyof Product)[]) {
-            if (before[key] !== (data as any)[key]) {
-                changedFields[key as string] = { from: before[key], to: (data as any)[key] };
+            if (before[key] !== (data as Product)[key]) {
+                changedFields[key as string] = { from: before[key], to: (data as Product)[key] };
             }
         }
         if (Object.keys(changedFields).length > 0) {

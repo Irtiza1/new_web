@@ -53,7 +53,7 @@ export const getAll = async (query: {
 
     dbQuery = dbQuery.order('createdAt', { ascending: false });
 
-    const { data, error, count } = await dbQuery;
+    const { data, error } = await dbQuery;
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
@@ -141,11 +141,14 @@ export const updateStatus = async (id: string, status: string) => {
 export const update = async (id: string, updates: Partial<CustomRequest>) => {
     // Map status to DB enum value
     if (updates.status) {
-        updates.status = toDbStatus(updates.status) as any;
+        updates.status = toDbStatus(updates.status) as CustomRequest['status'];
     }
 
     // Strip read-only / auto-managed fields to avoid Supabase schema errors
-    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...safeUpdates } = updates as any;
+    delete updates.id;
+    delete updates.createdAt;
+    delete updates.updatedAt;
+    const safeUpdates = updates;
 
     try {
         // Step 1: Perform the update (no .select() to avoid RLS RETURNING issues)
@@ -182,7 +185,7 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
 export const remove = async (id: string) => {
     const { error } = await supabase
         .from('custom_requests')
-        .update({ isArchived: true } as any)
+        .update({ isArchived: true } as Partial<CustomRequest>)
         .eq('id', id);
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
@@ -197,7 +200,7 @@ export const remove = async (id: string) => {
 export const restore = async (id: string) => {
     const { data, error } = await supabase
         .from('custom_requests')
-        .update({ isArchived: false } as any)
+        .update({ isArchived: false } as Partial<CustomRequest>)
         .eq('id', id)
         .select()
         .single();
@@ -219,18 +222,16 @@ export const getStats = async (): Promise<RequestStats> => {
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
     const stats = (data || []).reduce(
-        (acc: RequestStats, curr) => {
+        (acc: Record<string, number>, curr) => {
             acc.total++;
             const status = curr.status?.toLowerCase() || 'new';
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((acc as any)[status] !== undefined) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (acc as any)[status]++;
+            if (acc[status] !== undefined) {
+                acc[status]++;
             }
             return acc;
         },
-        { total: 0, new: 0, quoted: 0, in_progress: 0, completed: 0 }
+        { total: 0, new: 0, quoted: 0, in_progress: 0, completed: 0 } as Record<string, number>
     );
 
-    return stats;
+    return stats as unknown as RequestStats;
 };

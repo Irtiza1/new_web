@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as requestService from '@/lib/services/requestService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
-import { AppError } from '@/lib/utils/AppError';
 
 export const dynamic = 'force-dynamic';
 

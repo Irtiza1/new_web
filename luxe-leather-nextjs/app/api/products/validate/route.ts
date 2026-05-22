@@ -45,15 +45,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Build a set of found IDs
-    const foundIds = new Set((data ?? []).map((p: any) => p.id));
+    const foundIds = new Set((data ?? []).map((p: { id: string }) => p.id));
 
     // IDs not found in DB at all are unavailable
     const missingIds = ids.filter(id => !foundIds.has(id));
 
     // IDs found but inactive or out of stock
     const inactiveIds = (data ?? [])
-        .filter((p: any) => !p.isActive)
-        .map((p: any) => p.id);
+        .filter((p: { isActive: boolean }) => !p.isActive)
+        .map((p: { id: string }) => p.id);
 
     const unavailableIds = [...missingIds, ...inactiveIds];
 

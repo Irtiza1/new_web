@@ -43,7 +43,7 @@ export const getAll = async (query: {
     }
 
     const customerIds = customers?.map(c => c.id) || [];
-    let ordersMap: Record<string, { count: number; total: number }> = {};
+    const ordersMap: Record<string, { count: number; total: number }> = {};
 
     if (customerIds.length > 0) {
         const { data: orders } = await supabase
@@ -131,8 +131,8 @@ export const update = async (id: string, data: Partial<Customer>) => {
     if (before) {
         const changedFields: Record<string, { from: unknown; to: unknown }> = {};
         for (const key of Object.keys(data) as (keyof Customer)[]) {
-            if (before[key] !== (updated as any)[key]) {
-                changedFields[key as string] = { from: before[key], to: (updated as any)[key] };
+            if (before[key] !== (updated as Customer)[key]) {
+                changedFields[key as string] = { from: before[key], to: (updated as Customer)[key] };
             }
         }
         if (Object.keys(changedFields).length > 0) {
@@ -145,8 +145,10 @@ export const update = async (id: string, data: Partial<Customer>) => {
 
 /**
  * Create a new customer
+ * @param {Partial<Customer>} data - The customer payload
+ * @returns {Promise<Customer>}
  */
-export const create = async (data: any) => {
+export const create = async (data: Partial<Customer>) => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const { data: created, error } = await supabase
@@ -207,7 +209,7 @@ export const remove = async (id: string) => {
             return;
         }
         console.warn('[CustomerService] RPC anonymize_customer not available, falling back:', rpcError.message);
-    } catch (_) {
+    } catch {
         console.warn('[CustomerService] RPC call failed, using sequential fallback');
     }
 
@@ -228,7 +230,7 @@ export const remove = async (id: string) => {
             country: null,
             isActive: false,
             updatedAt: new Date().toISOString(),
-        } as any)
+        } as Partial<Customer>)
         .eq('id', id);
 
     if (error) {

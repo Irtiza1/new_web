@@ -14,6 +14,10 @@ export async function GET() {
         sortBy: { column: 'created_at', order: 'desc' }
     });
 
+    if (storageError) {
+        console.error('[GET /api/media] Storage list error:', storageError);
+    }
+
     const storageFiles = (storageData || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => ({
         name: f.name,
         url: supabase.storage.from(BUCKET).getPublicUrl(f.name).data.publicUrl,
@@ -28,6 +32,10 @@ export async function GET() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
+
+    if (dbError) {
+        console.error('[GET /api/media] DB list error:', dbError);
+    }
 
     const dbFiles = (dbData || []).map(f => ({
         name: f.filename,

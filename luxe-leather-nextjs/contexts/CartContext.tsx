@@ -214,7 +214,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         );
     };
 
-    const checkout = async (data: CheckoutData): Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string }> => {
+    const checkout = async (data: CheckoutData): Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string; dummyMode?: boolean }> => {
         try {
             const res = await fetch('/api/checkout/payment-intent', {
                 method: 'POST',

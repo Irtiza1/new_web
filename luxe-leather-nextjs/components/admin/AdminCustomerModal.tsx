@@ -121,7 +121,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
                         <label className="text-sm font-bold text-[#0d141b] dark:text-white">Phone</label>
                         <input
                             type="tel"
-                            value={formData.phone}
+                            value={formData.phone || ''}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
                             placeholder="+1 (555) 000-0000"

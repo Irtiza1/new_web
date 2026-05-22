@@ -43,7 +43,7 @@ export type Customer = {
     id: string;
     name: string;
     email: string;
-    phone?: string;
+    phone?: string | null;
     address?: string | null;
     city?: string | null;
     country?: string | null;
@@ -55,8 +55,11 @@ export type Customer = {
 export type Order = {
     id: string;
     customerId: string;
+    customer_id?: string;
     status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
     total: number;
+    subtotal?: number;
+    shipping?: number;
     notes?: string | null;
     stripe_session_id?: string | null;
     stripe_payment_intent_id?: string | null;

@@ -101,7 +101,7 @@ export async function POST(req: NextRequest){
             //step2: create pending order in database
             const isDummy = !!data.dummyPayment;
             const order = await orderService.create({
-                customer_id: customerId,
+                customerId: customerId,
                 status: isDummy ? 'PROCESSING' : 'PENDING',
                 total: data.total,
                 subtotal: data.total,
@@ -136,9 +136,13 @@ export async function POST(req: NextRequest){
             }
 
             // Step 3: Create Stripe Payment Intent
+            if (!stripe) {
+                throw new Error("Stripe is not configured");
+            }
+            
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: Math.round(data.total * 100), // Convert to cents
-                currency: 'usd',
+                currency: process.env.NEXT_PUBLIC_CURRENCY || 'usd',
                 automatic_payment_methods: {enabled: true},
                 receipt_email: data.customer.email,
                 metadata: {
@@ -160,11 +164,10 @@ export async function POST(req: NextRequest){
                 orderId: order.id,
                 paymentIntentId: paymentIntent.id,
             });
-    }
-    catch (error: any) {
-        console.error('Payment Intent creation error:', error);
+    } catch (error) {
+        console.error('[POST /api/checkout/payment-intent] Payment Intent creation error:', error);
 
-        if(error.name === 'ZodError'){
+        if (error instanceof z.ZodError) {
             return NextResponse.json({
                 success: false,
                 message: 'Invalid request data',
@@ -172,9 +175,10 @@ export async function POST(req: NextRequest){
             }, {status: 400});
         }
 
+        const errMessage = error instanceof Error ? error.message : 'Failed to create payment intent';
         return NextResponse.json({
             success: false,
-            message: error.message || 'Failed to create payment intent',
+            message: errMessage,
         }, {status: 500});
     }
 }

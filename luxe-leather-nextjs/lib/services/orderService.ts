@@ -63,7 +63,7 @@ export const getById = async (id: string) => {
  * Create a new order atomically using the create_order_with_items RPC.
  * Falls back to sequential inserts if the RPC is not yet deployed.
  */
-export const create = async (orderData: any) => {
+export const create = async (orderData: Partial<Order> & { items?: unknown[] }) => {
     const { items, ...orderPayload } = orderData;
     const orderId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -92,7 +92,7 @@ export const create = async (orderData: any) => {
 
         // RPC not available — fall back to sequential inserts
         console.warn('[OrderService] RPC not available, using sequential inserts:', rpcError?.message);
-    } catch (_) {
+    } catch {
         console.warn('[OrderService] RPC call failed, falling back to sequential inserts');
     }
 
@@ -108,12 +108,12 @@ export const create = async (orderData: any) => {
     }
 
     if (items && Array.isArray(items) && items.length > 0) {
-        const orderItems = items.map((item: any) => ({
+        const orderItems = items.map((item: Record<string, unknown>) => ({
             id: crypto.randomUUID(),
             order_id: orderId,
-            product_id: item.product_id || item.productId,
-            quantity: item.quantity,
-            price: item.price,
+            product_id: String(item.product_id || item.productId),
+            quantity: Number(item.quantity),
+            price: Number(item.price),
         }));
         await supabase.from('order_items').insert(orderItems);
     }
@@ -144,8 +144,8 @@ export const update = async (id: string, updates: Partial<Order>) => {
     if (before) {
         const changedFields: Record<string, { from: unknown; to: unknown }> = {};
         for (const key of Object.keys(updates) as (keyof Order)[]) {
-            if (before[key] !== (data as any)[key]) {
-                changedFields[key as string] = { from: before[key], to: (data as any)[key] };
+            if (before[key] !== (data as Order)[key]) {
+                changedFields[key as string] = { from: before[key], to: (data as Order)[key] };
             }
         }
         if (Object.keys(changedFields).length > 0) {
@@ -168,7 +168,7 @@ export const update = async (id: string, updates: Partial<Order>) => {
 export const remove = async (id: string) => {
     const { error } = await supabase
         .from('orders')
-        .update({ isDeleted: true, updatedAt: new Date().toISOString() } as any)
+        .update({ isDeleted: true, updatedAt: new Date().toISOString() } as Partial<Order>)
         .eq('id', id);
 
     if (error) {
@@ -184,7 +184,7 @@ export const remove = async (id: string) => {
 export const restore = async (id: string) => {
     const { data, error } = await supabase
         .from('orders')
-        .update({ isDeleted: false, updatedAt: new Date().toISOString() } as any)
+        .update({ isDeleted: false, updatedAt: new Date().toISOString() } as Partial<Order>)
         .eq('id', id)
         .select()
         .single();
@@ -217,7 +217,7 @@ export const getStats = async () => {
 
     const revenue = totalRevenue?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
 
-    const byStatus = statusCounts?.reduce((acc: any, order) => {
+    const byStatus = statusCounts?.reduce((acc: Record<string, number>, order) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
     }, {} as Record<string, number>) || {};

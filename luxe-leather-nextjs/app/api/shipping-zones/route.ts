@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const TABLE = 'shipping_zones';
 
-const graceful = (error: any) => {
+const graceful = (error: { message?: string } | Error) => {
     if (error.message?.includes('schema cache') || error.message?.includes('does not exist') || error.message?.includes('relation')) {
         return true;
     }
