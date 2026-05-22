@@ -48,9 +48,18 @@ export const POST = apiHandler(async (req: NextRequest) => {
         throw error;
     }
 
+    const { data: insertedData } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .eq('email', data.email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
     return NextResponse.json({
         success: true,
         message: 'Message sent successfully! We will get back to you within 24 hours.',
+        data: insertedData,
     });
 });
 
@@ -91,4 +100,33 @@ export const GET = apiHandler(async (req: NextRequest) => {
             totalPages: Math.ceil((count || 0) / limit),
         },
     });
+});
+
+/**
+ * @route   PUT /api/contact
+ * @desc    Update a contact message (e.g. status)
+ */
+export const PUT = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Message ID required' }, { status: 400 });
+
+    const body = await req.json();
+    const { data, error } = await supabase.from('contact_messages').update(body).eq('id', id).select().single();
+    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, data });
+});
+
+/**
+ * @route   DELETE /api/contact
+ * @desc    Delete a contact message
+ */
+export const DELETE = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Message ID required' }, { status: 400 });
+
+    const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Message deleted successfully' });
 });

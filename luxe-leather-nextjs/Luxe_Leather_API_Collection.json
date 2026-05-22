@@ -1,0 +1,513 @@
+{
+  "info": {
+    "name": "Luxe Leather API - Comprehensive Test Suite",
+    "description": "Comprehensive Postman collection testing all CRUD operations, including pagination, filtering, and bulk operations (simulated via multiple sequential deletes) for the Luxe Leather API. Deletes are placed at the very end to prevent premature data removal. Covers EVERY endpoint discovered in app/api.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. READ Operations (GET) - with Pagination & Filtering",
+      "item": [
+        {
+          "name": "Get Analytics",
+          "request": { "method": "GET", "url": "{{base_url}}/analytics" }
+        },
+        {
+          "name": "Get Audit Logs (Paginated & Filtered)",
+          "request": { "method": "GET", "url": "{{base_url}}/audit-logs?tableName=products&page=1&limit=5" }
+        },
+        {
+          "name": "Get Categories",
+          "request": { "method": "GET", "url": "{{base_url}}/categories" }
+        },
+        {
+          "name": "Get Contact Messages",
+          "request": { "method": "GET", "url": "{{base_url}}/contact" }
+        },
+        {
+          "name": "Get Coupons (Storefront Validate)",
+          "request": { "method": "GET", "url": "{{base_url}}/coupons?code=POSTMAN10" }
+        },
+        {
+          "name": "Get Coupons (Admin)",
+          "request": { "method": "GET", "url": "{{base_url}}/coupons/admin" }
+        },
+        {
+          "name": "Get Customers (Paginated & Search)",
+          "request": { "method": "GET", "url": "{{base_url}}/customers?search=john&page=1&limit=10&includeInactive=true" }
+        },
+        {
+          "name": "Get Media",
+          "request": { "method": "GET", "url": "{{base_url}}/media" }
+        },
+        {
+          "name": "Get Migrate (Run Migrations)",
+          "request": { "method": "GET", "url": "{{base_url}}/migrate" }
+        },
+        {
+          "name": "Get Nav Items",
+          "request": { "method": "GET", "url": "{{base_url}}/nav-items" }
+        },
+        {
+          "name": "Get Orders (Paginated & Filtered)",
+          "request": { "method": "GET", "url": "{{base_url}}/orders?status=PENDING&page=1&limit=5" }
+        },
+        {
+          "name": "Get Products (Paginated & Sorted)",
+          "request": { "method": "GET", "url": "{{base_url}}/products?category=Bags&sortBy=price-low&limit=5&includeInactive=true" }
+        },
+        {
+          "name": "Get Custom Requests (Paginated & Filtered)",
+          "request": { "method": "GET", "url": "{{base_url}}/requests?status=NEW&page=1&limit=10" }
+        },
+        {
+          "name": "Get Reviews",
+          "request": { "method": "GET", "url": "{{base_url}}/reviews" }
+        },
+        {
+          "name": "Get Settings",
+          "request": { "method": "GET", "url": "{{base_url}}/settings" }
+        },
+        {
+          "name": "Get Shipping Zones",
+          "request": { "method": "GET", "url": "{{base_url}}/shipping-zones" }
+        }
+      ]
+    },
+    {
+      "name": "2. CREATE Operations (POST)",
+      "item": [
+        {
+          "name": "Create Category 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"category_id_1\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Category 1\",\n  \"slug\": \"test-category-1\",\n  \"is_visible\": true,\n  \"image_url\": \"https://example.com/test-cat.jpg\"\n}" },
+            "url": "{{base_url}}/categories"
+          }
+        },
+        {
+          "name": "Create Category 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"category_id_2\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Category 2\",\n  \"slug\": \"test-category-2\",\n  \"is_visible\": true\n}" },
+            "url": "{{base_url}}/categories"
+          }
+        },
+        {
+          "name": "Create Contact Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"contact_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Postman\",\n  \"email\": \"john@postman.com\",\n  \"message\": \"Test message from Postman collection\",\n  \"inquiry_type\": \"General\"\n}" },
+            "url": "{{base_url}}/contact"
+          }
+        },
+        {
+          "name": "Create Coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"coupon_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"POSTMAN10\",\n  \"discount_type\": \"percentage\",\n  \"value\": 10,\n  \"is_active\": true\n}" },
+            "url": "{{base_url}}/coupons/admin"
+          }
+        },
+        {
+          "name": "Create Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"customer_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Postman\",\n  \"email\": \"jane@postman.com\",\n  \"phone\": \"+1234567890\"\n}" },
+            "url": "{{base_url}}/customers"
+          }
+        },
+        {
+          "name": "Create Nav Item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"nav_item_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"label\": \"Postman Link\",\n  \"url\": \"/postman\",\n  \"display_order\": 99,\n  \"is_visible\": true\n}" },
+            "url": "{{base_url}}/nav-items"
+          }
+        },
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"product_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Leather Bag\",\n  \"price\": 199.99,\n  \"stock\": 10,\n  \"category\": \"Bags\",\n  \"description\": \"Created via API\",\n  \"is_featured\": true,\n  \"featured_tag\": \"Top Rated\"\n}" },
+            "url": "{{base_url}}/products"
+          }
+        },
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"order_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customer_id\": \"{{customer_id}}\",\n  \"total\": 199.99,\n  \"status\": \"PENDING\",\n  \"items\": [{\n    \"product_id\": \"{{product_id}}\",\n    \"quantity\": 1,\n    \"price\": 199.99\n  }]\n}" },
+            "url": "{{base_url}}/orders"
+          }
+        },
+        {
+          "name": "Create Custom Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"request_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Custom Postman User\",\n  \"email\": \"custom@postman.com\",\n  \"itemType\": \"Wallet\",\n  \"description\": \"I need a custom blue leather wallet\"\n}" },
+            "url": "{{base_url}}/requests"
+          }
+        },
+        {
+          "name": "Create Review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"review_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customer_name\": \"Reviewer Postman\",\n  \"rating\": 5,\n  \"comment\": \"Amazing API testing!\",\n  \"status\": \"pending\"\n}" },
+            "url": "{{base_url}}/reviews"
+          }
+        },
+        {
+          "name": "Create Shipping Zone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) { pm.collectionVariables.set(\"zone_id\", jsonData.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman Zone\",\n  \"regions\": \"Localhost\",\n  \"handling_days\": 2,\n  \"rate\": 10,\n  \"is_active\": true\n}" },
+            "url": "{{base_url}}/shipping-zones"
+          }
+        },
+        {
+          "name": "Create Checkout Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customer\": {\n    \"name\": \"Jane Postman\",\n    \"email\": \"jane@postman.com\"\n  },\n  \"items\": [{\n    \"id\": \"{{product_id}}\",\n    \"name\": \"Test Item\",\n    \"price\": 199.99,\n    \"quantity\": 1\n  }],\n  \"total\": 199.99\n}" },
+            "url": "{{base_url}}/checkout/payment-intent"
+          }
+        },
+        {
+          "name": "Create Media (File Upload)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{base_url}}/media"
+          }
+        },
+        {
+          "name": "Trigger Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_test_123\",\n      \"metadata\": {\n        \"order_id\": \"{{order_id}}\"\n      }\n    }\n  }\n}" },
+            "url": "{{base_url}}/webhooks/stripe"
+          }
+        },
+        {
+          "name": "Update Settings (POST)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"site_title\": \"Luxe Leather - Postman Test\"\n}" },
+            "url": "{{base_url}}/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. UPDATE Operations (PUT)",
+      "item": [
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Category Name\"\n}" },
+            "url": "{{base_url}}/categories?id={{category_id_1}}"
+          }
+        },
+        {
+          "name": "Update Contact Message",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"read\"\n}" },
+            "url": "{{base_url}}/contact?id={{contact_id}}"
+          }
+        },
+        {
+          "name": "Update Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"is_active\": false\n}" },
+            "url": "{{base_url}}/coupons/admin?id={{coupon_id}}"
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+0987654321\"\n}" },
+            "url": "{{base_url}}/customers?id={{customer_id}}"
+          }
+        },
+        {
+          "name": "Update Nav Item",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"is_visible\": false\n}" },
+            "url": "{{base_url}}/nav-items?id={{nav_item_id}}"
+          }
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SHIPPED\"\n}" },
+            "url": "{{base_url}}/orders?id={{order_id}}"
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"price\": 149.99,\n  \"is_featured\": true,\n  \"featured_tag\": \"Top Selling\"\n}" },
+            "url": "{{base_url}}/products?id={{product_id}}"
+          }
+        },
+        {
+          "name": "Update Custom Request",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" },
+            "url": "{{base_url}}/requests?id={{request_id}}"
+          }
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"approved\"\n}" },
+            "url": "{{base_url}}/reviews?id={{review_id}}"
+          }
+        },
+        {
+          "name": "Update Shipping Zone",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"is_active\": false\n}" },
+            "url": "{{base_url}}/shipping-zones?id={{zone_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. DELETE Operations (Simulating Single & Bulk Delete)",
+      "item": [
+        {
+          "name": "Delete Order",
+          "request": { "method": "DELETE", "url": "{{base_url}}/orders?id={{order_id}}" }
+        },
+        {
+          "name": "Delete Custom Request",
+          "request": { "method": "DELETE", "url": "{{base_url}}/requests?id={{request_id}}" }
+        },
+        {
+          "name": "Delete Product",
+          "request": { "method": "DELETE", "url": "{{base_url}}/products?id={{product_id}}" }
+        },
+        {
+          "name": "Delete Customer",
+          "request": { "method": "DELETE", "url": "{{base_url}}/customers?id={{customer_id}}" }
+        },
+        {
+          "name": "Bulk Delete Category 1",
+          "request": { "method": "DELETE", "url": "{{base_url}}/categories?id={{category_id_1}}" }
+        },
+        {
+          "name": "Bulk Delete Category 2",
+          "request": { "method": "DELETE", "url": "{{base_url}}/categories?id={{category_id_2}}" }
+        },
+        {
+          "name": "Delete Contact Message",
+          "request": { "method": "DELETE", "url": "{{base_url}}/contact?id={{contact_id}}" }
+        },
+        {
+          "name": "Delete Coupon",
+          "request": { "method": "DELETE", "url": "{{base_url}}/coupons/admin?id={{coupon_id}}" }
+        },
+        {
+          "name": "Delete Nav Item",
+          "request": { "method": "DELETE", "url": "{{base_url}}/nav-items?id={{nav_item_id}}" }
+        },
+        {
+          "name": "Delete Review",
+          "request": { "method": "DELETE", "url": "{{base_url}}/reviews?id={{review_id}}" }
+        },
+        {
+          "name": "Delete Shipping Zone",
+          "request": { "method": "DELETE", "url": "{{base_url}}/shipping-zones?id={{zone_id}}" }
+        },
+        {
+          "name": "Delete Media",
+          "request": { "method": "DELETE", "url": "{{base_url}}/media?name=testfile.jpg" }
+        }
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@ interface ConfirmModalProps {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     onCancel: () => void;
     confirmText?: string;
     cancelText?: string;
@@ -25,11 +25,21 @@ export default function ConfirmModal({
     isDestructive = true
 }: ConfirmModalProps) {
     const [mounted, setMounted] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
 
     useEffect(() => {
         setMounted(true);
         return () => setMounted(false);
     }, []);
+
+    const handleConfirm = async () => {
+        setIsConfirming(true);
+        try {
+            await onConfirm();
+        } finally {
+            setIsConfirming(false);
+        }
+    };
 
     // Prevent scrolling when modal is open
     useEffect(() => {
@@ -77,9 +87,11 @@ export default function ConfirmModal({
                         </button>
                         <button
                             type="button"
-                            onClick={onConfirm}
-                            className={`flex-1 px-4 py-3 ${isDestructive ? 'bg-[#d41132] hover:bg-[#b30f2a]' : 'bg-slate-900 hover:bg-black'} text-white font-bold rounded-xl transition-all text-sm shadow-md hover:shadow-lg`}
+                            onClick={handleConfirm}
+                            disabled={isConfirming}
+                            className={`flex-1 px-4 py-3 ${isDestructive ? 'bg-[#d41132] hover:bg-[#b30f2a]' : 'bg-slate-900 hover:bg-black'} text-white font-bold rounded-xl transition-all text-sm shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                         >
+                            {isConfirming && <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>}
                             {confirmText}
                         </button>
                     </div>

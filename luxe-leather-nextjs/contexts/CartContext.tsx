@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { Coupon } from "@/lib/supabase";
 
 export interface CartItem {
@@ -40,6 +40,8 @@ interface CartContextType {
     removeCoupon: () => void;
     checkout: (data: CheckoutData) => Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string }>;
     clearCart: () => void;
+    removedItems: string[]; // names of items removed during last validation
+    clearRemovedItems: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -49,6 +51,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [isLoaded, setIsLoaded] = useState(false);
+    // Names of items silently removed during cart validation (to show user a notification)
+    const [removedItems, setRemovedItems] = useState<string[]>([]);
 
     // Load cart from localStorage on mount
     useEffect(() => {
@@ -83,8 +87,59 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [cartItems, appliedCoupon, isLoaded]);
 
-    const openCart = () => setIsOpen(true);
-    const closeCart = () => setIsOpen(false);
+    /**
+     * Validate cart items against the live product API.
+     * Removes any items that are archived (isActive=false) or no longer exist.
+     * Called every time the cart is opened so the shopper never sees stale items.
+     */
+    const validateCart = useCallback(async (items: CartItem[]) => {
+        if (items.length === 0) return items;
+
+        const ids = items.map(i => String(i.id)).join(',');
+        try {
+            const res = await fetch(`/api/products/validate?ids=${encodeURIComponent(ids)}`);
+            if (!res.ok) return items; // fail open — don't clear cart on network error
+
+            const result = await res.json();
+            const unavailableIds = new Set<string>(result.unavailableIds ?? []);
+
+            if (unavailableIds.size === 0) return items;
+
+            // Split into available and removed
+            const available: CartItem[] = [];
+            const removed: CartItem[] = [];
+            for (const item of items) {
+                if (unavailableIds.has(String(item.id))) {
+                    removed.push(item);
+                } else {
+                    available.push(item);
+                }
+            }
+
+            if (removed.length > 0) {
+                setRemovedItems(removed.map(i => i.name));
+                setCartItems(available);
+                localStorage.setItem('luxeCart', JSON.stringify(available));
+            }
+
+            return available;
+        } catch (err) {
+            console.warn('[CartContext] validateCart error (fail open):', err);
+            return items; // fail open
+        }
+    }, []);
+
+    const openCart = async () => {
+        // Validate on every open so archived/deleted products are removed before the user sees them
+        const validated = await validateCart(cartItems);
+        if (validated !== cartItems) setCartItems(validated);
+        setIsOpen(true);
+    };
+    const closeCart = () => {
+        setIsOpen(false);
+        setRemovedItems([]); // clear notification after closing
+    };
+    const clearRemovedItems = () => setRemovedItems([]);
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
     const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -212,6 +267,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 removeCoupon,
                 checkout,
                 clearCart,
+                removedItems,
+                clearRemovedItems,
             }}
         >
             {children}

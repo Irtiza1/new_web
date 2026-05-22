@@ -133,12 +133,14 @@ export default function AdminCustomersPage() {
     const handleDeleteCustomer = async (id: string) => {
         if (isBulkDeleting) return;
 
+        const customer = customers.find(c => c.id === id);
+        if (!customer) return;
+
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Customer',
-            message: 'Are you sure you want to delete this customer and all their associated orders? This action cannot be undone.',
+            title: `Delete ${customer.name}`,
+            message: `Are you sure you want to delete "${customer.name}"? To comply with GDPR and preserve financial history, their personal data will be permanently anonymized. This cannot be undone.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     const res = await fetch(`/api/customers/${id}`, {
                         method: 'DELETE',
@@ -153,10 +155,13 @@ export default function AdminCustomersPage() {
                         next.delete(id);
                         return next;
                     });
+                    showToast(`"${customer.name}" was successfully deleted (anonymized).`, 'success');
                 } catch (error) {
                     console.error('Error deleting customer:', error);
-                    showToast('Failed to delete customer. They might still have orders that could not be removed.', 'error');
+                    showToast(`Failed to delete "${customer.name}". Please try again.`, 'error');
                     loadCustomers(); // Refresh on error
+                } finally {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
             }
         });
@@ -169,9 +174,8 @@ export default function AdminCustomersPage() {
         setConfirmModal({
             isOpen: true,
             title: `Delete ${count} Customers`,
-            message: `Are you sure you want to delete ${count} customers and their orders? This action cannot be undone.`,
+            message: `Are you sure you want to delete ${count} selected customers? To preserve financial history, their personal data will be permanently anonymized. This action cannot be undone.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
                 let successCount = 0;
@@ -194,12 +198,16 @@ export default function AdminCustomersPage() {
                     }
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk delete finished with errors. Deleted (Anonymized): ${successCount}, Failed: ${failCount}`, 'error');
+                    } else {
+                        showToast(`Successfully deleted and anonymized ${successCount} customers.`, 'success');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                     loadCustomers();
                 }
             }
@@ -242,12 +250,13 @@ export default function AdminCustomersPage() {
             if (result.success) {
                 await loadCustomers();
                 setIsModalOpen(false);
+                showToast(`"${data.name}" has been added successfully.`, 'success');
             } else {
-                showToast('Failed to create customer: ' + (result.error || result.message), 'error');
+                showToast('Failed to add customer: ' + (result.error || result.message), 'error');
             }
         } catch (error) {
             console.error('Error creating customer:', error);
-            showToast('An error occurred while creating the customer.', 'error');
+            showToast('An error occurred while adding the customer.', 'error');
         }
     };
 
@@ -265,12 +274,13 @@ export default function AdminCustomersPage() {
                 await loadCustomers();
                 setIsModalOpen(false);
                 setEditingCustomer(null);
+                showToast(`"${data.name}"'s profile has been updated.`, 'success');
             } else {
                 showToast('Failed to update customer: ' + result.error, 'error');
             }
         } catch (error) {
             console.error('Error updating customer:', error);
-            showToast('An error occurred while updating the customer.', 'error');
+            showToast(`An error occurred while updating the customer.`, 'error');
         }
     };
 

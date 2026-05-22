@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
 
     const url = supabase.storage.from(BUCKET).getPublicUrl(filename).data.publicUrl;
+    await auditLog('media', filename, 'CREATE', { url: { from: null, to: url } });
     return NextResponse.json({ success: true, data: { name: filename, url } });
 }
 
@@ -76,5 +78,6 @@ export async function DELETE(request: Request) {
 
     const { error } = await supabase.storage.from(BUCKET).remove([name]);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('media', name, 'DELETE');
     return NextResponse.json({ success: true });
 }

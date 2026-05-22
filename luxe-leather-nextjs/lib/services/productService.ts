@@ -1,5 +1,6 @@
 import { supabase, Product } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
+import { auditLog } from './auditService';
 
 // ============================================
 // PRODUCT SERVICE
@@ -8,12 +9,21 @@ import { AppError } from '../utils/AppError';
 /**
  * Get all products with optional filtering
  * @param {Object} query - Query parameters
+ * @param {boolean} includeInactive - When true (admin), returns ALL products including soft-deleted
  * @returns {Promise<Product[]>} List of products
  */
-export const getAll = async (query: { search?: string; category?: string; limit?: string; sortBy?: string }) => {
+export const getAll = async (
+    query: { search?: string; category?: string; limit?: string; sortBy?: string },
+    includeInactive = false
+) => {
     let dbQuery = supabase
         .from('products')
         .select('*');
+
+    // Storefront only sees active products; admin can see all
+    if (!includeInactive) {
+        dbQuery = dbQuery.eq('isActive', true);
+    }
 
     if (query.category && query.category !== 'All' && query.category !== 'All Products') {
         dbQuery = dbQuery.eq('category', query.category);
@@ -71,12 +81,11 @@ export const create = async (productData: any) => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Only include columns that actually exist in the Product table:
-    // id, name, description, price, stock, category, image, badge, rating, sizes, createdAt, updatedAt
     const payload: any = {
         id,
         createdAt: now,
         updatedAt: now,
+        isActive: true,
         name: productData.name,
         description: productData.description || null,
         price: productData.price,
@@ -98,6 +107,8 @@ export const create = async (productData: any) => {
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    await auditLog('products', id, 'CREATE', { name: { from: null, to: payload.name }, price: { from: null, to: payload.price } });
     return data as Product;
 };
 
@@ -108,6 +119,9 @@ export const create = async (productData: any) => {
  * @returns {Promise<Product>}
  */
 export const update = async (id: string, updates: Partial<Product>) => {
+    // Capture current state for audit diff
+    const { data: before } = await supabase.from('products').select('*').eq('id', id).single();
+
     const { data, error } = await supabase
         .from('products')
         .update(updates)
@@ -118,6 +132,20 @@ export const update = async (id: string, updates: Partial<Product>) => {
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    // Build field-level diff for audit
+    if (before) {
+        const changedFields: Record<string, { from: unknown; to: unknown }> = {};
+        for (const key of Object.keys(updates) as (keyof Product)[]) {
+            if (before[key] !== (data as any)[key]) {
+                changedFields[key as string] = { from: before[key], to: (data as any)[key] };
+            }
+        }
+        if (Object.keys(changedFields).length > 0) {
+            await auditLog('products', id, 'UPDATE', changedFields);
+        }
+    }
+
     return data as Product;
 };
 
@@ -126,17 +154,54 @@ export const update = async (id: string, updates: Partial<Product>) => {
  * @param {string} id - Product UUID
  * @returns {Promise<void>}
  */
+/**
+ * Soft-delete a product (sets isActive = false).
+ *
+ * Strategy:
+ *   - If the product has existing order_items → BLOCK deletion entirely.
+ *     Order history is permanent business data and must not be destroyed.
+ *     The admin should mark it inactive instead.
+ *   - cart_items are ephemeral. The DB FK is set to ON DELETE CASCADE,
+ *     so they are cleaned up automatically on a hard delete.
+ *     On a soft delete we also clean them up explicitly so the cart
+ *     doesn't show unavailable products to shoppers.
+ *   - The product row itself is NOT removed from the DB; isActive = false
+ *     hides it from the storefront while preserving order history references.
+ *
+ * @param {string} id - Product UUID
+ * @returns {Promise<void>}
+ */
 export const remove = async (id: string) => {
-    // Delete associated OrderItems first to satisfy FK constraint
-    const { error: itemsError } = await supabase
+    // 1. Guard: block if product is referenced in any order
+    const { data: existingOrderItems, error: checkError } = await supabase
         .from('order_items')
+        .select('id')
+        .eq('product_id', id)
+        .limit(1);
+
+    if (checkError) {
+        throw new AppError(checkError.message, 500, 'DB_ERROR');
+    }
+
+    if (existingOrderItems && existingOrderItems.length > 0) {
+        throw new AppError(
+            'This product has order history and cannot be permanently deleted. It has been archived (hidden from storefront) instead.',
+            409,
+            'CONFLICT'
+        );
+    }
+
+    // 2. No orders → clean up cart_items (belt-and-suspenders; DB CASCADE also handles this)
+    const { error: cartError } = await supabase
+        .from('cart_items')
         .delete()
         .eq('product_id', id);
 
-    if (itemsError) {
-        throw new AppError(itemsError.message, 500, 'DB_ERROR');
+    if (cartError) {
+        throw new AppError(cartError.message, 500, 'DB_ERROR');
     }
 
+    // 3. Hard delete — safe because no orders reference this product
     const { error } = await supabase
         .from('products')
         .delete()
@@ -145,4 +210,58 @@ export const remove = async (id: string) => {
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    await auditLog('products', id, 'DELETE');
+};
+
+/**
+ * Soft-delete (archive) a product by setting isActive = false.
+ * Use this when the product has order history and cannot be hard-deleted.
+ *
+ * Also removes any active cart_items for the product so shoppers
+ * don't see unavailable items in their carts.
+ *
+ * @param {string} id - Product UUID
+ * @returns {Promise<Product>} The updated (archived) product
+ */
+export const archive = async (id: string) => {
+    // Clean up localStorage-based cart: the validate API will handle client side.
+    // Also attempt DB cart_items cleanup if used.
+    await supabase.from('cart_items').delete().eq('product_id', id);
+
+    const { data, error } = await supabase
+        .from('products')
+        .update({ isActive: false, updatedAt: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        throw new AppError(error.message, 500, 'DB_ERROR');
+    }
+
+    await auditLog('products', id, 'ARCHIVE', { isActive: { from: true, to: false } });
+    return data as Product;
+};
+
+/**
+ * Restore a previously archived product (sets isActive = true).
+ *
+ * @param {string} id - Product UUID
+ * @returns {Promise<Product>} The restored product
+ */
+export const restore = async (id: string) => {
+    const { data, error } = await supabase
+        .from('products')
+        .update({ isActive: true, updatedAt: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        throw new AppError(error.message, 500, 'DB_ERROR');
+    }
+
+    await auditLog('products', id, 'RESTORE', { isActive: { from: false, to: true } });
+    return data as Product;
 };

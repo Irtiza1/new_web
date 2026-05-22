@@ -90,27 +90,29 @@ export default function AdminReviewsPage() {
     useEffect(() => { load(); }, [load]);
 
     const updateStatus = async (id: string, status: string) => {
+        const review = reviews.find(r => r.id === id);
         const res = await fetch(`/api/reviews?id=${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
         const data = await res.json();
-        if (data.success) { showToast(`Review ${status}`); load(); }
-        else showToast('Failed to update', 'error');
+        if (data.success) { showToast(`Review from "${review?.customer_name}" marked as ${status}.`, 'success'); load(); }
+        else showToast('Failed to update review status.', 'error');
     };
 
     const toggleFeatured = async (review: Review) => {
         const res = await fetch(`/api/reviews?id=${review.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_featured: !review.is_featured }) });
-        if ((await res.json()).success) { showToast(review.is_featured ? 'Unfeatured' : 'Marked as featured'); load(); }
+        if ((await res.json()).success) { showToast(`Review from "${review.customer_name}" was ${review.is_featured ? 'unfeatured' : 'featured'}.`, 'success'); load(); }
     };
 
     const handleDelete = async (id: string) => {
+        const review = reviews.find(r => r.id === id);
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Review',
+            title: `Delete Review from "${review?.customer_name}"`,
             message: 'Delete this review permanently? This action cannot be undone.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/reviews?id=${id}`, { method: 'DELETE' });
-                if ((await res.json()).success) { showToast('Review deleted'); load(); }
-                else showToast('Failed to delete', 'error');
+                if ((await res.json()).success) { showToast(`Review from "${review?.customer_name}" was deleted successfully.`, 'success'); load(); }
+                else showToast(`Failed to delete review from "${review?.customer_name}".`, 'error');
             }
         });
     };
@@ -131,11 +133,16 @@ export default function AdminReviewsPage() {
                         )
                     );
                     const successCount = results.filter(r => r.success).length;
-                    showToast(`${successCount} reviews deleted successfully`);
+                    const failCount = selectedIds.size - successCount;
+                    if (failCount > 0) {
+                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} reviews were deleted successfully.`, 'success');
+                    }
                     load();
                     setSelectedIds(new Set());
                 } catch (err) {
-                    showToast('Bulk delete failed', 'error');
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkUpdating(false);
                 }
@@ -180,15 +187,15 @@ export default function AdminReviewsPage() {
             });
             const data = await res.json();
             if (data.success) {
-                showToast('Review created!');
+                showToast(`Review for "${createForm.customer_name}" created successfully.`, 'success');
                 setShowCreateModal(false);
                 setCreateForm({ product_id: '', customer_name: '', customer_email: '', rating: '5', comment: '', status: 'pending' });
                 load();
             } else {
-                showToast(data.message || 'Failed to create review', 'error');
+                showToast(data.message || 'Failed to create review.', 'error');
             }
         } catch (err) {
-            showToast('Failed to create review', 'error');
+            showToast('An error occurred while creating the review.', 'error');
         } finally {
             setCreateSaving(false);
         }

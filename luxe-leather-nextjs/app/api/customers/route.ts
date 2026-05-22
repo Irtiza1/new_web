@@ -95,3 +95,30 @@ export const POST = apiHandler(async (req: NextRequest) => {
         data: customer,
     }, { status: 201 });
 });
+
+/**
+ * @route   PUT /api/customers
+ * @desc    Update a customer
+ */
+export const PUT = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Customer ID required' }, { status: 400 });
+
+    const body = await req.json();
+    const customer = await customerService.update(id, body);
+    return NextResponse.json({ success: true, data: customer });
+});
+
+/**
+ * @route   DELETE /api/customers
+ * @desc    Delete (anonymize) a customer
+ */
+export const DELETE = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Customer ID required' }, { status: 400 });
+
+    await customerService.remove(id);
+    return NextResponse.json({ success: true, message: 'Customer anonymized successfully' });
+});

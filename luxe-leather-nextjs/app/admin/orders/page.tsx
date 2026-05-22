@@ -100,11 +100,14 @@ export default function AdminOrdersPage() {
 
             if (data.success) {
                 await loadOrders();
+                showToast(`Order #${orderId.slice(-8).toUpperCase()} moved to ${newStatus}.`, 'success');
             } else {
                 console.error('Failed to update order status:', data.error);
+                showToast(`Failed to update Order #${orderId.slice(-8).toUpperCase()}.`, 'error');
             }
         } catch (err) {
             console.error('Failed to update order status:', err);
+            showToast('An error occurred while updating the order status.', 'error');
         }
     };
 
@@ -120,6 +123,7 @@ export default function AdminOrdersPage() {
             if (result.success) {
                 await loadOrders();
                 setIsModalOpen(false);
+                showToast(`Order created successfully for ${orderData.customer_name || 'customer'}.`, 'success');
             } else {
                 showToast('Failed to create order: ' + (result.error || result.message), 'error');
             }
@@ -132,12 +136,14 @@ export default function AdminOrdersPage() {
     const handleDelete = async (orderId: string) => {
         if (isBulkDeleting) return;
 
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Order',
-            message: 'Are you sure you want to delete this order? This action cannot be undone.',
+            title: `Archive Order #${order.id.slice(-8).toUpperCase()}`,
+            message: `Are you sure you want to archive this order for ${order.customer_name}? For financial integrity, orders are never permanently deleted.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
                     const data = await res.json();
@@ -149,12 +155,15 @@ export default function AdminOrdersPage() {
                             next.delete(orderId);
                             return next;
                         });
+                        showToast(`Order #${order.id.slice(-8).toUpperCase()} was archived.`, 'success');
                     } else {
-                        showToast('Failed to delete order: ' + (data.error || 'Unknown error'), 'error');
+                        showToast('Failed to archive order: ' + (data.error || 'Unknown error'), 'error');
                     }
                 } catch (err) {
-                    showToast('An unexpected error occurred during deletion.', 'error');
-                    console.error('Failed to delete order:', err);
+                    showToast('An unexpected error occurred during archiving.', 'error');
+                    console.error('Failed to archive order:', err);
+                } finally {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
             }
         });
@@ -166,10 +175,9 @@ export default function AdminOrdersPage() {
         const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
-            title: `Delete ${count} Orders`,
-            message: `Are you sure you want to delete ${count} orders? This action cannot be undone.`,
+            title: `Archive ${count} Orders`,
+            message: `Are you sure you want to archive ${count} selected orders? For financial integrity, orders are never permanently deleted.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
                 let successCount = 0;
@@ -192,13 +200,17 @@ export default function AdminOrdersPage() {
                     }
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk archive finished with errors. Archived: ${successCount}, Failed: ${failCount}`, 'error');
+                    } else {
+                        showToast(`Successfully archived ${successCount} orders.`, 'success');
                     }
                 } catch (error) {
-                    console.error('Bulk delete error:', error);
+                    console.error('Bulk archive error:', error);
+                    showToast('An error occurred during bulk archiving.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
-                    loadOrders();
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    loadOrders(); // Refresh to ensure sync
                 }
             }
         });

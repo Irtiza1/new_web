@@ -125,6 +125,7 @@ export default function AdminRequestsPage() {
     };
 
     const handleStatusUpdate = async (id: string, newStatus: string) => {
+        const req = requests.find(r => r.id === id);
         try {
             const res = await fetch(`/api/requests/${id}`, {
                 method: 'PUT',
@@ -138,22 +139,27 @@ export default function AdminRequestsPage() {
                 if (selectedRequest?.id === id) {
                     setSelectedRequest({ ...selectedRequest, status: newStatus as any });
                 }
-                showToast(`Status updated to ${newStatus}`);
+                showToast(`Request #${req?.id.slice(-6).toUpperCase()} for ${req?.name} updated to ${newStatus.replace('_', ' ')}.`, 'success');
+            } else {
+                showToast(`Failed to update Request #${req?.id.slice(-6).toUpperCase()}.`, 'error');
             }
         } catch (error) {
             console.error('Failed to update status:', error);
+            showToast('An error occurred while updating the status.', 'error');
         }
     };
 
     const handleDelete = async (id: string) => {
         if (isBulkDeleting) return;
 
+        const req = requests.find(r => r.id === id);
+        if (!req) return;
+
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Request',
-            message: 'Are you sure you want to delete this request? This action cannot be undone.',
+            title: `Archive Request #${req.id.slice(-6).toUpperCase()}`,
+            message: `Are you sure you want to archive this custom request from "${req.name}"? This will remove it from the active pipeline.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
                     if (res.ok) {
@@ -167,12 +173,15 @@ export default function AdminRequestsPage() {
                         if (selectedRequest?.id === id) {
                             setSelectedRequest(null);
                         }
+                        showToast(`Request from "${req.name}" was successfully archived.`, 'success');
                     } else {
-                        showToast('Failed to delete request.', 'error');
+                        showToast(`Failed to archive request from "${req.name}".`, 'error');
                     }
                 } catch (err) {
                     console.error('Delete error:', err);
-                    showToast('An unexpected error occurred.', 'error');
+                    showToast('An unexpected error occurred while archiving.', 'error');
+                } finally {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
             }
         });
@@ -184,10 +193,9 @@ export default function AdminRequestsPage() {
         const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
-            title: `Delete ${count} Requests`,
-            message: `Are you sure you want to delete ${count} requests? This action cannot be undone.`,
+            title: `Archive ${count} Requests`,
+            message: `Are you sure you want to archive the ${count} selected requests? They will be removed from the active pipeline.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
                 let successCount = 0;
@@ -213,12 +221,16 @@ export default function AdminRequestsPage() {
                     }
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk archive finished with errors. Archived: ${successCount}, Failed: ${failCount}`, 'error');
+                    } else {
+                        showToast(`Successfully archived ${successCount} requests.`, 'success');
                     }
                 } catch (error) {
-                    console.error('Bulk delete error:', error);
+                    console.error('Bulk archive error:', error);
+                    showToast('An error occurred during bulk archiving.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                     fetchRequests();
                 }
             }
@@ -261,12 +273,13 @@ export default function AdminRequestsPage() {
             if (result.success) {
                 await fetchRequests();
                 setIsModalOpen(false);
+                showToast(`Request created successfully for ${requestData.name}.`, 'success');
             } else {
                 showToast('Failed to create request: ' + (result.error || result.message), 'error');
             }
         } catch (error) {
             console.error('Error creating request:', error);
-            showToast('An error occurred while creating the request', 'error');
+            showToast('An error occurred while creating the request.', 'error');
         }
     };
 

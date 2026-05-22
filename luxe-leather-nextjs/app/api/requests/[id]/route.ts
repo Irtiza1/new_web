@@ -37,5 +37,18 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Pro
 export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     await requestService.remove(id);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'Request archived.' });
+});
+
+export const PATCH = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+
+    if (action === 'restore') {
+        const request = await requestService.restore(id);
+        return NextResponse.json({ success: true, message: 'Request restored.', data: request });
+    }
+
+    throw new AppError('Invalid action. Use ?action=restore', 400, 'VALIDATION_ERROR');
 });

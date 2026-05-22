@@ -10,7 +10,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount, removedItems } = useCart();
     const router = useRouter();
 
     return (
@@ -33,6 +33,23 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
+
+                {/* Unavailable items removed notification */}
+                {removedItems.length > 0 && (
+                    <div className="mx-4 mt-3 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg flex items-start gap-2">
+                        <span className="material-symbols-outlined text-amber-500 text-[18px] shrink-0 mt-0.5">warning</span>
+                        <div>
+                            <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                                {removedItems.length === 1
+                                    ? `"${removedItems[0]}" was removed from your bag`
+                                    : `${removedItems.length} items were removed from your bag`}
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                                {removedItems.length === 1 ? 'This item is' : 'These items are'} no longer available.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Items List */}
                 <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6" style={{ scrollbarWidth: 'thin' }}>

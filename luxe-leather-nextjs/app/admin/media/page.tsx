@@ -79,8 +79,8 @@ export default function AdminMediaPage() {
         formData.append('file', file);
         const res = await fetch('/api/media', { method: 'POST', body: formData });
         const data = await res.json();
-        if (data.success) { showToast('Image uploaded!'); load(); }
-        else showToast(data.message || 'Upload failed', 'error');
+        if (data.success) { showToast(`Image "${file.name}" uploaded successfully.`, 'success'); load(); }
+        else showToast(data.message || 'Image upload failed.', 'error');
         setUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -88,6 +88,7 @@ export default function AdminMediaPage() {
     const copyUrl = (url: string) => {
         navigator.clipboard.writeText(url);
         setCopiedUrl(url);
+        showToast('Image URL copied to clipboard.', 'success');
         setTimeout(() => setCopiedUrl(null), 2000);
     };
 
@@ -96,13 +97,13 @@ export default function AdminMediaPage() {
 
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Image',
-            message: 'Delete this image? This action cannot be undone.',
+            title: `Delete Image "${name}"`,
+            message: 'Delete this image permanently? This action cannot be undone and may break links in your site.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
                 if ((await res.json()).success) {
-                    showToast('Image deleted');
+                    showToast(`Image "${name}" was deleted successfully.`, 'success');
                     setFiles(prev => prev.filter(f => f.name !== name));
                     setSelectedIds(prev => {
                         const next = new Set(prev);
@@ -110,7 +111,7 @@ export default function AdminMediaPage() {
                         return next;
                     });
                 } else {
-                    showToast('Failed to delete', 'error');
+                    showToast(`Failed to delete image "${name}".`, 'error');
                 }
             }
         });
@@ -148,7 +149,9 @@ export default function AdminMediaPage() {
                     }
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} images were deleted successfully.`, 'success');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);

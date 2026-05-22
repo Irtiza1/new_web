@@ -4,11 +4,11 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
 
 interface ToastState {
     text: string;
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning';
 }
 
 interface ToastContextType {
-    showToast: (text: string, type?: 'success' | 'error') => void;
+    showToast: (text: string, type?: 'success' | 'error' | 'warning') => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -17,7 +17,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toast, setToast] = useState<ToastState | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const showToast = useCallback((text: string, type: 'success' | 'error' = 'success') => {
+    const showToast = useCallback((text: string, type: 'success' | 'error' | 'warning' = 'success') => {
         if (timerRef.current) clearTimeout(timerRef.current);
         setToast({ text, type });
         timerRef.current = setTimeout(() => setToast(null), 3000);
@@ -29,9 +29,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             {toast && (
                 <div
                     role="alert"
-                    className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all ${
-                        toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-                    }`}
+                    style={{
+                        backgroundColor:
+                            toast.type === 'success' ? '#16a34a'
+                            : toast.type === 'warning' ? '#f59e0b'
+                            : '#dc2626'
+                    }}
+                    className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all"
                 >
                     {toast.text}
                 </div>

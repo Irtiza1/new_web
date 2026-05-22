@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { data, error } = await supabase.from('nav_items').insert([body]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('nav_items', data.id, 'CREATE', { label: { from: null, to: data.label } });
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -34,6 +38,8 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { data, error } = await supabase.from('nav_items').update(body).eq('id', id).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('nav_items', data.id, 'UPDATE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -43,5 +49,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
     const { error } = await supabase.from('nav_items').delete().eq('id', id);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('nav_items', id, 'DELETE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

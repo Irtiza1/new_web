@@ -31,6 +31,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
         phone: '',
         city: '',
         country: '',
+        isActive: true,
     });
 
     useEffect(() => {
@@ -42,6 +43,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
                     phone: initialData.phone || '',
                     city: initialData.city || '',
                     country: initialData.country || '',
+                    isActive: initialData.isActive !== undefined ? initialData.isActive : true,
                 });
             } else {
                 setFormData({
@@ -50,6 +52,7 @@ export default function AdminCustomerModal({ isOpen, onClose, onSubmit, initialD
                     phone: '',
                     city: '',
                     country: '',
+                    isActive: true,
                 });
             }
         }

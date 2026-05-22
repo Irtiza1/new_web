@@ -1,4 +1,5 @@
 import { supabase, type SiteSetting } from '@/lib/supabase';
+import { auditLog } from './auditService';
 
 export type { SiteSetting };
 
@@ -57,5 +58,11 @@ export async function update(settings: Record<string, string>) {
         console.error('Settings upsert error:', JSON.stringify(error));
         throw error;
     }
+    
+    // Log the update
+    await auditLog('site_settings', 'bulk_update', 'UPDATE', {
+        keys_updated: { from: null, to: Object.keys(settings) }
+    });
+
     return { success: true };
 }

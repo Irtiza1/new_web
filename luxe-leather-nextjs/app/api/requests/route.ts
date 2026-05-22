@@ -55,3 +55,30 @@ export const POST = apiHandler(async (req: NextRequest) => {
         data: newRequest,
     }, { status: 201 });
 });
+
+/**
+ * @route   PUT /api/requests
+ * @desc    Update a custom request
+ */
+export const PUT = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Request ID required' }, { status: 400 });
+
+    const body = await req.json();
+    const customReq = await requestService.update(id, body);
+    return NextResponse.json({ success: true, data: customReq });
+});
+
+/**
+ * @route   DELETE /api/requests
+ * @desc    Delete a custom request
+ */
+export const DELETE = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Request ID required' }, { status: 400 });
+
+    await requestService.remove(id);
+    return NextResponse.json({ success: true, message: 'Request deleted successfully' });
+});

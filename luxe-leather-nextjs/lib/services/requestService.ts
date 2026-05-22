@@ -1,5 +1,6 @@
 import { supabase, type CustomRequest } from '@/lib/supabase';
 import { AppError } from '@/lib/utils/AppError';
+import { auditLog } from './auditService';
 
 export type { CustomRequest };
 
@@ -35,13 +36,17 @@ export const getAll = async (query: {
     search?: string;
     page?: number;
     limit?: number;
+    includeArchived?: boolean;
 }) => {
     let dbQuery = supabase
         .from('custom_requests')
         .select('*', { count: 'exact' });
 
-    // Note: Supabase RequestStatus enum rejects eq() filters, so we fetch all
-    // and do client-side status filtering.
+    // Hide archived requests from normal admin views
+    if (!query.includeArchived) {
+        dbQuery = dbQuery.eq('isArchived', false);
+    }
+
     if (query.search) {
         dbQuery = dbQuery.or(`name.ilike.%${query.search}%,email.ilike.%${query.search}%,itemType.ilike.%${query.search}%`);
     }
@@ -94,16 +99,17 @@ export const getById = async (id: string) => {
  * Create new request
  */
 export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
-    // Generate a cuid-style id manually (CustomRequest table uses cuid not UUID)
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const { data, error } = await supabase
         .from('custom_requests')
-        .insert([{ ...request, id, status: 'NEW', createdAt: now, updatedAt: now }])
+        .insert([{ ...request, id, status: 'NEW', isArchived: false, createdAt: now, updatedAt: now }])
         .select()
         .single();
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
+
+    await auditLog('custom_requests', id, 'CREATE', { status: { from: null, to: 'NEW' } });
     return data as CustomRequest;
 };
 
@@ -112,6 +118,8 @@ export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | '
  */
 export const updateStatus = async (id: string, status: string) => {
     const dbStatus = toDbStatus(status);
+    const { data: before } = await supabase.from('custom_requests').select('status').eq('id', id).single();
+
     const { data, error } = await supabase
         .from('custom_requests')
         .update({ status: dbStatus })
@@ -120,6 +128,10 @@ export const updateStatus = async (id: string, status: string) => {
         .single();
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
+
+    await auditLog('custom_requests', id, 'UPDATE', {
+        status: { from: before?.status ?? null, to: dbStatus },
+    });
     return data as CustomRequest;
 };
 
@@ -164,16 +176,36 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
 };
 
 /**
- * Delete request
+ * Soft-delete (archive) a request — sets isArchived = true.
+ * Hard deletion is not allowed; requests are business records.
  */
 export const remove = async (id: string) => {
     const { error } = await supabase
         .from('custom_requests')
-        .delete()
+        .update({ isArchived: true } as any)
         .eq('id', id);
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
+
+    await auditLog('custom_requests', id, 'ARCHIVE', { isArchived: { from: false, to: true } });
     return { success: true };
+};
+
+/**
+ * Restore an archived request — sets isArchived = false.
+ */
+export const restore = async (id: string) => {
+    const { data, error } = await supabase
+        .from('custom_requests')
+        .update({ isArchived: false } as any)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw new AppError(error.message, 500, 'DB_ERROR');
+
+    await auditLog('custom_requests', id, 'RESTORE', { isArchived: { from: true, to: false } });
+    return data as CustomRequest;
 };
 
 /**

@@ -104,7 +104,8 @@ export default function AdminProductsPage() {
     const fetchProducts = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/products');
+            // includeInactive=true so admin sees ALL products, including archived
+            const res = await fetch('/api/products?includeInactive=true');
             const result = await res.json();
             if (result.success) {
                 setProducts(result.data);
@@ -158,33 +159,73 @@ export default function AdminProductsPage() {
     const handleDeleteProduct = async (id: string) => {
         if (isBulkDeleting) return;
 
+        const product = products.find(p => p.id === id);
+        if (!product) return;
+
         setConfirmModal({
             isOpen: true,
             title: 'Delete Product',
-            message: 'Are you sure you want to delete this product? This action cannot be undone.',
+            message: `Are you sure you want to delete "${product.name}"? If this product has order history, it will be archived (hidden from storefront) instead of permanently deleted.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
-                    const res = await fetch(`/api/products/${id}`, {
-                        method: 'DELETE',
-                    });
+                    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                    const result = await res.json();
 
-                    if (!res.ok) throw new Error('Failed to delete product');
+                    if (!res.ok) throw new Error(result.message || 'Failed to delete product');
 
-                    // Optimistic update
-                    setProducts(products.filter(p => p.id !== id));
-                    setSelectedIds(prev => {
-                        const next = new Set(prev);
-                        next.delete(id);
-                        return next;
-                    });
+                    if (result.archived) {
+                        showToast(
+                            `⚠️ "${product.name}" was archived instead of deleted because it exists in order history.`,
+                            'warning'
+                        );
+                        // Refresh to show updated isActive status
+                        await fetchProducts();
+                    } else {
+                        // Hard deleted — remove from local state optimistically
+                        setProducts(products.filter(p => p.id !== id));
+                        setSelectedIds(prev => {
+                            const next = new Set(prev);
+                            next.delete(id);
+                            return next;
+                        });
+                        showToast(`"${product.name}" was permanently deleted.`, 'success');
+                    }
                 } catch (error) {
                     console.error('Error deleting product:', error);
-                    showToast('Failed to delete product. Please try again.', 'error');
-                    fetchProducts(); // Revert on error
+                    showToast(`Failed to delete "${product.name}". Please try again.`, 'error');
+                } finally {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
             }
         });
+    };
+
+    const handleArchiveProduct = async (id: string) => {
+        const product = products.find(p => p.id === id);
+        try {
+            const res = await fetch(`/api/products/${id}?action=archive`, { method: 'PATCH' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(`"${product?.name}" archived and hidden from storefront.`, 'success');
+            fetchProducts();
+        } catch (error) {
+            console.error('Error archiving product:', error);
+            showToast(`Failed to archive "${product?.name || 'product'}".`, 'error');
+        }
+    };
+
+    const handleRestoreProduct = async (id: string) => {
+        const product = products.find(p => p.id === id);
+        try {
+            const res = await fetch(`/api/products/${id}?action=restore`, { method: 'PATCH' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            showToast(`"${product?.name}" restored and is now visible on the storefront.`, 'success');
+            fetchProducts();
+        } catch (error) {
+            console.error('Error restoring product:', error);
+            showToast(`Failed to restore "${product?.name || 'product'}".`, 'error');
+        }
     };
 
     const handleBulkDelete = async () => {
@@ -194,39 +235,52 @@ export default function AdminProductsPage() {
         setConfirmModal({
             isOpen: true,
             title: `Delete ${count} Products`,
-            message: `Are you sure you want to delete ${count} products? This action cannot be undone.`,
+            message: `Are you sure you want to delete ${count} products? This action cannot be undone. Products with order history will be archived instead of permanently deleted.`,
             onConfirm: async () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
-                let successCount = 0;
+                let hardDeletedCount = 0;
+                let archivedCount = 0;
                 let failCount = 0;
 
                 try {
                     await Promise.all(idsToDelete.map(async (id) => {
                         try {
                             const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-                            if (res.ok) successCount++;
-                            else failCount++;
+                            const result = await res.json();
+                            
+                            if (res.ok) {
+                                if (result.archived) {
+                                    archivedCount++;
+                                } else {
+                                    hardDeletedCount++;
+                                }
+                            } else {
+                                failCount++;
+                            }
                         } catch (err) {
                             failCount++;
                         }
                     }));
 
-                    if (successCount > 0) {
-                        setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
-                        setSelectedIds(new Set());
-                    }
+                    setSelectedIds(new Set());
+                    await fetchProducts(); // Refresh to ensure sync with DB
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk delete finished with errors. Deleted: ${hardDeletedCount}, Archived: ${archivedCount}, Failed: ${failCount}`, 'error');
+                    } else if (archivedCount > 0 && hardDeletedCount === 0) {
+                        showToast(`⚠️ All ${archivedCount} selected products were archived instead of deleted because they exist in order history.`, 'warning');
+                    } else if (archivedCount > 0 && hardDeletedCount > 0) {
+                        showToast(`⚠️ ${hardDeletedCount} products deleted. ${archivedCount} products were archived instead because they have order history.`, 'warning');
+                    } else {
+                        showToast(`Successfully deleted ${hardDeletedCount} products.`, 'success');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
-                    fetchProducts(); // Refresh to ensure sync
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
             }
         });
@@ -267,9 +321,11 @@ export default function AdminProductsPage() {
     };
 
     // Calculate stats
-    const totalInventory = products.reduce((acc, curr) => acc + curr.stock, 0);
-    const lowStockCount = products.filter(p => p.stock < 5).length;
-    const totalValue = products.reduce((acc, curr) => acc + (curr.price * curr.stock), 0);
+    const activeProducts = products.filter(p => p.isActive);
+    const archivedCount = products.filter(p => !p.isActive).length;
+    const totalInventory = activeProducts.reduce((acc, curr) => acc + curr.stock, 0);
+    const lowStockCount = activeProducts.filter(p => p.stock < 5).length;
+    const totalValue = activeProducts.reduce((acc, curr) => acc + (curr.price * curr.stock), 0);
 
     return (
         <AdminPageLayout
@@ -288,7 +344,7 @@ export default function AdminProductsPage() {
                 <>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Products</p>
-                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{products.length}</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{activeProducts.length} <span className="text-xs font-medium text-gray-400">active</span></p>
                     </div>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Inventory</p>
@@ -298,6 +354,12 @@ export default function AdminProductsPage() {
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Low Stock Alerts</p>
                         <p className={`text-base font-black leading-none mt-0.5 ${lowStockCount > 0 ? 'text-[#d41132]' : 'text-emerald-500'}`}>{lowStockCount}</p>
                     </div>
+                    {archivedCount > 0 && (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Archived</p>
+                            <p className="text-base font-black text-amber-700 dark:text-amber-300 leading-none mt-0.5">{archivedCount}</p>
+                        </div>
+                    )}
                 </>
             }
             filters={
@@ -386,10 +448,15 @@ export default function AdminProductsPage() {
                                         )}
                                     </div>
                                     <div>
-                                        <p className="font-bold text-[#0d141b] dark:text-white text-sm">{product.name}</p>
-                                        {product.sale_price && (
-                                            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">SALE</span>
-                                        )}
+                                        <p className={`font-bold text-sm ${!product.isActive ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-[#0d141b] dark:text-white'}`}>{product.name}</p>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            {!product.isActive && (
+                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">ARCHIVED</span>
+                                            )}
+                                            {product.sale_price && product.isActive && (
+                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">SALE</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -426,11 +493,20 @@ export default function AdminProductsPage() {
                                     <span className="material-symbols-outlined">more_vert</span>
                                 </button>
                                 {activeMenu === product.id && (
-                                    <div className="absolute right-8 top-12 z-20 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
+                                    <div className="absolute right-8 top-12 z-20 w-52 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 action-menu animate-in zoom-in-95 duration-150 origin-top-right">
                                         <button onClick={() => { openEditModal(product); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">edit</span> Edit Product
                                         </button>
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        {product.isActive ? (
+                                            <button onClick={() => { handleArchiveProduct(product.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">inventory_2</span> Archive
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => { handleRestoreProduct(product.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-lg">restore</span> Restore
+                                            </button>
+                                        )}
                                         <button onClick={() => { handleDeleteProduct(product.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">delete</span> Delete
                                         </button>

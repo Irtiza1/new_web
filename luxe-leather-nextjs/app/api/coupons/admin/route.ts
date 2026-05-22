@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 const couponSchema = z.object({
     code: z.string().min(1, 'Code is required'),
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
     }
     const { data, error } = await supabase.from('coupons').insert([result.data]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('coupons', data.id, 'CREATE', { code: { from: null, to: data.code } });
     return NextResponse.json({ success: true, data });
 }
 
@@ -55,6 +57,7 @@ export async function PUT(request: Request) {
     }
     const { data, error } = await supabase.from('coupons').update(updateResult.data).eq('id', id).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('coupons', data.id, 'UPDATE');
     return NextResponse.json({ success: true, data });
 }
 
@@ -64,5 +67,6 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
     const { error } = await supabase.from('coupons').delete().eq('id', id);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('coupons', id, 'DELETE');
     return NextResponse.json({ success: true });
 }

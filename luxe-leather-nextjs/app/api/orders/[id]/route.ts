@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as orderService from '../../../../lib/services/orderService';
 import { apiHandler } from '../../../../lib/middleware/apiHandler';
+import { AppError } from '../../../../lib/utils/AppError';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,6 @@ const idSchema = z.object({
 
 const updateOrderSchema = z.object({
     status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).optional(),
-    // Add other updateable fields if necessary
 });
 
 /**
@@ -39,10 +39,27 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Pro
 
 /**
  * @route   DELETE /api/orders/:id
- * @desc    Delete order
+ * @desc    Soft-delete an order (sets isDeleted=true). Orders are never hard-deleted.
  */
 export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = idSchema.parse(await params);
     await orderService.remove(id);
-    return NextResponse.json({ success: true, message: 'Order deleted successfully' });
+    return NextResponse.json({ success: true, message: 'Order archived successfully.' });
+});
+
+/**
+ * @route   PATCH /api/orders/:id?action=restore
+ * @desc    Restore a soft-deleted order
+ */
+export const PATCH = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = idSchema.parse(await params);
+    const { searchParams } = new URL(req.url);
+    const action = searchParams.get('action');
+
+    if (action === 'restore') {
+        const order = await orderService.restore(id);
+        return NextResponse.json({ success: true, message: 'Order restored.', data: order });
+    }
+
+    throw new AppError('Invalid action. Use ?action=restore', 400, 'VALIDATION_ERROR');
 });

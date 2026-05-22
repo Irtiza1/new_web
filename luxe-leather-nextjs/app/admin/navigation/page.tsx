@@ -90,24 +90,25 @@ export default function AdminNavigationPage() {
         const url = editingItem ? `/api/nav-items?id=${editingItem.id}` : '/api/nav-items';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.success) { showToast(editingItem ? 'Nav item updated!' : 'Nav item added!'); setShowModal(false); load(); }
-        else showToast(data.message || 'Failed to save', 'error');
+        if (data.success) { showToast(editingItem ? `Navigation link "${form.label}" updated successfully.` : `Navigation link "${form.label}" created successfully.`, 'success'); setShowModal(false); load(); }
+        else showToast(data.message || 'Failed to save navigation link.', 'error');
         setSaving(false);
     };
 
     const handleDelete = async (id: string) => {
         if (isBulkDeleting) return;
 
+        const navItem = items.find(i => i.id === id);
         setConfirmModal({
             isOpen: true,
-            title: 'Remove Nav Item',
-            message: 'Remove this nav item? This action cannot be undone.',
+            title: `Remove Nav Link "${navItem?.label}"`,
+            message: 'Remove this nav link? This action cannot be undone.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 try {
                     const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
                     if ((await res.json()).success) {
-                        showToast('Nav item removed');
+                        showToast(`Navigation link "${navItem?.label}" was removed successfully.`, 'success');
                         setItems(prev => prev.filter(i => i.id !== id));
                         setSelectedIds(prev => {
                             const next = new Set(prev);
@@ -159,7 +160,9 @@ export default function AdminNavigationPage() {
                     }
 
                     if (failCount > 0) {
-                        showToast(`Bulk delete completed. Success: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`Bulk delete finished. ${successCount} removed, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} navigation links were removed successfully.`, 'success');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
@@ -174,6 +177,7 @@ export default function AdminNavigationPage() {
 
     const toggleVisibility = async (item: NavItem) => {
         await fetch(`/api/nav-items?id=${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_visible: !item.is_visible }) });
+        showToast(`Navigation link "${item.label}" is now ${!item.is_visible ? 'visible' : 'hidden'}.`, 'success');
         load();
     };
 

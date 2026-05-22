@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 const reviewSchema = z.object({
     product_id: z.string().optional(),
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
     }
     const { data, error } = await supabase.from('reviews').insert([result.data]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('reviews', data.id, 'CREATE', { customer_name: { from: null, to: data.customer_name } });
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -60,6 +64,8 @@ export async function PUT(request: Request) {
     }
     const { data, error } = await supabase.from('reviews').update(updateResult.data).eq('id', id).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('reviews', data.id, 'UPDATE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -69,5 +75,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
     const { error } = await supabase.from('reviews').delete().eq('id', id);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('reviews', id, 'DELETE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

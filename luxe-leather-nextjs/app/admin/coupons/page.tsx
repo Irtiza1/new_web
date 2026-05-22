@@ -107,31 +107,37 @@ export default function AdminCouponsPage() {
         const url = editingCoupon ? `/api/coupons/admin?id=${editingCoupon.id}` : '/api/coupons/admin';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.success) { showToast(editingCoupon ? 'Coupon updated!' : 'Coupon created!'); setShowModal(false); loadCoupons(); }
-        else showToast(data.message || 'Failed to save', 'error');
+        if (data.success) { showToast(editingCoupon ? `Coupon "${form.code}" updated successfully.` : `Coupon "${form.code}" created successfully.`, 'success'); setShowModal(false); loadCoupons(); }
+        else showToast(data.message || 'Failed to save coupon.', 'error');
         setSaving(false);
     };
 
     const handleDelete = async (id: string) => {
+        const coupon = coupons.find(c => c.id === id);
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Coupon',
+            title: `Delete Coupon "${coupon?.code}"`,
             message: 'Are you sure you want to delete this coupon? This action cannot be undone.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' });
                 const data = await res.json();
-                if (data.success) { showToast('Coupon deleted'); loadCoupons(); }
-                else showToast('Failed to delete', 'error');
+                if (data.success) { showToast(`Coupon "${coupon?.code}" was deleted successfully.`, 'success'); loadCoupons(); }
+                else showToast(`Failed to delete coupon "${coupon?.code}".`, 'error');
             }
         });
     };
 
     const toggleActive = async (c: Coupon) => {
-        await fetch(`/api/coupons/admin?id=${c.id}`, {
+        const res = await fetch(`/api/coupons/admin?id=${c.id}`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...c, is_active: !c.is_active })
         });
+        if (res.ok) {
+            showToast(`Coupon "${c.code}" is now ${!c.is_active ? 'active' : 'inactive'}.`, 'success');
+        } else {
+            showToast(`Failed to update status for coupon "${c.code}".`, 'error');
+        }
         loadCoupons();
     };
 
@@ -157,11 +163,16 @@ export default function AdminCouponsPage() {
                         )
                     );
                     const successCount = results.filter(r => r.success).length;
-                    showToast(`${successCount} coupons deleted successfully`);
+                    const failCount = selectedIds.size - successCount;
+                    if (failCount > 0) {
+                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} coupons were deleted successfully.`, 'success');
+                    }
                     loadCoupons();
                     setSelectedIds(new Set());
                 } catch (err) {
-                    showToast('Bulk delete failed', 'error');
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
                 }

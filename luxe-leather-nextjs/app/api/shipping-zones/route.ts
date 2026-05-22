@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { data, error } = await supabase.from(TABLE).insert([body]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('shipping_zones', data.id, 'CREATE', { name: { from: null, to: data.name } });
     return NextResponse.json({ success: true, data });
 }
 
@@ -36,6 +38,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { data, error } = await supabase.from(TABLE).update(body).eq('id', id).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('shipping_zones', data.id, 'UPDATE');
     return NextResponse.json({ success: true, data });
 }
 
@@ -45,5 +48,6 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
     const { error } = await supabase.from(TABLE).delete().eq('id', id);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('shipping_zones', id, 'DELETE');
     return NextResponse.json({ success: true });
 }

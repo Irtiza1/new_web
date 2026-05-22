@@ -1,5 +1,6 @@
 import { supabase, Customer } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
+import { auditLog } from './auditService';
 
 // Type definition for enriched customer data
 export interface CustomerWithStats extends Customer {
@@ -8,11 +9,15 @@ export interface CustomerWithStats extends Customer {
 }
 
 /**
- * Get all customers with optional filtering and pagination
- * @param {Object} query - Query parameters
- * @returns {Promise<Object>} Paginated customers with stats
+ * Get all customers with optional filtering and pagination.
+ * Anonymized/inactive customers (isActive=false) are hidden by default.
  */
-export const getAll = async (query: { search?: string; page?: string; limit?: string }) => {
+export const getAll = async (query: {
+    search?: string;
+    page?: string;
+    limit?: string;
+    includeInactive?: boolean;
+}) => {
     const page = parseInt(query.page || '1');
     const limit = parseInt(query.limit || '10');
     const offset = (page - 1) * limit;
@@ -22,6 +27,10 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
         .select('*', { count: 'exact' })
         .order('createdAt', { ascending: false })
         .range(offset, offset + limit - 1);
+
+    if (!query.includeInactive) {
+        dbQuery = dbQuery.eq('isActive', true);
+    }
 
     if (query.search) {
         dbQuery = dbQuery.or(`name.ilike.%${query.search}%,email.ilike.%${query.search}%`);
@@ -33,27 +42,20 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
 
-    // Fetch orders to calculate stats (optimally this should be a DB join or materialized view)
-    // For now, we fetch orders for these specific customers
-    // Since Supabase join syntax is specific, fetching related orders:
-    // Actually, getting all orders is inefficient.
-    // We'll fetch orders for the visible customers ONLY.
     const customerIds = customers?.map(c => c.id) || [];
-
     let ordersMap: Record<string, { count: number; total: number }> = {};
 
     if (customerIds.length > 0) {
         const { data: orders } = await supabase
             .from('orders')
             .select('customer_id, total')
-            .in('customer_id', customerIds); // Only fetch for these customers!
+            .in('customer_id', customerIds)
+            .eq('isDeleted', false);
 
         if (orders) {
             orders.forEach(order => {
                 const cid = order.customer_id;
-                if (!ordersMap[cid]) {
-                    ordersMap[cid] = { count: 0, total: 0 };
-                }
+                if (!ordersMap[cid]) ordersMap[cid] = { count: 0, total: 0 };
                 ordersMap[cid].count++;
                 ordersMap[cid].total += order.total;
             });
@@ -79,8 +81,6 @@ export const getAll = async (query: { search?: string; page?: string; limit?: st
 
 /**
  * Get a customer by ID with stats
- * @param {string} id - Customer UUID
- * @returns {Promise<CustomerWithStats>}
  */
 export const getById = async (id: string) => {
     const { data: customer, error } = await supabase
@@ -93,11 +93,11 @@ export const getById = async (id: string) => {
         throw new AppError('Customer not found', 404, 'NOT_FOUND');
     }
 
-    // Fetch stats
     const { data: orders } = await supabase
         .from('orders')
         .select('total')
-        .eq('customer_id', id);
+        .eq('customer_id', id)
+        .eq('isDeleted', false);
 
     const stats = orders?.reduce<{ count: number; total: number }>((acc, order) => ({
         count: acc.count + 1,
@@ -113,11 +113,10 @@ export const getById = async (id: string) => {
 
 /**
  * Update a customer
- * @param {string} id - Customer UUID
- * @param {Partial<Customer>} data - Update data
- * @returns {Promise<Customer>}
  */
 export const update = async (id: string, data: Partial<Customer>) => {
+    const { data: before } = await supabase.from('customers').select('*').eq('id', id).single();
+
     const { data: updated, error } = await supabase
         .from('customers')
         .update(data)
@@ -128,33 +127,44 @@ export const update = async (id: string, data: Partial<Customer>) => {
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    if (before) {
+        const changedFields: Record<string, { from: unknown; to: unknown }> = {};
+        for (const key of Object.keys(data) as (keyof Customer)[]) {
+            if (before[key] !== (updated as any)[key]) {
+                changedFields[key as string] = { from: before[key], to: (updated as any)[key] };
+            }
+        }
+        if (Object.keys(changedFields).length > 0) {
+            await auditLog('customers', id, 'UPDATE', changedFields);
+        }
+    }
+
     return updated;
 };
 
 /**
  * Create a new customer
- * @param {Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>} data
- * @returns {Promise<Customer>}
  */
 export const create = async (data: any) => {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const { data: created, error } = await supabase
         .from('customers')
-        .insert([{ ...data, id, createdAt: now, updatedAt: now }])
+        .insert([{ ...data, id, isActive: true, createdAt: now, updatedAt: now }])
         .select()
         .single();
 
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    await auditLog('customers', id, 'CREATE', { email: { from: null, to: data.email } });
     return created;
 };
 
 /**
  * Get a customer by Email
- * @param {string} email
- * @returns {Promise<Customer | null>}
  */
 export const getByEmail = async (email: string) => {
     const { data: customer, error } = await supabase
@@ -163,68 +173,70 @@ export const getByEmail = async (email: string) => {
         .eq('email', email)
         .single();
 
-    if (error) {
-        return null;
-    }
+    if (error) return null;
     return customer as Customer;
 };
 
 /**
- * Delete a customer by ID
- * ... (existing remove)
- */
-/**
- * Delete a customer and all their associated data
- * @param {string} id - Customer UUID
+ * Anonymize a customer (GDPR-compliant soft delete).
+ *
+ * Strategy:
+ *   - Wipes all PII: name, email, phone, address, city, country
+ *   - Sets isActive = false so they're hidden from admin lists
+ *   - All orders are preserved with anonymized customer reference
+ *   - Custom requests are unlinked (customerId = null) but kept
+ *   - Uses anonymize_customer RPC for atomicity (migration 012 required)
+ *
+ * Why not hard delete?
+ *   - Orders reference customer_id; hard delete would orphan them
+ *   - Financial/audit records require the customer row to exist
  */
 export const remove = async (id: string) => {
-    // 1. Find all order IDs for this customer
-    const { data: customerOrders } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('customer_id', id);
+    // Try atomic RPC anonymization first
+    try {
+        const { error: rpcError } = await supabase.rpc('anonymize_customer', {
+            p_customer_id: id,
+        });
 
-    if (customerOrders && customerOrders.length > 0) {
-        const orderIds = customerOrders.map(o => o.id);
-
-        // 2. Delete all order items for those orders
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .delete()
-            .in('order_id', orderIds);
-
-        if (itemsError) {
-            console.error('Error deleting customer order items:', itemsError);
-            throw new AppError(itemsError.message, 500, 'DB_ERROR');
+        if (!rpcError) {
+            await auditLog('customers', id, 'ANONYMIZE', {
+                isActive: { from: true, to: false },
+                name: { from: '[original]', to: 'Deleted User' },
+                email: { from: '[original]', to: `deleted+${id}@deleted.invalid` },
+            });
+            return;
         }
-
-        // 3. Delete the orders
-        const { error: ordersError } = await supabase
-            .from('orders')
-            .delete()
-            .in('id', orderIds);
-
-        if (ordersError) {
-            console.error('Error deleting customer orders:', ordersError);
-            throw new AppError(ordersError.message, 500, 'DB_ERROR');
-        }
+        console.warn('[CustomerService] RPC anonymize_customer not available, falling back:', rpcError.message);
+    } catch (_) {
+        console.warn('[CustomerService] RPC call failed, using sequential fallback');
     }
 
-    // 4. Nullify customer_id in custom_requests (custom_requests table name is custom_requests)
-    // We don't want to delete requests, just unlink them from the deleted customer.
+    // Fallback: sequential anonymization
     await supabase
         .from('custom_requests')
         .update({ customerId: null })
         .eq('customerId', id);
 
-    // 5. Finally delete the customer
     const { error } = await supabase
         .from('customers')
-        .delete()
+        .update({
+            name: 'Deleted User',
+            email: `deleted+${id}@deleted.invalid`,
+            phone: null,
+            address: null,
+            city: null,
+            country: null,
+            isActive: false,
+            updatedAt: new Date().toISOString(),
+        } as any)
         .eq('id', id);
 
     if (error) {
-        console.error('Error deleting customer:', error);
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    await auditLog('customers', id, 'ANONYMIZE', {
+        isActive: { from: true, to: false },
+        name: { from: '[original]', to: 'Deleted User' },
+    });
 };

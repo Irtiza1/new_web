@@ -1,39 +1,35 @@
 import { supabase, Order } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
+import { auditLog } from './auditService';
 
-// ============================================
+// ============================================================
 // ORDER SERVICE
-// ============================================
+// ============================================================
 
 /**
- * Get all orders with optional filtering
- * @param {Object} query - Query parameters
- * @returns {Promise<Order[]>} List of orders
+ * Get all orders with optional filtering.
+ * Soft-deleted orders (isDeleted=true) are hidden by default.
+ * Pass includeDeleted=true to see them (e.g. for restore UI).
  */
-export const getAll = async (query: { search?: string; status?: string; limit?: string }) => {
+export const getAll = async (query: {
+    search?: string;
+    status?: string;
+    limit?: string;
+    includeDeleted?: boolean;
+}) => {
     let dbQuery = supabase
         .from('orders')
         .select('*, customers(name, email), order_items(*)')
         .order('createdAt', { ascending: false });
 
+    // Hide soft-deleted orders from normal views
+    if (!query.includeDeleted) {
+        dbQuery = dbQuery.eq('isDeleted', false);
+    }
+
     if (query.status && query.status !== 'all') {
         dbQuery = dbQuery.eq('status', query.status);
     }
-
-    // Note: Search filters on related Customer fields or Order ID
-    // Supabase simplified searching might be tricky with relations in one go without RPC or specific handling.
-    // For now, we'll fetch and let the frontend filter, OR strict match on ID, 
-    // OR we can implement a more complex search if needed. 
-    // Given the current usage in page.tsx client-side filtering, returning the list is key.
-    // However, for efficiency, if search is provided, we might want to defer to client or solve it here.
-    // For this refactor, I will implement a basic ID search if provided, but relying on client-side full text search 
-    // for customer name/email is what the previous implementation essentially did by fetching all.
-    // I will return the data and let the controller/frontend handle the specific fuzzy logic if it's too complex for basic PostgREST.
-
-    // Actually, looking at the previous page.tsx, it fetches ALL and filters in JS.
-    // To match performance, we should ideally filter DB side. 
-    // Filtering nested relations (Customer.name) in Supabase is hard with simple query.
-    // I will stick to returning the list based on status, and let the frontend refine, or implemented specific ID match.
 
     if (query.search) {
         dbQuery = dbQuery.ilike('id', `%${query.search}%`);
@@ -49,8 +45,6 @@ export const getAll = async (query: { search?: string; status?: string; limit?: 
 
 /**
  * Get order by ID
- * @param {string} id - Order UUID
- * @returns {Promise<Order>}
  */
 export const getById = async (id: string) => {
     const { data, error } = await supabase
@@ -66,19 +60,46 @@ export const getById = async (id: string) => {
 };
 
 /**
- * Create a new order
- * @param {any} orderData
- * @returns {Promise<Order>}
+ * Create a new order atomically using the create_order_with_items RPC.
+ * Falls back to sequential inserts if the RPC is not yet deployed.
  */
 export const create = async (orderData: any) => {
     const { items, ...orderPayload } = orderData;
     const orderId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    // Insert the main Order record
+    const orderObj = {
+        id: orderId,
+        createdAt: now,
+        updatedAt: now,
+        subtotal: orderPayload.total ?? 0,
+        shipping: orderPayload.shipping ?? 0,
+        customer_id: orderPayload.customer_id || orderPayload.customerId,
+        ...orderPayload,
+    };
+
+    try {
+        // Attempt atomic RPC (requires migration 012 to be run)
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'create_order_with_items',
+            { p_order: orderObj, p_items: items ?? [] }
+        );
+
+        if (!rpcError && rpcData) {
+            await auditLog('orders', orderId, 'CREATE', { status: { from: null, to: orderObj.status ?? 'PENDING' } });
+            return rpcData as Order;
+        }
+
+        // RPC not available — fall back to sequential inserts
+        console.warn('[OrderService] RPC not available, using sequential inserts:', rpcError?.message);
+    } catch (_) {
+        console.warn('[OrderService] RPC call failed, falling back to sequential inserts');
+    }
+
+    // Fallback: sequential (non-atomic)
     const { data, error } = await supabase
         .from('orders')
-        .insert([{ ...orderPayload, id: orderId, items: JSON.stringify(items), createdAt: now, updatedAt: now, subtotal: orderPayload.total ?? 0, shipping: orderPayload.shipping ?? 0, customer_id: orderPayload.customer_id || orderPayload.customerId }])
+        .insert([{ ...orderObj }])
         .select()
         .single();
 
@@ -86,35 +107,29 @@ export const create = async (orderData: any) => {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
 
-    // orderId already declared above; data.id will match it
-
-    // Insert the associated OrderItems if provided (non-fatal — order data is in JSONB items column)
     if (items && Array.isArray(items) && items.length > 0) {
-        try {
-            const orderItems = items.map((item: any) => ({
-                id: crypto.randomUUID(),
-                order_id: orderId,
-                product_id: item.product_id || item.productId,
-                quantity: item.quantity,
-                price: item.price,
-            }));
-
-            await supabase.from('order_items').insert(orderItems);
-        } catch (e) {
-            console.warn('order_items insert failed (non-fatal):', e);
-        }
+        const orderItems = items.map((item: any) => ({
+            id: crypto.randomUUID(),
+            order_id: orderId,
+            product_id: item.product_id || item.productId,
+            quantity: item.quantity,
+            price: item.price,
+        }));
+        await supabase.from('order_items').insert(orderItems);
     }
 
+    await auditLog('orders', orderId, 'CREATE', { status: { from: null, to: orderObj.status ?? 'PENDING' } });
     return data as Order;
 };
 
 /**
- * Update a order
- * @param {string} id - Order UUID
- * @param {Partial<Order>} updates
- * @returns {Promise<Order>}
+ * Update an order (e.g. status change).
+ * Captures a field-level diff for audit logging.
  */
 export const update = async (id: string, updates: Partial<Order>) => {
+    // Capture before state for audit diff
+    const { data: before } = await supabase.from('orders').select('*').eq('id', id).single();
+
     const { data, error } = await supabase
         .from('orders')
         .update(updates)
@@ -125,50 +140,78 @@ export const update = async (id: string, updates: Partial<Order>) => {
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    if (before) {
+        const changedFields: Record<string, { from: unknown; to: unknown }> = {};
+        for (const key of Object.keys(updates) as (keyof Order)[]) {
+            if (before[key] !== (data as any)[key]) {
+                changedFields[key as string] = { from: before[key], to: (data as any)[key] };
+            }
+        }
+        if (Object.keys(changedFields).length > 0) {
+            await auditLog('orders', id, 'UPDATE', changedFields);
+        }
+    }
+
     return data as Order;
 };
 
 /**
- * Delete a order
- * @param {string} id - Order UUID
- * @returns {Promise<void>}
+ * Soft-delete an order (sets isDeleted = true).
+ *
+ * Orders are permanent financial records — we never hard delete them.
+ * Soft deletion hides them from the admin list while preserving all data
+ * for accounting, reporting, and dispute resolution.
+ *
+ * Uses the delete_order_safe RPC for atomicity if available.
  */
 export const remove = async (id: string) => {
-    // Delete associated OrderItems first
-    const { error: itemsError } = await supabase
-        .from('order_items')
-        .delete()
-        .eq('order_id', id);
-
-    if (itemsError) {
-        throw new AppError(itemsError.message, 500, 'DB_ERROR');
-    }
-
     const { error } = await supabase
         .from('orders')
-        .delete()
+        .update({ isDeleted: true, updatedAt: new Date().toISOString() } as any)
         .eq('id', id);
 
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
+
+    await auditLog('orders', id, 'DELETE', { isDeleted: { from: false, to: true } });
 };
 
 /**
- * Get order statistics
+ * Restore a soft-deleted order.
+ */
+export const restore = async (id: string) => {
+    const { data, error } = await supabase
+        .from('orders')
+        .update({ isDeleted: false, updatedAt: new Date().toISOString() } as any)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        throw new AppError(error.message, 500, 'DB_ERROR');
+    }
+
+    await auditLog('orders', id, 'RESTORE', { isDeleted: { from: true, to: false } });
+    return data as Order;
+};
+
+/**
+ * Get order statistics (only counts non-deleted orders).
  */
 export const getStats = async () => {
-    // Get total revenue
     const { data: totalRevenue, error: revenueError } = await supabase
         .from('orders')
-        .select('total');
+        .select('total')
+        .eq('isDeleted', false);
 
     if (revenueError) throw new AppError(revenueError.message, 500, 'DB_ERROR');
 
-    // Get order counts by status
     const { data: statusCounts, error: statusError } = await supabase
         .from('orders')
-        .select('status');
+        .select('status')
+        .eq('isDeleted', false);
 
     if (statusError) throw new AppError(statusError.message, 500, 'DB_ERROR');
 

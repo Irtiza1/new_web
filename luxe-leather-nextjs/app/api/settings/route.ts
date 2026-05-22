@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import * as settingsService from '@/lib/services/settingsService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
@@ -21,6 +22,7 @@ export const PUT = apiHandler(async (req: NextRequest) => {
     const validatedData = updateSchema.parse(body);
 
     await settingsService.update(validatedData);
+    revalidatePath('/', 'layout');
 
     return NextResponse.json({
         success: true,

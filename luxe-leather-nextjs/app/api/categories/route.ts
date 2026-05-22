@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
+import { auditLog } from '@/lib/services/auditService';
 
 const categorySchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -37,6 +39,8 @@ export async function POST(request: Request) {
     }
     const { data, error } = await supabase.from('categories').insert([result.data]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('categories', data.id, 'CREATE', { name: { from: null, to: data.name } });
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -51,6 +55,8 @@ export async function PUT(request: Request) {
     }
     const { data, error } = await supabase.from('categories').update(updateResult.data).eq('id', id).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('categories', data.id, 'UPDATE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, data });
 }
 
@@ -60,5 +66,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
     const { error } = await supabase.from('categories').delete().eq('id', id);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    await auditLog('categories', id, 'DELETE');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

@@ -21,6 +21,9 @@ export type Product = {
     reviews?: number;
     salesCount?: number; // For sorting by popularity
     customSizingPrice?: number; // Base price for custom sizing
+    isActive: boolean; // Soft delete flag — false = archived/hidden from storefront
+    is_featured?: boolean; // Front-end toggle for featured products
+    featured_tag?: string | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -44,6 +47,7 @@ export type Customer = {
     address?: string | null;
     city?: string | null;
     country?: string | null;
+    isActive: boolean; // false = anonymized/GDPR-deleted customer
     createdAt: string;
     updatedAt: string;
 };
@@ -57,6 +61,7 @@ export type Order = {
     stripe_session_id?: string | null;
     stripe_payment_intent_id?: string | null;
     payment_status?: 'unpaid' | 'paid' | 'failed' | 'refunded';
+    isDeleted: boolean; // soft delete — orders are never hard-deleted
     items?: OrderItem[];
     createdAt: string;
     updatedAt?: string;

@@ -42,6 +42,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         category: 'Accessories',
         image: '',
         stock: 0,
+        is_featured: false,
+        featured_tag: null,
+        isActive: true,
     });
 
     // Reset or populate form
@@ -55,6 +58,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     category: initialData.category,
                     image: initialData.image || '',
                     stock: initialData.stock,
+                    is_featured: initialData.is_featured || false,
+                    featured_tag: initialData.featured_tag || null,
+                    isActive: initialData.isActive !== undefined ? initialData.isActive : true,
                 });
             } else {
                 setFormData({
@@ -64,6 +70,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     category: 'Accessories',
                     image: '',
                     stock: 0,
+                    is_featured: false,
+                    featured_tag: null,
+                    isActive: true,
                 });
             }
         }
@@ -183,6 +192,23 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         </div>
                     </div>
 
+                    {/* Featured Toggle */}
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Feature on Homepage</h3>
+                            <p className="text-xs text-gray-500">Showcase this product in the Featured Collections section.</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={formData.is_featured || false}
+                                onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                            />
+                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
+                        </label>
+                    </div>
+
                     {/* Image */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#0d141b] dark:text-white">Product Image</label>
@@ -223,6 +249,31 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 </button>
                             </div>
                         </div>
+
+                        <div className="flex items-center mt-2">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })} className={`relative w-11 h-6 rounded-full transition-all ${formData.is_featured ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-600'}`}>
+                                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formData.is_featured ? 'translate-x-5' : ''}`} />
+                                </div>
+                                <span className="text-sm font-medium text-amber-700 dark:text-amber-500">Feature on Homepage</span>
+                            </label>
+                        </div>
+
+                        {formData.is_featured && (
+                            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4 animate-in fade-in zoom-in-95 duration-200 mt-2">
+                                <label className="block text-xs font-bold uppercase tracking-widest text-amber-800 dark:text-amber-500 mb-3">Featured Badge Tag</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {['Most Purchased', 'Top Selling', 'New Arrival', 'Top Rated'].map(tag => (
+                                        <label key={tag} className="flex items-center gap-2 cursor-pointer group">
+                                            <div onClick={() => setFormData({ ...formData, featured_tag: tag })} className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${formData.featured_tag === tag ? 'border-amber-500' : 'border-slate-300 dark:border-slate-600 group-hover:border-amber-400'}`}>
+                                                {formData.featured_tag === tag && <div className="w-2 h-2 rounded-full bg-amber-500" />}
+                                            </div>
+                                            <span className={`text-sm font-medium ${formData.featured_tag === tag ? 'text-amber-900 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400 group-hover:text-amber-700 dark:group-hover:text-amber-300'}`}>{tag}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Description */}

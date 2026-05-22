@@ -62,3 +62,30 @@ export const POST = apiHandler(async (req: NextRequest) => {
         data: order,
     }, { status: 201 });
 });
+
+/**
+ * @route   PUT /api/orders
+ * @desc    Update an order
+ */
+export const PUT = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Order ID required' }, { status: 400 });
+
+    const body = await req.json();
+    const order = await orderService.update(id, body);
+    return NextResponse.json({ success: true, data: order });
+});
+
+/**
+ * @route   DELETE /api/orders
+ * @desc    Delete an order
+ */
+export const DELETE = apiHandler(async (req: NextRequest) => {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ success: false, message: 'Order ID required' }, { status: 400 });
+
+    await orderService.remove(id);
+    return NextResponse.json({ success: true, message: 'Order deleted successfully' });
+});

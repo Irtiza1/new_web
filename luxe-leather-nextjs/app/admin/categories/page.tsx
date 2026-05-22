@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminTable from '@/components/admin/shared/AdminTable';
@@ -12,18 +12,19 @@ interface Category {
     id: string;
     name: string;
     slug: string;
-    description: string | null;
     image_url: string | null;
     display_order: number;
     is_visible: boolean;
     product_count?: number;
 }
 
-const emptyForm = { name: '', slug: '', description: '', image_url: '', display_order: '0', is_visible: true };
+const emptyForm = { name: '', slug: '', image_url: '', display_order: '0', is_visible: true };
 
 export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [form, setForm] = useState(emptyForm);
@@ -79,33 +80,54 @@ export default function AdminCategoriesPage() {
     const openCreate = () => { setEditingCategory(null); setForm(emptyForm); setShowModal(true); };
     const openEdit = (c: Category) => {
         setEditingCategory(c);
-        setForm({ name: c.name, slug: c.slug, description: c.description || '', image_url: c.image_url || '', display_order: String(c.display_order), is_visible: c.is_visible });
+        setForm({ name: c.name, slug: c.slug, image_url: c.image_url || '', display_order: String(c.display_order), is_visible: c.is_visible });
         setShowModal(true);
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/media', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+            setForm(f => ({ ...f, image_url: data.url }));
+        } catch (error) {
+            console.error('Upload failed:', error);
+            showToast('Failed to upload image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleSave = async () => {
         setSaving(true);
-        const payload = { name: form.name, slug: form.slug || generateSlug(form.name), description: form.description || null, image_url: form.image_url || null, display_order: parseInt(form.display_order), is_visible: form.is_visible };
+        const payload = { name: form.name, slug: form.slug || generateSlug(form.name), image_url: form.image_url || null, display_order: parseInt(form.display_order), is_visible: form.is_visible };
         const method = editingCategory ? 'PUT' : 'POST';
         const url = editingCategory ? `/api/categories?id=${editingCategory.id}` : '/api/categories';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.success) { showToast(editingCategory ? 'Category updated!' : 'Category created!'); setShowModal(false); loadCategories(); }
-        else showToast(data.message || 'Failed to save', 'error');
+        if (data.success) { showToast(editingCategory ? `Category "${form.name}" updated successfully.` : `Category "${form.name}" created successfully.`, 'success'); setShowModal(false); loadCategories(); }
+        else showToast(data.message || 'Failed to save category.', 'error');
         setSaving(false);
     };
 
     const handleDelete = async (id: string) => {
+        const cat = categories.find(c => c.id === id);
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Category',
-            message: 'Products in this category won\'t be deleted, but they\'ll lose their category.',
+            title: `Delete Category "${cat?.name}"`,
+            message: 'Products in this category won\'t be deleted, but they\'ll lose their category assignment.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
                 const data = await res.json();
-                if (data.success) { showToast('Category deleted'); loadCategories(); }
-                else showToast('Failed to delete', 'error');
+                if (data.success) { showToast(`Category "${cat?.name}" was deleted successfully.`, 'success'); loadCategories(); }
+                else showToast(`Failed to delete category "${cat?.name}".`, 'error');
             }
         });
     };
@@ -126,11 +148,16 @@ export default function AdminCategoriesPage() {
                         )
                     );
                     const successCount = results.filter(r => r.success).length;
-                    showToast(`${successCount} categories deleted successfully`);
+                    const failCount = selectedIds.size - successCount;
+                    if (failCount > 0) {
+                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} categories were deleted successfully.`, 'success');
+                    }
                     loadCategories();
                     setSelectedIds(new Set());
                 } catch (err) {
-                    showToast('Bulk delete failed', 'error');
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
                 }
@@ -263,7 +290,6 @@ export default function AdminCategoriesPage() {
                             <td className="py-3 px-6">
                                 <div>
                                     <p className="font-bold text-slate-900 dark:text-white leading-tight">{cat.name}</p>
-                                    {cat.description && <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px] mt-1">{cat.description}</p>}
                                 </div>
                             </td>
                             <td className="py-3 px-6">
@@ -322,12 +348,28 @@ export default function AdminCategoriesPage() {
                                 <input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="leather-jackets" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm font-mono focus:border-[#d41132] outline-none dark:text-white" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
-                                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Brief description..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none resize-none dark:text-white" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Image URL</label>
-                                <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white" />
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Image</label>
+                                <div className="flex gap-2">
+                                    <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white" />
+                                    <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading}
+                                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center text-slate-600 dark:text-slate-300"
+                                    >
+                                        {isUploading ? (
+                                            <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-sm">cloud_upload</span>
+                                        )}
+                                    </button>
+                                </div>
+                                {form.image_url && (
+                                    <div className="mt-2 w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600">
+                                        <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>

@@ -90,21 +90,22 @@ export default function AdminShippingPage() {
         const url = editingZone ? `/api/shipping-zones?id=${editingZone.id}` : '/api/shipping-zones';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.success) { showToast(editingZone ? 'Zone updated!' : 'Zone created!'); setShowModal(false); load(); }
-        else showToast(data.message || 'Failed to save', 'error');
+        if (data.success) { showToast(editingZone ? `Shipping Zone "${form.name}" updated successfully.` : `Shipping Zone "${form.name}" created successfully.`, 'success'); setShowModal(false); load(); }
+        else showToast(data.message || 'Failed to save shipping zone.', 'error');
         setSaving(false);
     };
 
     const handleDelete = async (id: string) => {
+        const zone = zones.find(z => z.id === id);
         setConfirmModal({
             isOpen: true,
-            title: 'Delete Shipping Zone',
+            title: `Delete Shipping Zone "${zone?.name}"`,
             message: 'Delete this shipping zone? This action cannot be undone.',
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/shipping-zones?id=${id}`, { method: 'DELETE' });
-                if ((await res.json()).success) { showToast('Zone deleted'); load(); }
-                else showToast('Failed to delete', 'error');
+                if ((await res.json()).success) { showToast(`Shipping Zone "${zone?.name}" was deleted successfully.`, 'success'); load(); }
+                else showToast(`Failed to delete shipping zone "${zone?.name}".`, 'error');
             }
         });
     };
@@ -125,11 +126,16 @@ export default function AdminShippingPage() {
                         )
                     );
                     const successCount = results.filter(r => r.success).length;
-                    showToast(`${successCount} zones deleted successfully`);
+                    const failCount = selectedIds.size - successCount;
+                    if (failCount > 0) {
+                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    } else {
+                        showToast(`${successCount} shipping zones were deleted successfully.`, 'success');
+                    }
                     load();
                     setSelectedIds(new Set());
                 } catch (err) {
-                    showToast('Bulk delete failed', 'error');
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
                 }
