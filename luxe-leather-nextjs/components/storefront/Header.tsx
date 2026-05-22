@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+
 import { useCart } from "@/contexts/CartContext";
 import AnnouncementBar from "./AnnouncementBar";
 import { STOREFRONT_NAV_ITEMS } from "@/lib/constants/navigation";
@@ -18,7 +18,7 @@ interface NavItem {
 
 export default function Header() {
     const { cartCount, cartTotal, openCart } = useCart();
-    const router = useRouter();
+
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [showAccountToast, setShowAccountToast] = useState(false);
 

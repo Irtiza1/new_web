@@ -62,6 +62,7 @@ export default function AdminHomepagePage() {
         setLoading(false);
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { loadContent(); }, [loadContent]);
 
     const handleChange = (key: string, value: string) => {

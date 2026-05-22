@@ -149,7 +149,7 @@ export default function AdminNavigationPage() {
                             const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
                             if (res.ok) successCount++;
                             else failCount++;
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));

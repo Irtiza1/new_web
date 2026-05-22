@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { Order, CustomRequest } from '@/lib/supabase';
 
 
 export default function AdminDashboard() {
@@ -12,9 +13,8 @@ export default function AdminDashboard() {
         pendingRequests: 0,
         byStatus: {} as Record<string, number>
     });
-    const [recentOrders, setRecentOrders] = useState<any[]>([]);
-    const [recentRequests, setRecentRequests] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+    const [recentRequests, setRecentRequests] = useState<CustomRequest[]>([]);
 
     useEffect(() => {
         async function fetchStats() {
@@ -49,8 +49,6 @@ export default function AdminDashboard() {
                 if (requestsListData.success) setRecentRequests(requestsListData.data);
             } catch (err) {
                 console.error('Failed to fetch dashboard stats:', err);
-            } finally {
-                setLoading(false);
             }
         }
         fetchStats();
@@ -66,7 +64,7 @@ export default function AdminDashboard() {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">Admin Dashboard</h1>
-                            <p className="text-[#4c739a] dark:text-[#94a3b8] mt-1">Welcome back! Here's your overview.</p>
+                            <p className="text-[#4c739a] dark:text-[#94a3b8] mt-1">Welcome back! Here&apos;s your overview.</p>
                         </div>
                         <Link href="/" className="px-4 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white rounded-lg font-medium transition-colors">
                             View Storefront
@@ -166,10 +164,10 @@ export default function AdminDashboard() {
                                                 <div className={`mt-1 size-2 rounded-full flex-shrink-0 ${item.type === 'ORDER' ? 'bg-emerald-500' : 'bg-[#d41132]'}`} />
                                                 <div>
                                                     <p className="text-sm font-bold text-[#0d141b] dark:text-white">
-                                                        {item.type === 'ORDER' ? `New Order #${item.id.slice(0, 8)}` : `Bespoke: ${item.itemType || item.subject}`}
+                                                        {item.type === 'ORDER' ? `New Order #${item.id.slice(0, 8)}` : `Bespoke: ${(item as CustomRequest).itemType || (item as CustomRequest & {subject?: string}).subject}`}
                                                     </p>
                                                     <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">
-                                                        {item.type === 'ORDER' ? `$${item.total} • ${item.status}` : `${item.customer_name} • ${item.status}`}
+                                                        {item.type === 'ORDER' ? `$${(item as Order).total} • ${item.status}` : `${(item as CustomRequest & {customer_name?: string}).customer_name} • ${item.status}`}
                                                     </p>
                                                     <p className="text-[10px] text-gray-400 mt-0.5">
                                                         {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}

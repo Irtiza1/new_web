@@ -68,6 +68,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     }, [product?.id]);
 
     // Fetch real reviews for this product
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
     useEffect(() => {
         if (!product?.id) return;
         setReviewsLoading(true);
@@ -77,13 +78,13 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                 if (data.success) {
                     // Filter for approved reviews for this product
                     const approvedReviews = (data.data || []).filter(
-                        (r: any) => r.status === 'approved' &&
+                        (r: { status: string; product_id: string }) => r.status === 'approved' &&
                             (r.product_id === String(product.id) || r.product_id === product.id)
                     );
                     // If no product-specific reviews, show all featured approved reviews
                     if (approvedReviews.length === 0) {
                         const featured = (data.data || []).filter(
-                            (r: any) => r.status === 'approved' && r.is_featured
+                            (r: { status: string; is_featured: boolean }) => r.status === 'approved' && r.is_featured
                         );
                         setProductReviews(featured);
                     } else {
@@ -173,7 +174,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                             </div>
                                             <span className="text-[10px] text-gray-400 font-bold uppercase">{timeAgo}</span>
                                         </div>
-                                        {review.comment && <p className="text-xs text-gray-600 dark:text-gray-400 italic">"{review.comment}"</p>}
+                                        {review.comment && <p className="text-xs text-gray-600 dark:text-gray-400 italic">&quot;{review.comment}&quot;</p>}
                                         <p className="text-[10px] font-black text-[#1c140d] dark:text-white mt-1 uppercase">— {review.customer_name}</p>
                                     </div>
                                 );

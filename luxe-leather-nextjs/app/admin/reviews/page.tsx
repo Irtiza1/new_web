@@ -70,7 +70,7 @@ export default function AdminReviewsPage() {
 
     useEffect(() => {
         fetch('/api/products').then(r => r.json()).then(d => {
-            if (d.success) setProducts(d.data.map((p: any) => ({ id: p.id, name: p.name })));
+            if (d.success) setProducts(d.data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
         }).catch(() => {});
     }, []);
 
@@ -141,7 +141,7 @@ export default function AdminReviewsPage() {
                     }
                     load();
                     setSelectedIds(new Set());
-                } catch (err) {
+                } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkUpdating(false);
@@ -194,7 +194,7 @@ export default function AdminReviewsPage() {
             } else {
                 showToast(data.message || 'Failed to create review.', 'error');
             }
-        } catch (err) {
+        } catch {
             showToast('An error occurred while creating the review.', 'error');
         } finally {
             setCreateSaving(false);
@@ -203,7 +203,7 @@ export default function AdminReviewsPage() {
 
     const filtered = filter === 'all' ? reviews : reviews.filter(r => r.status === filter);
     const counts = { all: reviews.length, pending: reviews.filter(r => r.status === 'pending').length, approved: reviews.filter(r => r.status === 'approved').length, rejected: reviews.filter(r => r.status === 'rejected').length };
-    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
     const paginatedReviews = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const StarRating = ({ rating }: { rating: number }) => (
@@ -256,7 +256,7 @@ export default function AdminReviewsPage() {
                         { label: 'Rejected', value: 'rejected' },
                     ]}
                     activeTab={filter}
-                    onTabChange={(val) => { setFilter(val as any); setCurrentPage(1); }}
+                    onTabChange={(val) => { setFilter(val as 'all' | 'pending' | 'approved' | 'rejected'); setCurrentPage(1); }}
                 />
             }
             pagination={
@@ -330,7 +330,7 @@ export default function AdminReviewsPage() {
                                 </td>
                                 <td className="py-3 px-6">
                                     <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic line-clamp-2 max-w-[250px]">
-                                        "{review.comment || 'No comment'}"
+                                        &quot;{review.comment || 'No comment'}&quot;
                                     </p>
                                 </td>
                                 <td className="py-3 px-6">

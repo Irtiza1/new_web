@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Product } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
@@ -28,7 +28,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         // Load categories from admin API
         fetch('/api/categories')
             .then(r => r.json())
-            .then(d => { if (d.success && d.data?.length > 0) setCategories(d.data.map((c: any) => c.name)); })
+            .then(d => { if (d.success && d.data?.length > 0) setCategories(d.data.map((c: { name: string }) => c.name)); })
             .catch(() => { });
         return () => setMounted(false);
     }, []);

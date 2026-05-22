@@ -38,8 +38,8 @@ export default function ProductsPage() {
             } else {
                 throw new Error(result.message || "Failed to load products");
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to load products");
+        } catch (err: unknown) {
+            setError((err as Error).message || "Failed to load products");
             console.error("Error loading products:", err);
         } finally {
             setLoading(false);
@@ -74,8 +74,8 @@ export default function ProductsPage() {
             setIsModalOpen(false);
             resetForm();
             loadProducts();
-        } catch (err: any) {
-            alert("Error: " + err.message);
+        } catch (err: unknown) {
+            alert("Error: " + (err as Error).message);
         }
     };
 
@@ -90,8 +90,8 @@ export default function ProductsPage() {
             if (!result.success) throw new Error(result.message);
 
             loadProducts();
-        } catch (err: any) {
-            alert("Error: " + err.message);
+        } catch (err: unknown) {
+            alert("Error: " + (err as Error).message);
         }
     };
 
@@ -156,7 +156,7 @@ export default function ProductsPage() {
                                 <h3 className="font-bold">Database Connection Error</h3>
                                 <p className="text-sm mt-1">{error}</p>
                                 <p className="text-xs mt-2 text-text-secondary-light dark:text-text-secondary-dark">
-                                    Make sure you've:
+                                    Make sure you&apos;ve:
                                     <br />
                                     1. Created the database tables (run supabase-schema.sql)
                                     <br />

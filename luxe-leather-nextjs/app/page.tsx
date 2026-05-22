@@ -1,4 +1,4 @@
-import Image from "next/image";
+
 import Link from "next/link";
 import Header from "@/components/storefront/Header";
 import Footer from "@/components/storefront/Footer";
@@ -228,7 +228,7 @@ export default async function HomePage() {
                   ))}
                 </div>
                 <p className="text-lg font-medium text-[#1A1A1A] dark:text-white leading-relaxed">
-                  "{testimonial.text}"
+                  &quot;{testimonial.text}&quot;
                 </p>
                 <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">
                   <p className="font-bold text-sm">{testimonial.name}</p>

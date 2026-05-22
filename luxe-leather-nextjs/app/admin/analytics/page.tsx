@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+
 import { useToast } from '@/contexts/ToastContext';
 
 import type { AnalyticsSummary, TopProduct, CustomerCountry } from '@/lib/services/analyticsService';
@@ -11,7 +11,7 @@ export default function AdminAnalyticsPage() {
     const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
     const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
     const [countries, setCountries] = useState<CustomerCountry[]>([]);
-    const [loading, setLoading] = useState(true);
+
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [startDate, setStartDate] = useState(() => {
         const d = new Date();
@@ -39,8 +39,6 @@ export default function AdminAnalyticsPage() {
                 if (countriesData.success) setCountries(countriesData.data);
             } catch (err) {
                 console.error('Failed to load analytics:', err);
-            } finally {
-                setLoading(false);
             }
         }
         fetchData();

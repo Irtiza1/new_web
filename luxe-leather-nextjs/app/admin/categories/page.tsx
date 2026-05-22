@@ -156,7 +156,7 @@ export default function AdminCategoriesPage() {
                     }
                     loadCategories();
                     setSelectedIds(new Set());
-                } catch (err) {
+                } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);

@@ -14,6 +14,7 @@ const mockCustomer = {
     updatedAt: '2025-06-15T10:00:00Z',
     ordersCount: 5,
     totalSpent: 749.95,
+    isActive: true,
 };
 
 describe('CustomerViewDrawer', () => {

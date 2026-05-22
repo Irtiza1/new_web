@@ -6,11 +6,11 @@ import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 interface StripePaymentFormProps {
     orderId: string;
     total: number;
-    onSuccess: () => void;
+
     onError: (message: string) => void;
 }
 
-export default function StripePaymentForm({ orderId, total, onSuccess, onError }: StripePaymentFormProps) {
+export default function StripePaymentForm({ orderId, total, onError }: StripePaymentFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);

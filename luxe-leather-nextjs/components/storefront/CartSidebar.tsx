@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import Link from "next/link";
+
 import { useCart } from "@/contexts/CartContext";
 import { useRouter } from "next/navigation";
 
@@ -11,7 +11,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-    const { cartItems, removeFromCart, updateQuantity, cartTotal, closeCart, discount, totalAfterDiscount, removedItems, validateCheckoutStock } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, cartTotal, discount, totalAfterDiscount, removedItems, validateCheckoutStock } = useCart();
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [isValidating, setIsValidating] = useState(false);

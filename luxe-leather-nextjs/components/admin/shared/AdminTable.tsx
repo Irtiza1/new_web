@@ -7,7 +7,7 @@ interface AdminTableProps {
     children: React.ReactNode;
     onSelectAll?: (checked: boolean) => void;
     isAllSelected?: boolean;
-    colSpan?: number;
+
     containerClassName?: string;
     stickyHeader?: boolean;
 }
@@ -17,7 +17,7 @@ export default function AdminTable({
     children,
     onSelectAll,
     isAllSelected = false,
-    colSpan,
+
     containerClassName = "",
     stickyHeader = true
 }: AdminTableProps) {

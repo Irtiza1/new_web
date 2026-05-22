@@ -75,11 +75,13 @@ export default function AdminRequestsPage() {
         return matchesStatus && matchesSearch;
     });
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchRequests();
     }, [statusFilter]); // Reload when status filter changes
 
     // Debounce search
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchRequests();
@@ -135,9 +137,9 @@ export default function AdminRequestsPage() {
             const data = await res.json();
             if (data.success) {
                 // Update local state
-                setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus as any } : r));
+                setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus as CustomRequest['status'] } : r));
                 if (selectedRequest?.id === id) {
-                    setSelectedRequest({ ...selectedRequest, status: newStatus as any });
+                    setSelectedRequest({ ...selectedRequest, status: newStatus as CustomRequest['status'] });
                 }
                 showToast(`Request #${req?.id.slice(-6).toUpperCase()} for ${req?.name} updated to ${newStatus.replace('_', ' ')}.`, 'success');
             } else {
@@ -207,7 +209,7 @@ export default function AdminRequestsPage() {
                             const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
                             if (res.ok) successCount++;
                             else failCount++;
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));

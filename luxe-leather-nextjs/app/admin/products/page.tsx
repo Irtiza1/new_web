@@ -34,7 +34,7 @@ export default function AdminProductsPage() {
     const [categories, setCategories] = useState<string[]>(['Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes']);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
+
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -48,9 +48,6 @@ export default function AdminProductsPage() {
         onConfirm: () => { },
     });
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -72,7 +69,7 @@ export default function AdminProductsPage() {
     // Fetch categories
     useEffect(() => {
         fetch('/api/categories').then(r => r.json()).then(d => {
-            if (d.success && d.data?.length > 0) setCategories(d.data.map((c: any) => c.name));
+            if (d.success && d.data?.length > 0) setCategories(d.data.map((c: { name: string }) => c.name));
         }).catch(() => { });
     }, []);
 
@@ -258,7 +255,7 @@ export default function AdminProductsPage() {
                             } else {
                                 failCount++;
                             }
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));
@@ -325,7 +322,7 @@ export default function AdminProductsPage() {
     const archivedCount = products.filter(p => !p.isActive).length;
     const totalInventory = activeProducts.reduce((acc, curr) => acc + curr.stock, 0);
     const lowStockCount = activeProducts.filter(p => p.stock < 5).length;
-    const totalValue = activeProducts.reduce((acc, curr) => acc + (curr.price * curr.stock), 0);
+
 
     return (
         <AdminPageLayout

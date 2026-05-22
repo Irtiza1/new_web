@@ -171,7 +171,7 @@ export default function AdminCouponsPage() {
                     }
                     loadCoupons();
                     setSelectedIds(new Set());
-                } catch (err) {
+                } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
@@ -221,7 +221,7 @@ export default function AdminCouponsPage() {
                         { label: 'Inactive', value: 'inactive' },
                     ]}
                     activeTab={statusFilter}
-                    onTabChange={(val) => setStatusFilter(val as any)}
+                    onTabChange={(val) => setStatusFilter(val as 'all' | 'active' | 'inactive')}
                 />
             }
             pagination={
@@ -352,7 +352,7 @@ export default function AdminCouponsPage() {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">Type *</label>
-                                    <select value={form.discount_type} onChange={e => setForm(f => ({ ...f, discount_type: e.target.value as any }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none">
+                                    <select value={form.discount_type} onChange={e => setForm(f => ({ ...f, discount_type: e.target.value as 'percentage' | 'flat' }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none">
                                         <option value="percentage">Percentage (%)</option>
                                         <option value="flat">Flat Amount ($)</option>
                                     </select>

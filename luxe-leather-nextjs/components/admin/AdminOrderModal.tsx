@@ -8,7 +8,7 @@ import { useToast } from '@/contexts/ToastContext';
 interface AdminOrderModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (orderData: any) => Promise<void>;
+    onSubmit: (orderData: { customer_id: string; status: Order['status']; total: number; items: { product_id: string; quantity: number; price: number }[] }) => Promise<void>;
 }
 
 // Simplified types for the selection lists
@@ -169,7 +169,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
                                     <label className="text-sm font-bold text-[#0d141b] dark:text-white">Status</label>
                                     <select
                                         value={status}
-                                        onChange={(e) => setStatus(e.target.value as any)}
+                                        onChange={(e) => setStatus(e.target.value as Order['status'])}
                                         className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none"
                                     >
                                         <option value="pending">Pending</option>
@@ -196,7 +196,7 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
 
                                 {items.length === 0 ? (
                                     <div className="p-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg text-center text-sm text-gray-400 border border-dashed border-gray-200 dark:border-gray-700">
-                                        No items added. Click "Add Item" to start.
+                                        No items added. Click &quot;Add Item&quot; to start.
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-3">

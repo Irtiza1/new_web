@@ -21,7 +21,7 @@ export default function AdminMediaPage() {
     const [files, setFiles] = useState<MediaFile[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -87,9 +87,7 @@ export default function AdminMediaPage() {
 
     const copyUrl = (url: string) => {
         navigator.clipboard.writeText(url);
-        setCopiedUrl(url);
         showToast('Image URL copied to clipboard.', 'success');
-        setTimeout(() => setCopiedUrl(null), 2000);
     };
 
     const handleDelete = async (name: string) => {
@@ -138,7 +136,7 @@ export default function AdminMediaPage() {
                             const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
                             if ((await res.json()).success) successCount++;
                             else failCount++;
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));

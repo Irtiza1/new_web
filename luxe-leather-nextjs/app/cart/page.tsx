@@ -65,7 +65,7 @@ export default function CartPage() {
                     </div>
                     <h1 className="text-3xl font-black text-[#1c140d] dark:text-white uppercase tracking-tighter mb-4">Your collection is empty</h1>
                     <p className="text-gray-500 dark:text-gray-400 max-w-md text-center mb-10 leading-relaxed">
-                        It seems you haven't added any luxury pieces to your cart yet. Discover our latest arrivals.
+                        It seems you haven&apos;t added any luxury pieces to your cart yet. Discover our latest arrivals.
                     </p>
                     <Link
                         href="/shop"

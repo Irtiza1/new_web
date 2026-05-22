@@ -53,6 +53,7 @@ export default function AdminOrdersPage() {
         setIsMounted(true);
     }, []);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         loadOrders();
     }, [statusFilter]); // Reload when filter changes if server-side filtering is preferred, but we will filter client side for search
@@ -111,7 +112,7 @@ export default function AdminOrdersPage() {
         }
     };
 
-    const handleCreateOrder = async (orderData: any) => {
+    const handleCreateOrder = async (orderData: Partial<Order>) => {
         try {
             const res = await fetch('/api/orders', {
                 method: 'POST',
@@ -123,7 +124,7 @@ export default function AdminOrdersPage() {
             if (result.success) {
                 await loadOrders();
                 setIsModalOpen(false);
-                showToast(`Order created successfully for ${orderData.customer_name || 'customer'}.`, 'success');
+                showToast(`Order created successfully.`, 'success');
             } else {
                 showToast('Failed to create order: ' + (result.error || result.message), 'error');
             }
@@ -189,7 +190,7 @@ export default function AdminOrdersPage() {
                             const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
                             if (res.ok) successCount++;
                             else failCount++;
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));

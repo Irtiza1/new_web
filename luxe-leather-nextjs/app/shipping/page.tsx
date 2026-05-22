@@ -147,7 +147,7 @@ export default function ShippingPage() {
                                         <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-[#c27a2a] font-black text-xs shrink-0 group-hover:bg-[#c27a2a] group-hover:text-white transition-all shadow-sm">0{i + 1}</div>
                                         <div>
                                             <h4 className="font-bold text-[#1c140d] dark:text-white uppercase tracking-tight mb-1">{tip.title}</h4>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium italic">"{tip.desc}"</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium italic">&quot;{tip.desc}&quot;</p>
                                         </div>
                                     </div>
                                 ))}

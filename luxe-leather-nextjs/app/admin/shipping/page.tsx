@@ -70,7 +70,7 @@ export default function AdminShippingPage() {
             const res = await fetch('/api/shipping-zones');
             const data = await res.json();
             if (data.success) setZones(data.data || []);
-        } catch (_) { }
+        } catch { }
         setLoading(false);
     }, []);
 
@@ -134,7 +134,7 @@ export default function AdminShippingPage() {
                     }
                     load();
                     setSelectedIds(new Set());
-                } catch (err) {
+                } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
@@ -195,7 +195,7 @@ export default function AdminShippingPage() {
                         { label: 'Inactive', value: 'inactive' },
                     ]}
                     activeTab={statusFilter}
-                    onTabChange={(val) => setStatusFilter(val as any)}
+                    onTabChange={(val) => setStatusFilter(val as 'all' | 'active' | 'inactive')}
                 />
             }
             pagination={
@@ -321,7 +321,7 @@ export default function AdminShippingPage() {
                                     <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-1.5">{field.label}</label>
                                     <input
                                         type={field.type}
-                                        value={(form as any)[field.key]}
+                                        value={form[field.key as keyof typeof form] as string}
                                         onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
                                         placeholder={field.placeholder}
                                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:border-[#d41132] outline-none dark:text-white transition-all ring-0"

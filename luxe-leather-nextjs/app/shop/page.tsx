@@ -30,7 +30,7 @@ function ShopContent() {
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.data.length > 0) {
-                    const names = ['All Products', ...data.data.filter((c: any) => c.is_visible).map((c: any) => c.name)];
+                    const names = ['All Products', ...data.data.filter((c: { is_visible: boolean }) => c.is_visible).map((c: { name: string }) => c.name)];
                     setCategories(names);
                 }
             })

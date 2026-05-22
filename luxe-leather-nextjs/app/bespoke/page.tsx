@@ -136,7 +136,7 @@ export default function BespokePage() {
                         <div className="lg:col-span-2 sticky top-32">
                             <h2 className="text-4xl font-bold text-[#1c140d] dark:text-white tracking-tight mb-6">Commence Your Project</h2>
                             <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg mb-8 font-medium italic">
-                                "Perfection is not a standard, it is a conversation."
+                                &quot;Perfection is not a standard, it is a conversation.&quot;
                             </p>
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">

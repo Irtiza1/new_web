@@ -20,6 +20,7 @@ export default function CMSAdminPage() {
             const data = await contentService.getAll();
             setContent(data);
         } catch (error) {
+            console.error('[CMS] Failed to load content:', error);
             setMessage({ text: "Failed to load content", type: 'error' });
         } finally {
             setLoading(false);
@@ -34,6 +35,7 @@ export default function CMSAdminPage() {
             setContent(prev => prev.map(item => item.id === id ? { ...item, content: newContent } : item));
             setMessage({ text: "Content updated successfully!", type: 'success' });
         } catch (error) {
+            console.error(`[CMS] Failed to update content ${id}:`, error);
             setMessage({ text: "Failed to update content", type: 'error' });
         } finally {
             setSaving(null);

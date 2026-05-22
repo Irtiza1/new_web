@@ -23,7 +23,7 @@ export default function AnnouncementBar() {
                 ]);
                 const cms = [a1, a2, a3].filter(Boolean) as string[];
                 if (cms.length > 0) setAnnouncementList(cms);
-            } catch (_) {
+            } catch {
                 // fallback to defaults on error
             }
         }

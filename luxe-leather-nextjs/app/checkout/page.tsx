@@ -140,7 +140,7 @@ export default function CheckoutPage() {
                                     <StripePaymentForm
                                         orderId={orderId}
                                         total={totalAfterDiscount}
-                                        onSuccess={() => {}}
+
                                         onError={(msg) => setError(msg)}
                                     />
                                 </Elements>

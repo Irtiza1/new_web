@@ -187,7 +187,7 @@ export default function AdminCustomersPage() {
                             const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
                             if (res.ok) successCount++;
                             else failCount++;
-                        } catch (err) {
+                        } catch {
                             failCount++;
                         }
                     }));
