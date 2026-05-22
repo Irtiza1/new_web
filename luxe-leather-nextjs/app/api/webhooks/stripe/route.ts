@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
+import * as orderService from '@/lib/services/orderService';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,19 +50,14 @@ export async function POST(req: NextRequest) {
                     break;
                 }
 
-                const { error } = await supabase
-                    .from('orders')
-                    .update({
+                try {
+                    await orderService.update(orderId, {
                         status: 'PROCESSING',
                         payment_status: 'paid',
-                        updatedAt: new Date().toISOString(),
-                    })
-                    .eq('id', orderId);
-
-                if (error) {
-                    console.error(`[Stripe webhook] Failed to update order ${orderId}:`, error);
-                } else {
+                    });
                     console.log(`[Stripe webhook] Order ${orderId} marked as PAID`);
+                } catch (error) {
+                    console.error(`[Stripe webhook] Failed to update order ${orderId}:`, error);
                 }
                 break;
             }
@@ -71,15 +67,15 @@ export async function POST(req: NextRequest) {
                 const orderId = paymentIntent.metadata?.order_id;
 
                 if (orderId) {
-                    await supabase
-                        .from('orders')
-                        .update({
+                    try {
+                        await orderService.update(orderId, {
+                            status: 'CANCELLED',
                             payment_status: 'failed',
-                            updatedAt: new Date().toISOString(),
-                        })
-                        .eq('id', orderId);
-
-                    console.log(`[Stripe webhook] Order ${orderId} payment failed`);
+                        });
+                        console.log(`[Stripe webhook] Order ${orderId} payment failed and cancelled`);
+                    } catch (error) {
+                        console.error(`[Stripe webhook] Failed to cancel order ${orderId}:`, error);
+                    }
                 }
                 break;
             }

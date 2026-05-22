@@ -49,7 +49,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.variable} ${manrope.variable} ${playfair.variable} antialiased`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${manrope.variable} ${playfair.variable} antialiased`}>
         <ThemeProvider>
           <CartProvider>
             {children}
