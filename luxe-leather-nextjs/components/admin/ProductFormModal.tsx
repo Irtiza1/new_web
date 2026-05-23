@@ -98,13 +98,16 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
 
         setIsUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', 'product-images');
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', file);
+            formDataUpload.append('bucket', 'product-images');
+            
+            const customName = `${formData.category || 'item'}-${formData.name || 'product'}`;
+            formDataUpload.append('customName', customName);
 
             const res = await fetch('/api/media', {
                 method: 'POST',
-                body: formData,
+                body: formDataUpload,
             });
 
             const data = await res.json();
