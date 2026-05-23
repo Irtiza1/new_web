@@ -5,11 +5,14 @@ import { auditLog } from '@/lib/services/auditService';
 
 export const dynamic = 'force-dynamic';
 
-const BUCKET = 'product-images';
+const BUCKET = 'media';
 
-export async function GET() {
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const folderName = searchParams.get('bucket') || 'platform-images';
+
     // 1. Get files from Storage
-    const { data: storageData, error: storageError } = await supabase.storage.from(BUCKET).list('', {
+    const { data: storageData, error: storageError } = await supabase.storage.from(BUCKET).list(folderName, {
         limit: 100,
         sortBy: { column: 'created_at', order: 'desc' }
     });
@@ -20,7 +23,7 @@ export async function GET() {
 
     const storageFiles = (storageData || []).filter(f => f.name !== '.emptyFolderPlaceholder').map(f => ({
         name: f.name,
-        url: supabase.storage.from(BUCKET).getPublicUrl(f.name).data.publicUrl,
+        url: supabase.storage.from(BUCKET).getPublicUrl(`${folderName}/${f.name}`).data.publicUrl,
         size: f.metadata?.size || 0,
         created_at: f.created_at,
         source: 'storage'
@@ -64,27 +67,35 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     if (!file) return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
 
+    const folderName = formData.get('bucket') as string || 'platform-images';
+
     const ext = file.name.split('.').pop();
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const filePath = `${folderName}/${filename}`;
 
-    const { error } = await supabase.storage.from(BUCKET).upload(filename, file, {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error } = await supabase.storage.from(BUCKET).upload(filePath, buffer, {
         contentType: file.type,
         upsert: false
     });
 
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
 
-    const url = supabase.storage.from(BUCKET).getPublicUrl(filename).data.publicUrl;
-    await auditLog('media', filename, 'CREATE', { url: { from: null, to: url } });
+    const url = supabase.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
+    await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
     return NextResponse.json({ success: true, data: { name: filename, url } });
 }
 
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name');
+    const folderName = searchParams.get('bucket') || 'platform-images';
     if (!name) return NextResponse.json({ success: false, message: 'File name required' }, { status: 400 });
 
-    const { error } = await supabase.storage.from(BUCKET).remove([name]);
+    const filePath = `${folderName}/${name}`;
+    const { error } = await supabase.storage.from(BUCKET).remove([filePath]);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     await auditLog('media', name, 'DELETE');
     return NextResponse.json({ success: true });

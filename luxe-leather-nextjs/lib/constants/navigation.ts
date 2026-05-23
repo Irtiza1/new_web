@@ -36,7 +36,7 @@ export const ADMIN_NAV_GROUPS = [
     {
         label: 'System',
         items: [
-            { name: 'Shipping Zones', path: '/admin/shipping', icon: 'local_shipping' },
+            { name: 'Shipping & Sizing', path: '/admin/shipping-and-sizing', icon: 'local_shipping' },
             { name: 'Settings', path: '/admin/settings', icon: 'settings' },
         ]
     },

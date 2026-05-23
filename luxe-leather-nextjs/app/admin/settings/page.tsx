@@ -45,7 +45,7 @@ export default function AdminSettingsPage() {
             const data = await res.json();
             if (!data.success) throw new Error(data.message);
 
-            setSettingsState(prev => ({ ...prev, logo_url: data.url }));
+            setSettingsState(prev => ({ ...prev, logo_url: data.data.url }));
         } catch (error) {
             console.error('Logo upload failed:', error);
             showToast('Failed to upload logo', 'error');

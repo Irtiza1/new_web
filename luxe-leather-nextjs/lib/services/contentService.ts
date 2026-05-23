@@ -35,9 +35,9 @@ export const contentService = {
             .from('site_content')
             .select('content')
             .eq('slug', slug)
-            .single();
+            .maybeSingle();
 
-        if (error) return '';
+        if (error || !data) return '';
         return data.content;
     },
 

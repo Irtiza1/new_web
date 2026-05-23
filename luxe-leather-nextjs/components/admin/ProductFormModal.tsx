@@ -100,6 +100,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('bucket', 'product-images');
 
             const res = await fetch('/api/media', {
                 method: 'POST',

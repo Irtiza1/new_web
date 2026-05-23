@@ -57,7 +57,7 @@ export default function Header() {
                             </span>
                         </div>
                         <span className="text-xl font-extrabold tracking-tight uppercase font-[family-name:var(--font-playfair)]">
-                            Luxe Leather
+                            Luxe Leather Co.
                         </span>
                     </Link>
 

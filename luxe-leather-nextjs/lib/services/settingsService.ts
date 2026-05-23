@@ -46,7 +46,6 @@ export async function update(settings: Record<string, string>) {
             id,
             key,
             value,
-            updatedAt: new Date().toISOString(),
         };
     });
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getAll } from "@/lib/services/settingsService";
 import { Inter } from "next/font/google";
 import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
@@ -29,11 +30,26 @@ const playfair = Playfair_Display({
   style: ["normal", "italic"],
 });
 
-export const metadata: Metadata = {
-  title: "Luxe Leather Co. | Handcrafted Premium Leather Goods",
-  description: "Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.",
-  keywords: ["leather goods", "handcrafted", "premium", "wallets", "bags", "accessories"],
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let settings: Record<string, string> = {};
+  try {
+    settings = await getAll();
+  } catch (e) {
+    console.error('Metadata settings fetch error:', e);
+  }
+
+  const logoUrl = settings.logo_url || '/favicon.ico';
+
+  return {
+    title: settings.site_title || "Luxe Leather Co. | Handcrafted Premium Leather Goods",
+    description: settings.meta_description || "Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.",
+    keywords: ["leather goods", "handcrafted", "premium", "wallets", "bags", "accessories"],
+    icons: {
+      icon: logoUrl,
+      apple: logoUrl,
+    }
+  };
+}
 
 export default function RootLayout({
   children,
