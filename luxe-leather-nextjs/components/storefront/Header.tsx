@@ -20,8 +20,19 @@ export default function Header() {
     const { cartCount, cartTotal, openCart } = useCart();
 
     const [navItems, setNavItems] = useState<NavItem[]>([]);
+    const [siteTitle, setSiteTitle] = useState("Luxe Leather Co.");
 
     useEffect(() => {
+        // Fetch site settings
+        fetch('/api/settings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data && data.data.site_title) {
+                    setSiteTitle(data.data.site_title);
+                }
+            })
+            .catch(err => console.error('Error fetching settings:', err));
+
         const homeItem: NavItem = { id: 'home', label: 'Home', url: '/', is_visible: true, opens_in_new_tab: false, display_order: -1 };
 
         fetch('/api/nav-items')
@@ -56,7 +67,7 @@ export default function Header() {
                             </span>
                         </div>
                         <span className="text-xl font-extrabold tracking-tight uppercase font-[family-name:var(--font-playfair)]">
-                            Luxe Leather Co.
+                            {siteTitle}
                         </span>
                     </Link>
 

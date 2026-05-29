@@ -7,8 +7,10 @@ export const dynamic = 'force-dynamic';
 
 // Schema for query parameters
 const querySchema = z.object({
-    type: z.enum(['summary', 'top-products', 'customers-by-country']).optional().default('summary'),
+    type: z.enum(['summary', 'top-products', 'customers-by-country', 'traffic']).optional().default('summary'),
     limit: z.string().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
 });
 
 export const GET = apiHandler(async (req: NextRequest) => {
@@ -27,6 +29,11 @@ export const GET = apiHandler(async (req: NextRequest) => {
             break;
         case 'customers-by-country':
             data = await analyticsService.getCustomersByCountry();
+            break;
+        case 'traffic':
+            const start = query.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const end = query.endDate || new Date().toISOString().split('T')[0];
+            data = await analyticsService.getTrafficSummary(start, end);
             break;
     }
 

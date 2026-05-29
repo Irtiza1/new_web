@@ -7,7 +7,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CartProvider } from "@/contexts/CartContext";
 import GlobalCart from "@/components/storefront/GlobalCart";
 import BackToTop from "@/components/ui/BackToTop";
-
+import { Suspense } from 'react';
+import TrafficTracker from '@/components/storefront/TrafficTracker';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ const playfair = Playfair_Display({
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   colorScheme: "light",
-};
+ };
 
 export async function generateMetadata(): Promise<Metadata> {
   let settings: Record<string, string> = {};
@@ -76,7 +77,9 @@ export default function RootLayout({
             {children}
             <GlobalCart />
             <BackToTop />
-
+            <Suspense fallback={null}>
+              <TrafficTracker />
+            </Suspense>
           </CartProvider>
         </ThemeProvider>
       </body>

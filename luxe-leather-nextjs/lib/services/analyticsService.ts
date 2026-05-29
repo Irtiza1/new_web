@@ -149,3 +149,166 @@ export async function getCustomersByCountry(): Promise<CustomerCountry[]> {
             flag: FLAG_MAP[country] || '🌍',
         }));
 }
+
+export interface TrafficStats {
+    pageViews: number;
+    uniqueSessions: number;
+    hourlyViews: Record<number, number>;
+    dailyViews: Record<number, number>;
+    monthlyViews: Record<number, number>;
+    countries: Array<{ name: string; count: number; percentage: number }>;
+    regions: Array<{ name: string; count: number; percentage: number }>;
+    cities: Array<{ name: string; count: number; percentage: number }>;
+    deviceType: Record<string, number>;
+    os: Record<string, number>;
+    browser: Record<string, number>;
+    events: Record<string, number>;
+    topPages: Array<{ path: string; count: number }>;
+    topSearches: Array<{ query: string; count: number }>;
+}
+
+/**
+ * Aggregate website visitor traffic events from traffic_events table
+ */
+export async function getTrafficSummary(startDate: string, endDate: string): Promise<TrafficStats> {
+    const { data: events, error } = await supabase
+        .from('traffic_events')
+        .select('*')
+        .gte('created_at', startDate + 'T00:00:00Z')
+        .lte('created_at', endDate + 'T23:59:59Z');
+
+    if (error) {
+        // Return empty fallback stats if table does not exist yet (before migration runs)
+        if (error.code === '42P01') {
+            return getFallbackTrafficStats();
+        }
+        throw error;
+    }
+
+    const pageViews = events?.length ?? 0;
+    const sessionSet = new Set(events?.map(e => e.session_id) || []);
+    const uniqueSessions = sessionSet.size;
+
+    // Time buckets
+    const hourlyViews: Record<number, number> = {};
+    const dailyViews: Record<number, number> = {};
+    const monthlyViews: Record<number, number> = {};
+    
+    // Geo buckets
+    const countryCounts: Record<string, number> = {};
+    const regionCounts: Record<string, number> = {};
+    const cityCounts: Record<string, number> = {};
+
+    // Device buckets
+    const deviceTypeCounts: Record<string, number> = {};
+    const osCounts: Record<string, number> = {};
+    const browserCounts: Record<string, number> = {};
+
+    // Events counts
+    const eventCounts: Record<string, number> = {};
+    
+    // Path counts
+    const pathCounts: Record<string, number> = {};
+    
+    // Search queries
+    const searchCounts: Record<string, number> = {};
+
+    (events || []).forEach(e => {
+        const dt = new Date(e.created_at);
+        
+        // Time
+        const hour = dt.getUTCHours();
+        const day = dt.getUTCDay(); // 0 is Sunday, 6 is Saturday
+        const month = dt.getUTCMonth() + 1; // 1-12
+        hourlyViews[hour] = (hourlyViews[hour] || 0) + 1;
+        dailyViews[day] = (dailyViews[day] || 0) + 1;
+        monthlyViews[month] = (monthlyViews[month] || 0) + 1;
+
+        // Geo
+        const country = e.country || 'Unknown';
+        const region = e.region || 'Unknown';
+        const city = e.city || 'Unknown';
+        countryCounts[country] = (countryCounts[country] || 0) + 1;
+        regionCounts[region] = (regionCounts[region] || 0) + 1;
+        cityCounts[city] = (cityCounts[city] || 0) + 1;
+
+        // Device
+        const device = e.device_type || 'Desktop';
+        const osName = e.os || 'Unknown';
+        const browserName = e.browser || 'Unknown';
+        deviceTypeCounts[device] = (deviceTypeCounts[device] || 0) + 1;
+        osCounts[osName] = (osCounts[osName] || 0) + 1;
+        browserCounts[browserName] = (browserCounts[browserName] || 0) + 1;
+
+        // Event type
+        const type = e.event_type || 'page_view';
+        eventCounts[type] = (eventCounts[type] || 0) + 1;
+
+        // Path
+        pathCounts[e.path] = (pathCounts[e.path] || 0) + 1;
+
+        // Search metadata
+        if (type === 'search' && e.metadata?.query) {
+            const q = e.metadata.query.trim().toLowerCase();
+            if (q) searchCounts[q] = (searchCounts[q] || 0) + 1;
+        }
+    });
+
+    // Format Geo arrays
+    const formatCounts = (counts: Record<string, number>, total: number) => {
+        return Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5)
+            .map(([name, count]) => ({
+                name,
+                count,
+                percentage: total > 0 ? Math.round((count / total) * 100) : 0
+            }));
+    };
+
+    const topPages = Object.entries(pathCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([path, count]) => ({ path, count }));
+
+    const topSearches = Object.entries(searchCounts)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([query, count]) => ({ query, count }));
+
+    return {
+        pageViews,
+        uniqueSessions,
+        hourlyViews,
+        dailyViews,
+        monthlyViews,
+        countries: formatCounts(countryCounts, pageViews),
+        regions: formatCounts(regionCounts, pageViews),
+        cities: formatCounts(cityCounts, pageViews),
+        deviceType: deviceTypeCounts,
+        os: osCounts,
+        browser: browserCounts,
+        events: eventCounts,
+        topPages,
+        topSearches
+    };
+}
+
+function getFallbackTrafficStats(): TrafficStats {
+    return {
+        pageViews: 0,
+        uniqueSessions: 0,
+        hourlyViews: {},
+        dailyViews: {},
+        monthlyViews: {},
+        countries: [],
+        regions: [],
+        cities: [],
+        deviceType: {},
+        os: {},
+        browser: {},
+        events: {},
+        topPages: [],
+        topSearches: []
+    };
+}

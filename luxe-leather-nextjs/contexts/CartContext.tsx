@@ -200,6 +200,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
             return [...prevItems, { ...newItem, quantity: 1 }];
         });
         setIsOpen(true); // Open cart when adding an item
+
+        // Track the Add to Cart event in analytics
+        if (typeof window !== 'undefined') {
+            const extWindow = window as unknown as {
+                trackEvent?: (eventType: string, metadata?: Record<string, unknown>) => void;
+            };
+            if (extWindow.trackEvent) {
+                extWindow.trackEvent('add_to_cart', {
+                    productId: newItem.id,
+                    name: newItem.name,
+                    price: newItem.price,
+                    variant: newItem.variant || 'Default'
+                });
+            }
+        }
     };
 
     const removeFromCart = (id: string, variant?: string) => {

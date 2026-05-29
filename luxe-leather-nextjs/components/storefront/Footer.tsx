@@ -15,8 +15,19 @@ interface NavItem {
 
 export default function Footer() {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
+    const [siteTitle, setSiteTitle] = useState("Luxe Leather Co.");
 
     useEffect(() => {
+        // Fetch site settings
+        fetch('/api/settings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data && data.data.site_title) {
+                    setSiteTitle(data.data.site_title);
+                }
+            })
+            .catch(err => console.error('Error fetching settings in footer:', err));
+
         const homeItem: NavItem = { id: 'home', label: 'Home', url: '/', is_visible: true, opens_in_new_tab: false, display_order: -1 };
 
         fetch('/api/nav-items')
@@ -48,7 +59,7 @@ export default function Footer() {
                                 checkroom
                             </span>
                             <span className="text-base font-bold uppercase tracking-[0.2em] font-serif whitespace-nowrap">
-                                Luxe Leather Co.
+                                {siteTitle}
                             </span>
                         </div>
                         <p className="text-gray-400 text-xs leading-relaxed">
@@ -98,7 +109,7 @@ export default function Footer() {
                 {/* Bottom Stripe */}
                 <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-600">
                     <div className="flex flex-col md:flex-row items-center gap-6 lg:gap-10">
-                        <p>© {new Date().getFullYear()} Luxe Leather Co.</p>
+                        <p>© {new Date().getFullYear()} {siteTitle}</p>
                     </div>
                 </div>
             </div>

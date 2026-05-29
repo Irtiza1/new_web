@@ -34,7 +34,7 @@ export default function OurStoryPage() {
                         </h1>
                         <div className="w-16 h-1 bg-[#cf1736] mx-auto my-2"></div>
                         <p className="text-[#1b0e10]/80 dark:text-gray-300 text-lg md:text-xl font-normal leading-relaxed">
-                            Founded on the principles of slow fashion and enduring quality, LUXE LEATHER CO. began as a small workshop in 2013. We believe that true luxury lies in the details—the hand-stitched seams, the carefully selected full-grain hides, and the patina that develops over years of use.
+                            Founded on the principles of slow fashion and enduring quality, {assets.site_title?.toUpperCase() || 'LUXE LEATHER CO.'} began as a small workshop in 2000. We believe that true luxury lies in the details—the hand-stitched seams, the carefully selected full-grain hides, and the patina that develops over years of use.
                         </p>
                         <p className="text-[#1b0e10]/60 dark:text-gray-400 text-base md:text-lg font-normal leading-relaxed">
                             Every piece tells a story of patience, skill, and an unwavering commitment to excellence. We don&apos;t just make leather goods; we create heirlooms meant to be passed down.
@@ -61,7 +61,7 @@ export default function OurStoryPage() {
                     <div className="max-w-[1200px] mx-auto">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 text-center divide-y sm:divide-y-0 sm:divide-x divide-gray-300 dark:divide-gray-700/50">
                             {[
-                                { value: '30+', label: 'Years of Experience', sub: 'Refining our craft daily' },
+                                { value: '26+', label: 'Years of Experience', sub: 'Refining our craft daily' },
                                 { value: '5k+', label: 'Unique Products', sub: 'Created for clients globally' },
                                 { value: '40+', label: 'Countries Served', sub: 'Shipping worldwide' },
                                 { value: '100%', label: 'Handcrafted Quality', sub: 'No shortcuts taken' },
@@ -81,13 +81,8 @@ export default function OurStoryPage() {
                     <div className="max-w-[800px] text-center relative">
                         <span className="material-symbols-outlined text-6xl text-[#cf1736]/20 absolute -top-8 -left-8 select-none">format_quote</span>
                         <blockquote className="text-2xl md:text-3xl italic dark:text-gray-200 leading-normal">
-                            &ldquo;We don&apos;t chase trends. We chase perfection. The leather we choose today will look even better in ten years, carrying the marks of your journey.&rdquo;
+                            &ldquo;We don&apos;t chase trends. We chase perfection. The leather we choose today will look even better over years, carrying the marks of your journey.&rdquo;
                         </blockquote>
-                        <div className="mt-8 flex flex-col items-center">
-                            <div className="w-16 h-16 rounded-full bg-cover bg-center mb-4 border-2 border-[#cf1736]/20" style={{ backgroundImage: `url("${staticAsset(assets, 'story_founder_image')}")` }}></div>
-                            <cite className="not-italic font-bold dark:text-white text-lg">Arthur Morgan</cite>
-                            <span className="text-sm text-[#1b0e10]/60 dark:text-gray-400 uppercase tracking-widest text-xs mt-1">Founder &amp; Master Craftsman</span>
-                        </div>
                     </div>
                 </section>
 

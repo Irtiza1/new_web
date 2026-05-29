@@ -50,6 +50,18 @@ function ShopContent() {
             .catch(() => {});
     }, []);
 
+    // Track search query in analytics
+    useEffect(() => {
+        if (search && typeof window !== 'undefined') {
+            const extWindow = window as unknown as {
+                trackEvent?: (eventType: string, metadata?: Record<string, unknown>) => void;
+            };
+            if (extWindow.trackEvent) {
+                extWindow.trackEvent('search', { query: search });
+            }
+        }
+    }, [search]);
+
     // Fetch products from DB on mount
     useEffect(() => {
         async function loadProducts() {

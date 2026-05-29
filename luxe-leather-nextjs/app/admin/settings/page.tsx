@@ -227,8 +227,18 @@ export default function AdminSettingsPage() {
                                     </div>
                                 </div>
                                 <hr className="border-[#e5e7eb] dark:border-[#2d3b4a]" />
-                                {/* Contact Info */}
+                                {/* Store Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2 md:col-span-2">
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Site Title</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">badge</span>
+                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="e.g. Luxe Leather Gear" type="text" value={settings.site_title || ''} onChange={(e) => setSettingsState({ ...settings, site_title: e.target.value })} />
+                                        </div>
+                                        <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">
+                                            The official name of the store. Used across the header, footer, metadata, order notifications, and invoices.
+                                        </p>
+                                    </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm font-bold text-[#0d141b] dark:text-white">Support Email</label>
                                         <div className="relative">
@@ -237,12 +247,14 @@ export default function AdminSettingsPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">WhatsApp Number</label>
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Facebook Page Name</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">chat</span>
-                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="+1 (555) 000-0000" type="tel" value={settings.whatsapp_number || ''} onChange={(e) => setSettingsState({ ...settings, whatsapp_number: e.target.value })} />
+                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="e.g. Luxe Leather Co." type="text" value={settings.facebook_page_name || ''} onChange={(e) => setSettingsState({ ...settings, facebook_page_name: e.target.value })} />
                                         </div>
-                                        <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Format: +(Country Code) Number</p>
+                                        <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">
+                                            Enter your Facebook page name (e.g. `Luxe Leather Co.`).
+                                        </p>
                                     </div>
                                 </div>
                             </div>

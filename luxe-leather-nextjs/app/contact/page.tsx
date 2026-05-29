@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 
@@ -26,11 +26,21 @@ export default function ContactPage() {
             });
 
             const result = await res.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Failed to send message');
-            }
+            if (!result.success) throw new Error(result.message || 'Failed to send message');
             setFormStatus('success');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Track form submission event
+            if (typeof window !== 'undefined') {
+                const extWindow = window as unknown as {
+                    trackEvent?: (eventType: string, metadata?: Record<string, unknown>) => void;
+                };
+                if (extWindow.trackEvent) {
+                    extWindow.trackEvent('contact_submit', {
+                        inquiryType: data.get('inquiry_type') as string
+                    });
+                }
+            }
         } catch (err) {
             console.error('Failed to submit contact form:', err);
             alert('Failed to send message. Please try again.');
@@ -141,71 +151,99 @@ export default function ContactPage() {
 
             <Footer />
 
-            {/* Floating WhatsApp Chat Widget */}
-            <WhatsAppWidget />
+            {/* Custom Facebook Messenger Support Widget */}
+            <MessengerWidget />
         </div>
     );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WhatsApp Chat Widget — popup chat card like the reference image
+// Custom Facebook Messenger Chat Widget
+//
+// Username source: site_settings DB (Admin › Settings › Facebook Page Username)
+//
+// UX: A beautiful, interactive live-chat composer styled like Messenger.
+// When user types a message and clicks send, it redirects to m.me link
+// in a new tab to begin the conversation, keeping them on the site.
 // ─────────────────────────────────────────────────────────────────────────────
-function WhatsAppWidget() {
-    const [waUrl, setWaUrl] = useState<string | null>(null);
+function MessengerWidget() {
+    const [messengerUsername, setMessengerUsername] = useState<string | null>(null);
     const [open, setOpen] = useState(false);
+    const [userMessage, setUserMessage] = useState('');
+    const [sent, setSent] = useState(false);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
+    // Fetch messenger username from settings DB
     useEffect(() => {
-        // Primary: env var (set in .env.local or Vercel env)
-        const envNum = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '').replace(/\D/g, '');
-        if (envNum) {
-            const msg = encodeURIComponent('Hi Luxe Leather Co., I need help with an order or inquiry.');
-            setWaUrl(`https://wa.me/${envNum}?text=${msg}`);
-            return;
-        }
-        // Fallback: whatsapp_number from Admin › Settings
         fetch('/api/settings')
             .then(r => r.json())
             .then(d => {
-                if (d.success) {
-                    const num = (d.data?.whatsapp_number || '').replace(/\D/g, '');
-                    if (num) {
-                        const msg = encodeURIComponent('Hi Luxe Leather Co., I need help with an order or inquiry.');
-                        setWaUrl(`https://wa.me/${num}?text=${msg}`);
-                    }
+                if (d.success && d.data?.messenger_username) {
+                    setMessengerUsername(d.data.messenger_username.trim());
                 }
             })
             .catch(() => null);
     }, []);
 
-    if (!waUrl) return null;
+    // Focus textarea when popup opens
+    useEffect(() => {
+        if (open && inputRef.current) {
+            setTimeout(() => inputRef.current?.focus(), 150);
+        }
+    }, [open]);
+
+    if (!messengerUsername) return null;
 
     const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+    const handleSend = () => {
+        // m.me does not support custom text params officially in standard URL, 
+        // but opening opens the page directly. We trigger the transition to feel premium.
+        const url = `https://m.me/${messengerUsername}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setSent(true);
+        // Reset state after 3 seconds
+        setTimeout(() => {
+            setSent(false);
+            setUserMessage('');
+        }, 3000);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
     return (
-        <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+        <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 font-[family-name:var(--font-inter)]">
 
-            {/* ── Chat popup card ── */}
+            {/* ── Messenger Popup Card ── */}
             {open && (
-                <div className="w-[300px] rounded-2xl overflow-hidden shadow-2xl shadow-black/25 animate-in slide-in-from-bottom-4 fade-in duration-200">
+                <div className="w-[320px] rounded-2xl overflow-hidden shadow-2xl shadow-black/25 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 animate-in slide-in-from-bottom-4 fade-in duration-200">
 
-                    {/* Header — dark green WhatsApp brand */}
-                    <div className="bg-[#075E54] px-4 py-4 flex items-center justify-between gap-3">
+                    {/* Header: Messenger Blue/Purple Gradient */}
+                    <div className="bg-gradient-to-r from-[#0695FF] via-[#7B3FFB] to-[#A334FA] px-4 py-4 flex items-center justify-between gap-3 shadow-md">
                         <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
                                 <div className="w-11 h-11 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-xs font-black text-white select-none">
                                     LL
                                 </div>
-                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#25D366] rounded-full border-2 border-[#075E54]" />
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#7B3FFB] animate-pulse" />
                             </div>
                             <div>
                                 <p className="text-white font-bold text-sm leading-snug">Luxe Leather Support</p>
-                                <p className="text-white/65 text-[11px] mt-0.5">Typically replies within a day</p>
+                                <p className="text-white/70 text-[10px] mt-0.5 flex items-center gap-1">
+                                    <span className="inline-block w-1.5 h-1.5 bg-green-400 rounded-full" />
+                                    Active on Messenger
+                                </p>
                             </div>
                         </div>
                         <button
-                            onClick={() => setOpen(false)}
+                            onClick={() => { setOpen(false); setSent(false); setUserMessage(''); }}
                             aria-label="Close chat"
-                            className="text-white/50 hover:text-white transition-colors shrink-0"
+                            className="text-white/60 hover:text-white transition-colors shrink-0"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M18 6 6 18M6 6l12 12" />
@@ -213,51 +251,80 @@ function WhatsAppWidget() {
                         </button>
                     </div>
 
-                    {/* Chat body — WhatsApp beige bg */}
-                    <div className="px-4 py-5 bg-[#ECE5DD]">
-                        <div className="max-w-[210px] bg-white rounded-b-2xl rounded-tr-2xl px-3.5 py-2.5 shadow-sm">
-                            <p className="text-[#303030] text-sm leading-relaxed">Hi there 👋</p>
-                            <p className="text-[#303030] text-sm leading-relaxed">How can I help you?</p>
-                            <p className="text-right text-[10px] text-[#aaa] mt-1.5">{now}</p>
-                        </div>
-                    </div>
+                    {/* Body */}
+                    <div className="px-4 py-4 bg-slate-50 dark:bg-slate-950 flex flex-col gap-3 min-h-[220px] justify-between">
+                        <div className="flex flex-col gap-3">
+                            {/* Agent greeting bubble */}
+                            <div className="max-w-[230px] bg-slate-200/80 dark:bg-slate-800 rounded-b-2xl rounded-tr-2xl px-3.5 py-2.5 shadow-sm text-slate-800 dark:text-slate-100 self-start">
+                                <p className="text-sm leading-relaxed">Hi there! Thanks for visiting Luxe Leather Co. 👋</p>
+                                <p className="text-sm leading-relaxed mt-1">Type your message below to chat with us on Messenger.</p>
+                                <p className="text-right text-[9px] text-slate-400 dark:text-slate-500 mt-1">{now}</p>
+                            </div>
 
-                    {/* CTA button */}
-                    <div className="px-4 pb-4 bg-[#ECE5DD]">
-                        <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2.5 w-full bg-[#25D366] hover:bg-[#1db954] text-white font-bold text-sm rounded-full py-3 transition-colors"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                            </svg>
-                            Chat on WhatsApp
-                        </a>
+                            {/* Sent State User Bubble */}
+                            {sent && (
+                                <div className="max-w-[230px] bg-[#0084FF] text-white rounded-b-2xl rounded-tl-2xl px-3.5 py-2.5 shadow-sm self-end animate-in fade-in duration-300">
+                                    <p className="text-sm leading-relaxed">{userMessage || 'Hi Luxe Leather Co., I need help!'}</p>
+                                    <p className="text-right text-[9px] text-white/70 mt-1">{now}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Input Composer */}
+                        {!sent ? (
+                            <div className="flex flex-col gap-2 mt-2">
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl px-3.5 py-2.5 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                                    <textarea
+                                        ref={inputRef}
+                                        value={userMessage}
+                                        onChange={e => setUserMessage(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="Type a message..."
+                                        rows={1}
+                                        className="flex-1 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 bg-transparent resize-none focus:outline-none leading-relaxed"
+                                    />
+                                    <button
+                                        onClick={handleSend}
+                                        aria-label="Send message on Messenger"
+                                        className="w-8 h-8 rounded-full bg-[#0084FF] flex items-center justify-center hover:bg-[#0074E0] transition-colors shrink-0 text-white"
+                                    >
+                                        <svg className="w-4 h-4 transform rotate-45" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p className="text-center text-[9px] text-slate-400">
+                                    Opens Messenger · <span className="font-semibold">{messengerUsername}</span>
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="text-center py-2 animate-pulse">
+                                <p className="text-xs text-[#7B3FFB] font-bold">✓ Opening Messenger...</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* ── Floating trigger button ── */}
+            {/* ── Floating Messenger Launcher Button ── */}
             <button
                 onClick={() => setOpen(o => !o)}
-                aria-label={open ? 'Close WhatsApp chat' : 'Chat with us on WhatsApp'}
-                className="relative w-14 h-14 rounded-full bg-[#25D366] shadow-lg shadow-[#25D366]/40 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+                aria-label={open ? 'Close Messenger chat' : 'Chat with us on Messenger'}
+                className="relative w-14 h-14 rounded-full bg-gradient-to-r from-[#0695FF] via-[#7B3FFB] to-[#A334FA] shadow-lg shadow-[#7B3FFB]/30 hover:scale-105 transition-all duration-200 flex items-center justify-center text-white"
             >
-                {/* Unread notification badge */}
                 {!open && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center pointer-events-none">
-                        <span className="text-white text-[8px] font-black leading-none">1</span>
+                    <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center pointer-events-none animate-bounce">
+                        <span className="text-white text-[9px] font-black leading-none">1</span>
                     </span>
                 )}
                 {open ? (
-                    <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M18 6 6 18M6 6l12 12" />
                     </svg>
                 ) : (
-                    <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    // Messenger Speech Bubble with Lightning Bolt SVG
+                    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.914 1.458 5.513 3.738 7.202.195.145.31.373.303.618l-.08 2.457c-.012.392.393.673.748.5l2.766-1.347c.18-.088.39-.089.572-.002A10.22 10.22 0 0012 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.255 12.368l-2.452-2.622-4.787 2.622 5.265-5.592 2.452 2.622 4.787-2.622-5.265 5.592z"/>
                     </svg>
                 )}
             </button>

@@ -81,6 +81,19 @@ export default function BespokePage() {
             }
             setFormStatus('success');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Track bespoke request event
+            if (typeof window !== 'undefined') {
+                const extWindow = window as unknown as {
+                    trackEvent?: (eventType: string, metadata?: Record<string, unknown>) => void;
+                };
+                if (extWindow.trackEvent) {
+                    extWindow.trackEvent('bespoke_submit', {
+                        itemType: data.get('item_type') as string,
+                        budget: data.get('budget_range') as string
+                    });
+                }
+            }
         } catch (err) {
             console.error('Failed to submit request:', err);
             alert('Failed to submit request. Please try again.');
