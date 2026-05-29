@@ -247,13 +247,13 @@ export default function AdminSettingsPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Facebook Page Name</label>
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Facebook Page ID</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">chat</span>
-                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="e.g. Luxe Leather Co." type="text" value={settings.facebook_page_name || ''} onChange={(e) => setSettingsState({ ...settings, facebook_page_name: e.target.value })} />
+                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="e.g. 61590459932071" type="text" value={settings.facebook_page_id || ''} onChange={(e) => setSettingsState({ ...settings, facebook_page_id: e.target.value })} />
                                         </div>
                                         <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">
-                                            Enter your Facebook page name (e.g. `Luxe Leather Co.`).
+                                            Enter your numeric Facebook Page ID (e.g. `61590459932071`). This embeds the official direct-chat plugin.
                                         </p>
                                     </div>
                                 </div>
