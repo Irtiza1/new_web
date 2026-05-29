@@ -4,7 +4,8 @@ const ACCESS_COOKIE = 'sb-access-token';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 export function setAuthCookie(accessToken: string) {
-    document.cookie = `${ACCESS_COOKIE}=${encodeURIComponent(accessToken)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+    const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${ACCESS_COOKIE}=${encodeURIComponent(accessToken)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
 }
 
 export function clearAuthCookie() {
@@ -20,6 +21,21 @@ export async function syncAuthCookieFromSession() {
     } else {
         clearAuthCookie();
     }
+}
+
+export async function getAuthHeader(): Promise<Record<string, string>> {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+
+    if (!token) {
+        clearAuthCookie();
+        return {};
+    }
+
+    setAuthCookie(token);
+    return {
+        Authorization: `Bearer ${token}`,
+    };
 }
 
 function oauthRedirectUrl(redirectTo: string) {

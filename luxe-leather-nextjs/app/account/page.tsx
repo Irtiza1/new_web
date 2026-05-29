@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { authClient, clearAuthCookie, syncAuthCookieFromSession } from '@/lib/auth/client';
+import { authClient, clearAuthCookie, getAuthHeader, syncAuthCookieFromSession } from '@/lib/auth/client';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 
@@ -47,6 +47,7 @@ export default function AccountPage() {
             if (authUser) {
                 try {
                     const res = await fetch('/api/account/profile', {
+                        headers: await getAuthHeader(),
                         credentials: 'include',
                     });
                     const json = await res.json();
@@ -99,6 +100,7 @@ export default function AccountPage() {
             const res = await fetch('/api/account/profile', {
                 method: 'PUT',
                 headers: {
+                    ...(await getAuthHeader()),
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
