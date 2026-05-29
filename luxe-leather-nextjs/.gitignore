@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+newman-e2e-report*.json
 
 # next.js
 /.next/

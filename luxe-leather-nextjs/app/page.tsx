@@ -3,6 +3,8 @@ import Link from "next/link";
 import Header from "@/components/storefront/Header";
 import Footer from "@/components/storefront/Footer";
 import { contentService } from "@/lib/services/contentService";
+import { getAll as getSettings } from "@/lib/services/settingsService";
+import { staticAsset } from "@/lib/staticAssets";
 
 import { supabase } from "@/lib/supabase";
 
@@ -16,6 +18,7 @@ export default async function HomePage() {
   await Promise.all(keysToFetch.map(async (key) => {
     cmsContent[key] = await contentService.getBySlug(key);
   }));
+  const settings = await getSettings();
 
   // Fetch Categories
   const { data: dbCategories } = await supabase
@@ -26,13 +29,17 @@ export default async function HomePage() {
 
   // Map to the aesthetic images since DB doesn't store them yet
   const categoryImages: Record<string, string> = {
-    "Jackets": "https://lh3.googleusercontent.com/aida-public/AB6AXuA3Mi_4x3U-7bVaej8P1FqcWGO1loc-UlDb3dKp8fBeepxCP4ba_zcJhpELxvqiZWSbycGJQ4_VYDkc7tCC2D7Ga4TJ07sn-9LkhAsh_EdSFpHNQTkVEukqmfG4SCgwKyUPTsjAG4CH7DvMrAZs2FFJQK8xycF0EY2a7f-LtuaUDjvLhGpmtAcy9g96yAVgwz_-hy_nvYkAS9uYOVBCFbdXWid_3Lm9keTylyHZSiAGzUSBN-6Nt1M_YVnZGph1Wfz61rIw1vTqtPlg",
-    "Bags": "https://lh3.googleusercontent.com/aida-public/AB6AXuBCXlGxUlNVUPCAiWMd3IcYHCtTCaQvmlKE8ckXliTBTGO7kZ24DWxTydT7c4x1eeH35zHBO74SK-RKLOoM7RhMziyd1-Fu4iCqwhQ5L1bpLGdqI3WB04LpXr8J23V6k3-ilfx436cvf0BlQP6GByydrvlclk3UpR7ByQsvVPZyi6bhMx70GBeaG9FuU586DekhEOcxRgynzdU7etRxAR6HZGK8nZgiGwPtCNy-bvAm9g7Gy0wYB-PKF7Z4hw0avEYeHbeL3Zj4LU4p",
-    "Coats": "https://lh3.googleusercontent.com/aida-public/AB6AXuBO93bgOimTqtihwaN7n5zlO0ylWa0nFvO7i1VbdSfDNLYa7XiTh_lA-rtXtlqV-xBe4pfnyCEkRHegpXFjQRx7ALF0SlxPx9kYPFkAtaQqD6rq-zdDr_tU3FETvcs6hyuNQuwc58Hiiv2Z2gGsDurrj8QSftr9P9jNgWhuNb9snOBHADAHEX5gGjjptE6A3DwJzNFpau3b3EIS0aFxUQ0G7AZFBejy90dR2PvsCca8b_aKfrvIdSGZvl1Pqzn8ZkIvvKndePNvRrf0",
-    "Accessories": "https://lh3.googleusercontent.com/aida-public/AB6AXuBpvy-aR6ixt8NgGdfJXyIz7APWRrVukfe-6kHDMsTC98bk97oHUi0JVRbzoL2oWp9hT5pZun2_QmxyCG1vnZm3fTOVnhd0Omj7PtoQRHdVeriLgRK_FvOcCOac_CbCQTjOPTmGn4VKuw92loIyXg4tWqFj6DKhpFq7SEriHHe9UF0V5ooAbLAnlsGfMUof3WmdqXsqotbv58-K2COJX_zeYno-As-Nivs6_g9qYCHL9P6EbZ9rwcRV9fvgfBqdDVECTFknlfJt11oB",
-    "Wallets": "https://lh3.googleusercontent.com/aida-public/AB6AXuClaBZyru9u7jYuaK3T9Rimw2LKCajKhDdre-7pUpAdDe164j2mCQgKBs3C0e2btEGSZPfCmszf4gu4SHYwV49k8AheIEbrbScve59Wad63lFV0bdDtBAQ21w_KKQmIk09r0Cuqp4zDrpaPz_49pey7_pUTHqKVnKoiZkMz1k2f448mxAxZdvNOPSZWVw4d0NRlahRWlxhSWYJCVgXeRB_ghCxQMiVwQHC9Ta655dJjq99t2v4_e9pc_nJ7DEL3OWl74iWXb9dZl7Em",
-    "Default": "https://lh3.googleusercontent.com/aida-public/AB6AXuBCXlGxUlNVUPCAiWMd3IcYHCtTCaQvmlKE8ckXliTBTGO7kZ24DWxTydT7c4x1eeH35zHBO74SK-RKLOoM7RhMziyd1-Fu4iCqwhQ5L1bpLGdqI3WB04LpXr8J23V6k3-ilfx436cvf0BlQP6GByydrvlclk3UpR7ByQsvVPZyi6bhMx70GBeaG9FuU586DekhEOcxRgynzdU7etRxAR6HZGK8nZgiGwPtCNy-bvAm9g7Gy0wYB-PKF7Z4hw0avEYeHbeL3Zj4LU4p"
+    "Jackets": staticAsset(settings, 'category_jackets_image'),
+    "Bags": staticAsset(settings, 'category_bags_image'),
+    "Coats": staticAsset(settings, 'category_coats_image'),
+    "Full Coats": staticAsset(settings, 'category_coats_image'),
+    "Bags & Satchels": staticAsset(settings, 'category_bags_image'),
+    "Accessories": staticAsset(settings, 'category_accessories_image'),
+    "Wallets": staticAsset(settings, 'category_wallets_image'),
+    "Default": staticAsset(settings, 'category_bags_image')
   };
+  const homeHeroImage = staticAsset(settings, 'home_hero_image');
+  const featuredProductFallbackImage = staticAsset(settings, 'featured_product_fallback_image');
 
   const categories = dbCategories?.map(c => ({
     name: c.name,
@@ -77,8 +84,7 @@ export default async function HomePage() {
           <div
             className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage:
-                "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD663YQ9A3yCTD5ey9kXXjD2nNHR8t7_sLSr9pizcD4Ai5LZfqqKiZz8zyYNLGjhITo-Z05zCLpeLUJwAbqCICLNGO_KilvL65Qu-FKP5cmYRl4JBFK7k-3CzTHAzUTXnx21a6yXnPEDhsFh8I1xbgex4o4t8SYYq9qpJraotJZhmiRNI_bnKTgiLqMPpnV3CxPjLoWJ6ma68eRBMqoaUlXn2Zy2B_fQo09l7vqGPJwsnOPAHIsSj7-eSGjKyVbu7bHY_I5SD-QBRgT')",
+              backgroundImage: `url('${homeHeroImage}')`,
             }}
           >
             <div className="absolute inset-0 bg-black/10 dark:bg-black/40"></div>
@@ -169,7 +175,7 @@ export default async function HomePage() {
                   <div className="aspect-square w-full overflow-hidden rounded-xl bg-gray-100 relative mb-4">
                     <div
                       className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                      style={{ backgroundImage: `url('${product.image || 'https://images.unsplash.com/photo-1551028719-00167b16eac5'}')` }}
+                      style={{ backgroundImage: `url('${product.image || featuredProductFallbackImage}')` }}
                     ></div>
                     {badgeText && (
                       <div className="absolute top-4 left-4 bg-[#1a2632] dark:bg-[#d41132] text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">

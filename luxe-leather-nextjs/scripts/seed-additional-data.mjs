@@ -21,9 +21,9 @@ async function seed() {
     console.log('Seeding media_files...');
     const mediaFiles = Array.from({ length: 15 }).map((_, i) => ({
         id: crypto.randomUUID(),
-        filename: `leather-jacket-${i + 1}.jpg`,
-        url: `https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=1000&auto=format&fit=crop`,
-        content_type: 'image/jpeg',
+        filename: `leather-jacket-${i + 1}.webp`,
+        url: `https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=1000&auto=format&fit=crop&fm=webp`,
+        content_type: 'image/webp',
         size: 1024 * 1024,
         folder: 'products',
         created_at: new Date().toISOString(),

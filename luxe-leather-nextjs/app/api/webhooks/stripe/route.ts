@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe, isStripeConfigured } from '@/lib/stripe';
-import { supabase } from '@/lib/supabase';
 import * as orderService from '@/lib/services/orderService';
 
 export const dynamic = 'force-dynamic';

@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:e2e": "npx newman run Luxe_Leather_E2E_Postman_Collection.json -e Luxe_Leather_E2E_Postman_Environment.json --reporters cli,json --reporter-json-export newman-e2e-report.json",
+    "e2e:prepare": "node scripts/fetch_e2e_tokens.js",
+    "test:e2e:ci": "npm run e2e:prepare && npm run test:e2e",
+    "assets:upload-static": "node scripts/upload_static_assets_to_supabase.mjs",
     "start": "next start",
     "lint": "eslint"
   },
@@ -19,6 +23,7 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "sharp": "^0.34.5",
     "stripe": "^22.0.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"
@@ -41,4 +46,6 @@
     "typescript": "^5",
     "vitest": "^4.1.4"
   }
+
+
 }

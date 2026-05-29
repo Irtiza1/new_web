@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const sharp = require('sharp');
 
 // 1. Load Environment Variables
 function loadEnv() {
@@ -50,7 +51,7 @@ async function importImages() {
     }
 
     const files = fs.readdirSync(IMAGES_DIR);
-    const imageFiles = files.filter(file => /\.(jpg|jpeg|png|webp|gif)$/i.test(file));
+    const imageFiles = files.filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file));
 
     console.log(`Found ${imageFiles.length} images.`);
 
@@ -73,18 +74,33 @@ async function importImages() {
     for (const [index, fileName] of imageFiles.entries()) {
         const filePath = path.join(IMAGES_DIR, fileName);
         const fileBuffer = fs.readFileSync(filePath);
-        const fileExt = path.extname(fileName).slice(1);
+        const baseName = path.basename(fileName, path.extname(fileName))
+            .replace(/[^a-zA-Z0-9-]/g, '-')
+            .toLowerCase()
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+        const webpBuffer = await sharp(fileBuffer, { animated: false })
+            .rotate()
+            .resize({
+                width: 2200,
+                height: 2200,
+                fit: 'inside',
+                withoutEnlargement: true,
+            })
+            .webp({ quality: 84, effort: 4 })
+            .toBuffer();
+        const webpFileName = `imported_${Date.now()}_${index}_${baseName || 'image'}.webp`;
 
         // Generate a unique storage path
-        const storagePath = `${STORAGE_FOLDER}/imported_${Date.now()}_${index}.${fileExt}`;
+        const storagePath = `${STORAGE_FOLDER}/${webpFileName}`;
 
-        console.log(`[${index + 1}/${imageFiles.length}] Uploading ${fileName}...`);
+        console.log(`[${index + 1}/${imageFiles.length}] Converting and uploading ${fileName} as WebP...`);
 
         // A. Upload to Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
             .from(STORAGE_BUCKET)
-            .upload(storagePath, fileBuffer, {
-                contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+            .upload(storagePath, webpBuffer, {
+                contentType: 'image/webp',
                 upsert: true
             });
 
@@ -129,10 +145,10 @@ async function importImages() {
         await supabase
             .from('media_files')
             .insert([{
-                filename: fileName,
+                filename: webpFileName,
                 url: publicUrl,
-                size: fileBuffer.length,
-                content_type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+                size: webpBuffer.length,
+                content_type: 'image/webp',
                 folder: STORAGE_FOLDER
             }]);
     }

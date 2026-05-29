@@ -6,6 +6,7 @@ import Footer from '@/components/storefront/Footer';
 import { contentService } from '@/lib/services/contentService';
 import { getShippingRates, type ShippingRate } from '@/lib/services/shippingService';
 import { getSizeGuides, type SizeGuide } from '@/lib/services/sizeService';
+import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
 export default function ShippingPage() {
     const [unit, setUnit] = useState<'inches' | 'cm'>('inches');
@@ -13,6 +14,7 @@ export default function ShippingPage() {
     const [sizeChart, setSizeChart] = useState<SizeGuide[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
+    const [heroImage, setHeroImage] = useState(STATIC_ASSET_DEFAULTS.shipping_hero_image);
 
     const convert = (val: string): string => {
         const num = parseFloat(val);
@@ -24,9 +26,14 @@ export default function ShippingPage() {
         async function loadCMS() {
             const keys = ['shipping_hero_title', 'shipping_hero_subtitle'];
             const content: Record<string, string> = {};
+            const settingsPromise = fetch('/api/settings').then((res) => res.json()).catch(() => null);
             await Promise.all(keys.map(async (key) => {
                 content[key] = await contentService.getBySlug(key);
             }));
+            const settingsData = await settingsPromise;
+            if (settingsData?.success && settingsData.data?.shipping_hero_image) {
+                setHeroImage(settingsData.data.shipping_hero_image);
+            }
             setCmsContent(content);
         }
         loadCMS();
@@ -58,7 +65,7 @@ export default function ShippingPage() {
             {/* Hero Section */}
             <div className="relative w-full py-24 md:py-32 bg-[#1a130e] overflow-hidden">
                 <img
-                    src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop"
+                    src={heroImage}
                     className="absolute inset-0 w-full h-full object-cover opacity-20 filter grayscale scale-110"
                     alt="Leather texture"
                 />

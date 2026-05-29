@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
+import { STATIC_ASSET_DEFAULTS } from "@/lib/staticAssets";
 
 interface ReviewData {
     id: string;
@@ -56,6 +57,18 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const imgRef = useRef<HTMLDivElement>(null);
     const [productReviews, setProductReviews] = useState<ReviewData[]>([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [productFallbackImage, setProductFallbackImage] = useState(STATIC_ASSET_DEFAULTS.product_fallback_image);
+
+    useEffect(() => {
+        fetch('/api/settings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data?.product_fallback_image) {
+                    setProductFallbackImage(data.data.product_fallback_image);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     // Reset state when product changes
     useEffect(() => {
@@ -107,7 +120,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     if (!isOpen || !product) return null;
 
     // Get the product image
-    const allImages = [product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop', ...(product.images || [])];
+    const allImages = [product.image || productFallbackImage, ...(product.images || [])];
     const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     const productDescription = product.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';

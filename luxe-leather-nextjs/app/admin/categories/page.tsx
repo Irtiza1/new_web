@@ -95,7 +95,7 @@ export default function AdminCategoriesPage() {
             const res = await fetch('/api/media', { method: 'POST', body: formData });
             const data = await res.json();
             if (!data.success) throw new Error(data.message);
-            setForm(f => ({ ...f, image_url: data.url }));
+            setForm(f => ({ ...f, image_url: data.data.url }));
         } catch (error) {
             console.error('Upload failed:', error);
             showToast('Failed to upload image', 'error');

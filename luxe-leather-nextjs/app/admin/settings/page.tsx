@@ -36,6 +36,8 @@ export default function AdminSettingsPage() {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('bucket', 'logos');
+            formData.append('customName', 'site-logo');
 
             const res = await fetch('/api/media', {
                 method: 'POST',
@@ -177,7 +179,7 @@ export default function AdminSettingsPage() {
                                             <span className="mt-2 block text-xs font-medium text-[#0d141b]/60 dark:text-white/60">
                                                 Recommended: 512x512px
                                                 <br />
-                                                Formats: JPG, PNG, SVG
+                                                Formats: JPG, PNG, SVG, WebP. Stored as optimized WebP.
                                             </span>
                                         </p>
                                     </div>

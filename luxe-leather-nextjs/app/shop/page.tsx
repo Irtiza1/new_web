@@ -7,6 +7,7 @@ import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 import ProductDetailModal, { type ShopProduct } from '@/components/storefront/ProductDetailModal';
 import { useCart } from '@/contexts/CartContext';
+import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
 const FALLBACK_CATEGORIES = ['All Products', 'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'];
 
@@ -23,6 +24,7 @@ function ShopContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState('newest');
+    const [productFallbackImage, setProductFallbackImage] = useState(STATIC_ASSET_DEFAULTS.product_fallback_image);
 
     // Load categories from DB
     useEffect(() => {
@@ -35,6 +37,17 @@ function ShopContent() {
                 }
             })
             .catch(() => { /* fallback remains */ });
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/settings')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.data?.product_fallback_image) {
+                    setProductFallbackImage(data.data.product_fallback_image);
+                }
+            })
+            .catch(() => {});
     }, []);
 
     // Fetch products from DB on mount
@@ -76,7 +89,7 @@ function ShopContent() {
     };
 
     const getProductImage = (product: ShopProduct) => {
-        return product.image || 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop';
+        return product.image || productFallbackImage;
     };
 
     const filteredProducts = products.filter(product => {

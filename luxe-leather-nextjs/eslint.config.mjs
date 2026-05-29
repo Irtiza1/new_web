@@ -12,6 +12,18 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "*.js",
+    "scripts/**",
+    "sqa*.js",
+    "scratch*.js",
+    "clean*.js",
+    "patch_*.js",
+    "seed_db.js",
+    "test_pg.js",
+    "verify_seed.js",
+    "check_cms.js",
+    "insert_*.js",
+    "run_migration.js",
   ]),
   {
     rules: {

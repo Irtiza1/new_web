@@ -54,14 +54,20 @@
 
 /* Global Variables */
 :root {
-  --background: var(--color-background-dark);
-  --foreground: var(--color-text-primary-dark);
+  --background: var(--color-background-light);
+  --foreground: var(--color-text-primary-light);
 }
 
 /* Light Mode Variables */
 :root.light {
   --background: var(--color-background-light);
   --foreground: var(--color-text-primary-light);
+}
+
+/* Dark Mode Variables */
+:root.dark {
+  --background: var(--color-background-dark);
+  --foreground: var(--color-text-primary-dark);
 }
 
 /* Global Base Styles */

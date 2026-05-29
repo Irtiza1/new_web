@@ -113,7 +113,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             const data = await res.json();
             if (!data.success) throw new Error(data.message);
 
-            setFormData(prev => ({ ...prev, image: data.url }));
+            setFormData(prev => ({ ...prev, image: data.data.url }));
         } catch (error) {
             console.error('Upload failed:', error);
             showToast('Failed to upload image', 'error');
@@ -230,7 +230,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                     value={formData.image}
                                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                     className="flex-1 px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
-                                    placeholder="https://example.com/image.jpg"
+                                    placeholder="https://example.com/image.webp"
                                 />
                                 <input
                                     type="file"

@@ -62,6 +62,7 @@ export type Customer = {
 
 export type Order = {
     id: string;
+    order_number?: string | null;
     customerId: string;
     customer_id?: string;
     status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';

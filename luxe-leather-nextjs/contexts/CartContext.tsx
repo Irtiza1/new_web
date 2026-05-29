@@ -58,23 +58,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Load cart from localStorage on mount
     useEffect(() => {
-        const savedCart = localStorage.getItem("luxeCart");
-        const savedCoupon = localStorage.getItem("luxeCoupon");
-        if (savedCart) {
-            try {
-                setCartItems(JSON.parse(savedCart));
-            } catch (error) {
-                console.error("Failed to parse cart data", error);
+        const timer = window.setTimeout(() => {
+            const savedCart = localStorage.getItem("luxeCart");
+            const savedCoupon = localStorage.getItem("luxeCoupon");
+            if (savedCart) {
+                try {
+                    setCartItems(JSON.parse(savedCart));
+                } catch (error) {
+                    console.error("Failed to parse cart data", error);
+                }
             }
-        }
-        if (savedCoupon) {
-            try {
-                setAppliedCoupon(JSON.parse(savedCoupon));
-            } catch (error) {
-                console.warn("Failed to parse coupon data");
+            if (savedCoupon) {
+                try {
+                    setAppliedCoupon(JSON.parse(savedCoupon));
+                } catch {
+                    console.warn("Failed to parse coupon data");
+                }
             }
-        }
-        setIsLoaded(true);
+            setIsLoaded(true);
+        }, 0);
+
+        return () => window.clearTimeout(timer);
     }, []);
 
     // Save cart to localStorage whenever it changes
@@ -170,7 +174,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
             setAppliedCoupon(coupon);
             return { success: true, message: 'Coupon applied successfully!' };
-        } catch (error) {
+        } catch {
             return { success: false, message: 'Failed to apply coupon' };
         }
     };
@@ -238,9 +242,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 orderId: result.orderId,
                 dummyMode: result.dummyMode,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Checkout error:', error);
-            return { success: false, message: error.message || 'Checkout failed' };
+            return { success: false, message: error instanceof Error ? error.message : 'Checkout failed' };
         }
     };
 
@@ -302,4 +306,3 @@ export function useCart() {
     }
     return context;
 }
-

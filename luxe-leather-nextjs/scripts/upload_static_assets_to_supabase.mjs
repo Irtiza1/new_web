@@ -1,0 +1,144 @@
+import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or Supabase key in .env.local');
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+    },
+});
+
+const BUCKET = 'media';
+const FOLDER = 'static-assets';
+
+const assets = {
+    home_hero_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD663YQ9A3yCTD5ey9kXXjD2nNHR8t7_sLSr9pizcD4Ai5LZfqqKiZz8zyYNLGjhITo-Z05zCLpeLUJwAbqCICLNGO_KilvL65Qu-FKP5cmYRl4JBFK7k-3CzTHAzUTXnx21a6yXnPEDhsFh8I1xbgex4o4t8SYYq9qpJraotJZhmiRNI_bnKTgiLqMPpnV3CxPjLoWJ6ma68eRBMqoaUlXn2Zy2B_fQo09l7vqGPJwsnOPAHIsSj7-eSGjKyVbu7bHY_I5SD-QBRgT',
+    login_hero_image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1600&auto=format&fit=crop',
+    signup_hero_image: 'https://images.unsplash.com/photo-1511401139252-f158d3209c17?q=80&w=1200&auto=format&fit=crop',
+    shipping_hero_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
+    bespoke_hero_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
+    product_fallback_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
+    featured_product_fallback_image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5',
+    story_sourcing_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAjtiaK7tCTCU__1xs3wJGwKj_sMvqRg5QZYSoAKgVnyyZYQDJUGSucijpU1yyJALdEXJ7LFMZxc2qlRAIVeNwx93vd6hfH3ngg55FVqEOxqIRYDOgmWFmcDroHpKwbMWhvmi_la6X-edUHtAktxcPLP9RJictqlMGiNgbnhVC73l1Kt_SXE_4OOLfRt0BXZ1Jwuf05bGRKxqUd7zaiZ7Q-koaaH0UOdd6ektH4dnSQrs8cPllyn2adV5uqsg9jcKUlyD2I_HG-aoWO',
+    story_stitching_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBZ97uyqtye-GSN8F2Pz2jDdqjmslLzFGyDwwSjfkudpcoOLU1-PekxtHsWGH0i5anHveMKBT_l4_PbbRGBsQCzxEFNebh2IvS1aMJDKoh6O7nTstC2oGPNIwSOHg2cndlCT5WKyaGfVJiArEWlepP7ymRquuMNh64-bhDEyeOx3DuytNJwOGylxdCFyHMCWjzzZ6rvRgPSkzRXdsAWEZJgVypM2_1xaVXwC627bhfsExrf6Co2K8E1VbozKW86D-hp-SmwtMz5Qw5G',
+    story_founder_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDMX4majIUk6fUlkseIJ8dgepBwt1zoDRR8OUtr63kTKy2q_oXahzNMXxmI539AsaC0PRuOlqq4_b4Dk4ekhBzR9E3Eu6HOspyESOTi_01GLyUK-JfL2hxQPtwehuc0HkD_UfcOrETWU4TF1HPb3bz-buzYGEwJ-iMx9uhFfSNw5tqEJn6MFIX2Szic6c91RJKNPoPl4bFf8h7VcObDIJh4sC0kzQYcVsXGph6r0Le84ob5uW9VyrCY-azd_nlBkYU1WkuCuvOHePPE',
+    story_cta_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCGzSV6bS6T4fzxyUkVEXsY1l6Kbaukv26zjCOdbUURssex3g3-smR2f72179m_GDb5vtxMXKyWSFs9b1IcZnh5tkk7h7SiaCXYXS98BVtbJ0CR8b6jVTXRG-cRlIbTtPWvF6c-2MUwqpa4UrNr5v1EXAZlaFwLmn3bMMcXxRqgy1GALj0TSNl_-TyAoultuGKeVTim-VWlSjf_9QlzNVtox_qtzP382Q1Q9G21Fkf-TFCf1XTTsyQrCkH4hIIDqXRGttrYV8774Wg2',
+    category_jackets_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA3Mi_4x3U-7bVaej8P1FqcWGO1loc-UlDb3dKp8fBeepxCP4ba_zcJhpELxvqiZWSbycGJQ4_VYDkc7tCC2D7Ga4TJ07sn-9LkhAsh_EdSFpHNQTkVEukqmfG4SCgwKyUPTsjAG4CH7DvMrAZs2FFJQK8xycF0EY2a7f-LtuaUDjvLhGpmtAcy9g96yAVgwz_-hy_nvYkAS9uYOVBCFbdXWid_3Lm9keTylyHZSiAGzUSBN-6Nt1M_YVnZGph1Wfz61rIw1vTqtPlg',
+    category_bags_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBCXlGxUlNVUPCAiWMd3IcYHCtTCaQvmlKE8ckXliTBTGO7kZ24DWxTydT7c4x1eeH35zHBO74SK-RKLOoM7RhMziyd1-Fu4iCqwhQ5L1bpLGdqI3WB04LpXr8J23V6k3-ilfx436cvf0BlQP6GByydrvlclk3UpR7ByQsvVPZyi6bhMx70GBeaG9FuU586DekhEOcxRgynzdU7etRxAR6HZGK8nZgiGwPtCNy-bvAm9g7Gy0wYB-PKF7Z4hw0avEYeHbeL3Zj4LU4p',
+    category_coats_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBO93bgOimTqtihwaN7n5zlO0ylWa0nFvO7i1VbdSfDNLYa7XiTh_lA-rtXtlqV-xBe4pfnyCEkRHegpXFjQRx7ALF0SlxPx9kYPFkAtaQqD6rq-zdDr_tU3FETvcs6hyuNQuwc58Hiiv2Z2gGsDurrj8QSftr9P9jNgWhuNb9snOBHADAHEX5gGjjptE6A3DwJzNFpau3b3EIS0aFxUQ0G7AZFBejy90dR2PvsCca8b_aKfrvIdSGZvl1Pqzn8ZkIvvKndePNvRrf0',
+    category_accessories_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBpvy-aR6ixt8NgGdfJXyIz7APWRrVukfe-6kHDMsTC98bk97oHUi0JVRbzoL2oWp9hT5pZun2_QmxyCG1vnZm3fTOVnhd0Omj7PtoQRHdVeriLgRK_FvOcCOac_CbCQTjOPTmGn4VKuw92loIyXg4tWqFj6DKhpFq7SEriHHe9UF0V5ooAbLAnlsGfMUof3WmdqXsqotbv58-K2COJX_zeYno-As-Nivs6_g9qYCHL9P6EbZ9rwcRV9fvgfBqdDVECTFknlfJt11oB',
+    category_wallets_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuClaBZyru9u7jYuaK3T9Rimw2LKCajKhDdre-7pUpAdDe164j2mCQgKBs3C0e2btEGSZPfCmszf4gu4SHYwV49k8AheIEbrbScve59Wad63lFV0bdDtBAQ21w_KKQmIk09r0Cuqp4zDrpaPz_49pey7_pUTHqKVnKoiZkMz1k2f448mxAxZdvNOPSZWVw4d0NRlahRWlxhSWYJCVgXeRB_ghCxQMiVwQHC9Ta655dJjq99t2v4_e9pc_nJ7DEL3OWl74iWXb9dZl7Em',
+};
+
+const categorySettingMap = {
+    category_jackets_image: ['Jackets'],
+    category_bags_image: ['Bags', 'Bags & Satchels'],
+    category_coats_image: ['Coats', 'Full Coats'],
+    category_accessories_image: ['Accessories'],
+    category_wallets_image: ['Wallets'],
+};
+
+async function downloadImage(url) {
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'LuxeLeatherStaticAssetImporter/1.0',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+}
+
+async function uploadAsset(key, sourceUrl) {
+    const inputBuffer = await downloadImage(sourceUrl);
+    const webpBuffer = await sharp(inputBuffer, { animated: false })
+        .rotate()
+        .resize({
+            width: 2200,
+            height: 2200,
+            fit: 'inside',
+            withoutEnlargement: true,
+        })
+        .webp({ quality: 84, effort: 4 })
+        .toBuffer();
+
+    const filename = `${key}.webp`;
+    const filePath = `${FOLDER}/${filename}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, webpBuffer, {
+            contentType: 'image/webp',
+            upsert: true,
+        });
+
+    if (uploadError) {
+        throw uploadError;
+    }
+
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
+    const url = data.publicUrl;
+
+    const mediaRecord = {
+        filename,
+        url,
+        size: webpBuffer.length,
+        content_type: 'image/webp',
+        folder: FOLDER,
+    };
+
+    const { data: existingMedia } = await supabase
+        .from('media_files')
+        .select('id')
+        .eq('url', url)
+        .maybeSingle();
+
+    if (existingMedia?.id) {
+        await supabase.from('media_files').update(mediaRecord).eq('id', existingMedia.id);
+    } else {
+        await supabase.from('media_files').insert(mediaRecord);
+    }
+
+    await supabase.from('site_settings').upsert({
+        id: crypto.randomUUID(),
+        key,
+        value: url,
+    }, { onConflict: 'key' });
+
+    if (categorySettingMap[key]) {
+        for (const categoryName of categorySettingMap[key]) {
+            await supabase
+                .from('categories')
+                .update({ image_url: url })
+                .eq('name', categoryName);
+        }
+    }
+
+    return url;
+}
+
+for (const [key, sourceUrl] of Object.entries(assets)) {
+    try {
+        console.log(`Uploading ${key}...`);
+        const publicUrl = await uploadAsset(key, sourceUrl);
+        console.log(`  ${publicUrl}`);
+    } catch (error) {
+        console.error(`Failed to upload ${key}:`, error.message);
+    }
+}
+
+console.log('Static asset upload finished.');

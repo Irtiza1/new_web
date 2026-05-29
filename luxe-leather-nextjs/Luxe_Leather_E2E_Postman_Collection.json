@@ -1,0 +1,240 @@
+{
+  "info": {
+    "name": "Luxe Leather E2E Flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "End-to-end API checks for auth, storefront, checkout, admin RBAC, media, orders, and requests."
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "admin_access_token", "value": "" },
+    { "key": "customer_access_token", "value": "" },
+    { "key": "product_id", "value": "" },
+    { "key": "customer_id", "value": "" },
+    { "key": "order_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Public storefront products",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('public products are readable', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.eql(true);",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('product_id', json.data[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin products blocked without token",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/products?includeInactive=true"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('admin product view requires auth', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin products with token",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+        ],
+        "url": "{{base_url}}/api/products?includeInactive=true"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('admin product view succeeds', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().success).to.eql(true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit contact message",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"E2E Customer\",\n  \"email\": \"e2e.customer@example.com\",\n  \"inquiry_type\": \"Order Support\",\n  \"message\": \"Testing the public contact flow.\"\n}"
+        },
+        "url": "{{base_url}}/api/contact"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('contact submission succeeds', () => pm.response.to.have.status(200));",
+              "pm.expect(pm.response.json().success).to.eql(true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin contact messages blocked without token",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/contact"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('contact admin read requires auth', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create bespoke request",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"E2E Bespoke\",\n  \"email\": \"bespoke.e2e@example.com\",\n  \"phone\": \"+15550001111\",\n  \"itemType\": \"Jacket\",\n  \"budget\": \"$500-$700\",\n  \"deadline\": \"2026-08-15\",\n  \"description\": \"Custom jacket request created by the E2E suite.\"\n}"
+        },
+        "url": "{{base_url}}/api/requests"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('public bespoke request succeeds', () => pm.response.to.have.status(201));",
+              "pm.expect(pm.response.json().success).to.eql(true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validate checkout stock",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    { \"id\": \"{{product_id}}\", \"quantity\": 1 }\n  ]\n}"
+        },
+        "url": "{{base_url}}/api/products/validate-stock"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('stock validation returns a handled response', () => pm.expect([200, 400]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin orders with token",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+        ],
+        "url": "{{base_url}}/api/orders"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('admin orders are readable with token', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json.success).to.eql(true);",
+              "if (json.data && json.data[0]) pm.collectionVariables.set('order_id', json.data[0].id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin media blocked without token",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/media"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('media library requires auth', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stripe webhook rejects unsigned calls",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"type\": \"payment_intent.succeeded\" }"
+        },
+        "url": "{{base_url}}/api/webhooks/stripe"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('unsigned webhook is rejected or unavailable when Stripe is unconfigured', () => pm.expect([400, 503]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

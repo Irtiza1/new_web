@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getAll } from "@/lib/services/settingsService";
 import { Inter } from "next/font/google";
 import { Manrope, Playfair_Display } from "next/font/google";
@@ -29,6 +29,11 @@ const playfair = Playfair_Display({
   display: "swap",
   style: ["normal", "italic"],
 });
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   let settings: Record<string, string> = {};
@@ -78,4 +83,3 @@ export default function RootLayout({
     </html>
   );
 }
-

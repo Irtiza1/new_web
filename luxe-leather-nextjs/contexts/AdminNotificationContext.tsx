@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 interface NotificationCounts {
@@ -23,7 +23,7 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
         lowStock: 0,
     });
 
-    const refreshCounts = async () => {
+    const refreshCounts = useCallback(async () => {
         try {
             // New Requests
             const { count: requestsCount } = await supabase
@@ -51,15 +51,20 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
         } catch (error) {
             console.error('Failed to fetch notification counts', error);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        refreshCounts();
+        const initialTimer = window.setTimeout(() => {
+            void refreshCounts();
+        }, 0);
 
         // Poll every 60 seconds
         const interval = setInterval(refreshCounts, 60000);
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            window.clearTimeout(initialTimer);
+            clearInterval(interval);
+        };
+    }, [refreshCounts]);
 
     return (
         <AdminNotificationContext.Provider value={{ counts, refreshCounts }}>

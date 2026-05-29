@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { supabaseAdmin } from '@/lib/supabase';
 import { auditLog } from '@/lib/services/auditService';
 
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const BUCKET = 'media';
+const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
+
+function safeFolderName(value: FormDataEntryValue | null): string {
+    const raw = typeof value === 'string' && value.trim() ? value : 'platform-images';
+    const normalized = raw.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return normalized || 'platform-images';
+}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -93,23 +103,39 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     if (!file) return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
 
-    const folderName = formData.get('bucket') as string || 'platform-images';
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+        return NextResponse.json({ success: false, message: 'Only JPG, PNG, SVG, and WebP images are allowed' }, { status: 400 });
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+        return NextResponse.json({ success: false, message: 'Image must be smaller than 6MB' }, { status: 400 });
+    }
+
+    const folderName = safeFolderName(formData.get('bucket'));
     const customName = formData.get('customName') as string;
 
-    const ext = file.name.split('.').pop();
     let baseName = customName || file.name.replace(/\.[^/.]+$/, "");
     baseName = baseName.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
     
-    // Add a short timestamp as the "counter" to ensure uniqueness
-    const shortTimestamp = Date.now().toString().slice(-6);
-    const filename = `${baseName}-${shortTimestamp}.${ext}`;
+    const shortId = `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+    const filename = `${baseName || 'image'}-${shortId}.webp`;
     const filePath = `${folderName}/${filename}`;
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const inputBuffer = Buffer.from(arrayBuffer);
+    const buffer = await sharp(inputBuffer, { animated: false })
+        .rotate()
+        .resize({
+            width: 2200,
+            height: 2200,
+            fit: 'inside',
+            withoutEnlargement: true,
+        })
+        .webp({ quality: 84, effort: 4 })
+        .toBuffer();
 
     const { error } = await supabaseAdmin.storage.from(BUCKET).upload(filePath, buffer, {
-        contentType: file.type,
+        contentType: 'image/webp',
         upsert: false
     });
 
@@ -121,13 +147,18 @@ export async function POST(request: Request) {
     await supabaseAdmin.from('media_files').insert({
         filename,
         url,
-        size: file.size,
-        content_type: file.type,
+        size: buffer.length,
+        content_type: 'image/webp',
         folder: folderName
     });
 
     await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
-    return NextResponse.json({ success: true, data: { name: filename, url } });
+    return NextResponse.json({
+        success: true,
+        data: { name: filename, url, content_type: 'image/webp', size: buffer.length },
+        url,
+        content_type: 'image/webp',
+    });
 }
 
 export async function DELETE(request: Request) {

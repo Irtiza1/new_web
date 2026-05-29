@@ -172,11 +172,11 @@ export default function AdminOrderModal({ isOpen, onClose, onSubmit }: AdminOrde
                                         onChange={(e) => setStatus(e.target.value as Order['status'])}
                                         className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none"
                                     >
-                                        <option value="pending">Pending</option>
-                                        <option value="processing">Processing</option>
-                                        <option value="shipped">Shipped</option>
-                                        <option value="delivered">Delivered</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <option value="PENDING">Pending</option>
+                                        <option value="PROCESSING">Processing</option>
+                                        <option value="SHIPPED">Shipped</option>
+                                        <option value="DELIVERED">Delivered</option>
+                                        <option value="CANCELLED">Cancelled</option>
                                     </select>
                                 </div>
                             </div>

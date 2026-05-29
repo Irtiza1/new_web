@@ -181,13 +181,13 @@ export default function AdminAnalyticsPage() {
                         <div className="bg-white dark:bg-[#1a2632] p-5 rounded-xl border border-[#e7edf3] dark:border-[#2b3a4a] shadow-sm flex flex-col gap-1">
                             <div className="flex justify-between items-start">
                                 <p className="text-[#4c739a] dark:text-[#9ca3af] text-sm font-medium">Avg. Order Value</p>
-                                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded text-#a20e26 dark:text-#e85273">
+                                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded text-[#a20e26] dark:text-[#e85273]">
                                     <span className="material-symbols-outlined text-sm">remove</span>
                                 </div>
                             </div>
                             <div className="flex items-baseline gap-2 mt-2">
                                 <h3 className="text-2xl font-bold text-[#0d141b] dark:text-[#f3f4f6]">${summary?.avgOrderValue ?? '0'}</h3>
-                                <span className="text-sm font-semibold text-#b30f2a dark:text-#e85273">+2%</span>
+                                <span className="text-sm font-semibold text-[#b30f2a] dark:text-[#e85273]">+2%</span>
                             </div>
                             <p className="text-xs text-[#4c739a] dark:text-[#9ca3af] mt-1">Stable performance</p>
                         </div>

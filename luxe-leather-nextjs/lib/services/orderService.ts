@@ -1,6 +1,7 @@
 import { supabase, Order } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
 import { auditLog } from './auditService';
+import { createOrderNumber } from '../utils/orderNumber';
 
 // ============================================================
 // ORDER SERVICE
@@ -70,6 +71,7 @@ export const create = async (orderData: Partial<Order> & { items?: unknown[] }) 
 
     const orderObj = {
         id: orderId,
+        order_number: createOrderNumber(new Date(now), orderId),
         createdAt: now,
         updatedAt: now,
         subtotal: orderPayload.total ?? 0,

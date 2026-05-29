@@ -4,20 +4,27 @@ import { useState, useRef, useEffect } from 'react';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 import { contentService } from '@/lib/services/contentService';
+import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
 export default function BespokePage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileName, setFileName] = useState<string | null>(null);
     const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
+    const [heroImage, setHeroImage] = useState(STATIC_ASSET_DEFAULTS.bespoke_hero_image);
 
     useEffect(() => {
         async function loadCMS() {
             const keys = ['bespoke_hero_title', 'bespoke_hero_subtitle', 'bespoke_cta_text'];
             const content: Record<string, string> = {};
+            const settingsPromise = fetch('/api/settings').then((res) => res.json()).catch(() => null);
             await Promise.all(keys.map(async (key) => {
                 content[key] = await contentService.getBySlug(key);
             }));
+            const settingsData = await settingsPromise;
+            if (settingsData?.success && settingsData.data?.bespoke_hero_image) {
+                setHeroImage(settingsData.data.bespoke_hero_image);
+            }
             setCmsContent(content);
         }
         loadCMS();
@@ -48,7 +55,10 @@ export default function BespokePage() {
                 imageFormData.append('file', file);
                 const mediaRes = await fetch('/api/media', { method: 'POST', body: imageFormData });
                 const mediaData = await mediaRes.json();
-                imageUrl = mediaData.url || '';
+                if (!mediaRes.ok || !mediaData.success) {
+                    throw new Error(mediaData.message || 'Failed to upload inspiration image');
+                }
+                imageUrl = mediaData.data.url;
             }
 
             const res = await fetch('/api/requests', {
@@ -86,7 +96,7 @@ export default function BespokePage() {
             <div className="relative w-full h-[60vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-[#1a130e]">
                     <img
-                        src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop"
+                        src={heroImage}
                         className="w-full h-full object-cover opacity-40 grayscale"
                         alt="Artisan at work"
                     />

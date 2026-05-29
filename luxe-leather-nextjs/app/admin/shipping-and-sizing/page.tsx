@@ -105,9 +105,9 @@ export default function AdminShippingAndSizingPage() {
             const data = await res.json();
             if (data.success) {
                 const newContent = { shipping_hero_title: '', shipping_hero_subtitle: '' };
-                data.data.forEach((item: any) => {
+                data.data.forEach((item: { slug: string; content: string }) => {
                     if (keys.includes(item.slug)) {
-                        (newContent as any)[item.slug] = item.content;
+                        newContent[item.slug as keyof typeof newContent] = item.content;
                     }
                 });
                 setContent(newContent);

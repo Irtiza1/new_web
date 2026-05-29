@@ -16,6 +16,11 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toast, setToast] = useState<ToastState | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const toastColors = {
+        success: 'bg-green-600',
+        warning: 'bg-amber-500',
+        error: 'bg-red-600',
+    };
 
     const showToast = useCallback((text: string, type: 'success' | 'error' | 'warning' = 'success') => {
         if (timerRef.current) clearTimeout(timerRef.current);
@@ -29,13 +34,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             {toast && (
                 <div
                     role="alert"
-                    style={{
-                        backgroundColor:
-                            toast.type === 'success' ? '#16a34a'
-                            : toast.type === 'warning' ? '#f59e0b'
-                            : '#dc2626'
-                    }}
-                    className="fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all"
+                    className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-xl font-semibold text-white text-sm shadow-xl transition-all ${toastColors[toast.type]}`}
                 >
                     {toast.text}
                 </div>

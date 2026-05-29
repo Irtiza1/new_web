@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
@@ -11,9 +11,11 @@ import type { Order } from '@/lib/supabase';
 import AdminOrderModal from '@/components/admin/AdminOrderModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
+import { displayOrderNumber } from '@/lib/utils/orderNumber';
 
 interface OrderRow {
     id: string;
+    order_number: string;
     customer_name: string;
     customer_email: string;
     total: number;
@@ -53,12 +55,7 @@ export default function AdminOrdersPage() {
         setIsMounted(true);
     }, []);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
-        loadOrders();
-    }, [statusFilter]); // Reload when filter changes if server-side filtering is preferred, but we will filter client side for search
-
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
             const query = new URLSearchParams();
@@ -71,6 +68,7 @@ export default function AdminOrdersPage() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const mapped: OrderRow[] = (data.data || []).map((o: any) => ({
                     id: o.id,
+                    order_number: displayOrderNumber(o),
                     customer_name: o.customers?.name || 'Unknown',
                     customer_email: o.customers?.email || '',
                     total: Number(o.total),
@@ -88,7 +86,11 @@ export default function AdminOrdersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [statusFilter]);
+
+    useEffect(() => {
+        loadOrders();
+    }, [loadOrders]);
 
     const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
         try {
@@ -101,10 +103,11 @@ export default function AdminOrdersPage() {
 
             if (data.success) {
                 await loadOrders();
-                showToast(`Order #${orderId.slice(-8).toUpperCase()} moved to ${newStatus}.`, 'success');
+                const orderNumber = orders.find(o => o.id === orderId)?.order_number || orderId.slice(-8).toUpperCase();
+                showToast(`Order ${orderNumber} moved to ${newStatus}.`, 'success');
             } else {
                 console.error('Failed to update order status:', data.error);
-                showToast(`Failed to update Order #${orderId.slice(-8).toUpperCase()}.`, 'error');
+                showToast(`Failed to update order ${orderId.slice(-8).toUpperCase()}.`, 'error');
             }
         } catch (err) {
             console.error('Failed to update order status:', err);
@@ -142,7 +145,7 @@ export default function AdminOrdersPage() {
 
         setConfirmModal({
             isOpen: true,
-            title: `Archive Order #${order.id.slice(-8).toUpperCase()}`,
+            title: `Archive Order ${order.order_number}`,
             message: `Are you sure you want to archive this order for ${order.customer_name}? For financial integrity, orders are never permanently deleted.`,
             onConfirm: async () => {
                 try {
@@ -156,7 +159,7 @@ export default function AdminOrdersPage() {
                             next.delete(orderId);
                             return next;
                         });
-                        showToast(`Order #${order.id.slice(-8).toUpperCase()} was archived.`, 'success');
+                        showToast(`Order ${order.order_number} was archived.`, 'success');
                     } else {
                         showToast('Failed to archive order: ' + (data.error || 'Unknown error'), 'error');
                     }
@@ -243,7 +246,7 @@ export default function AdminOrdersPage() {
 
     const getStatusBadge = (status: Order['status']) => {
         const styles = {
-            PENDING: 'bg-yellow-100 text-yellow-full md:w-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+            PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
             PROCESSING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
             SHIPPED: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
             DELIVERED: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
@@ -260,6 +263,7 @@ export default function AdminOrdersPage() {
     const filteredOrders = orders.filter(order => {
         const matchesSearch = order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
             order.id.includes(searchQuery);
         // Status filtering is now handled by the API mostly, but if 'all' is fetched we can filter client side too
         // However, since we reload on status change, this check is redundant but safe
@@ -282,10 +286,11 @@ export default function AdminOrdersPage() {
     }, [activeMenu]);
 
     const handleExport = () => {
-        const headers = ['Order ID', 'Customer', 'Email', 'Items', 'Total', 'Status', 'Date'];
+        const headers = ['Order Number', 'UUID', 'Customer', 'Email', 'Items', 'Total', 'Status', 'Date'];
         const csvContent = [
             headers.join(','),
             ...filteredOrders.map(order => [
+                order.order_number,
                 order.id,
                 `"${order.customer_name}"`,
                 order.customer_email,
@@ -356,7 +361,7 @@ export default function AdminOrdersPage() {
                         </div>
                         <input
                             className="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#d41132]/50 text-sm transition-all"
-                            placeholder="Search by order ID, customer name, or email..."
+                            placeholder="Search by order number, UUID, customer name, or email..."
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -398,7 +403,7 @@ export default function AdminOrdersPage() {
             }
         >
             <AdminTable
-                headers={['Order ID', 'Customer', 'Items', 'Total', 'Status', 'Date', '']}
+                headers={['Order', 'Customer', 'Items', 'Total', 'Status', 'Date', '']}
                 onSelectAll={toggleSelectAll}
                 isAllSelected={filteredOrders.length > 0 && filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(o => selectedIds.has(o.id))}
             >
@@ -429,7 +434,10 @@ export default function AdminOrdersPage() {
                                 />
                             </td>
                             <td className="py-4 px-6">
-                                <span className="text-sm font-mono font-medium text-slate-900 dark:text-white" title={order.id}>#{order.id.slice(-8).toUpperCase()}</span>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-mono font-black text-slate-900 dark:text-white" title={order.id}>{order.order_number}</span>
+                                    <span className="text-[10px] font-mono text-slate-400">{order.id.slice(0, 8)}</span>
+                                </div>
                             </td>
                             <td className="py-4 px-6">
                                 <div className="flex flex-col gap-1">
@@ -493,7 +501,7 @@ export default function AdminOrdersPage() {
                         {/* Drawer Header */}
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                             <div className="flex flex-col">
-                                <span className="text-xs font-mono text-slate-500 mb-1">#{selectedOrder.id.slice(-8).toUpperCase()}</span>
+                                <span className="text-xs font-mono text-slate-500 mb-1">{selectedOrder.order_number}</span>
                                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Order Details</h3>
                             </div>
                             <button onClick={() => setSelectedOrder(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
