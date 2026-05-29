@@ -44,6 +44,7 @@ export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
 }
 
 export interface TopProduct {
+    id: string;
     name: string;
     sales: number;
     percentage: number;
@@ -95,6 +96,7 @@ export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
 
     // 5. Format result
     return sortedProducts.map(([id, sales]) => ({
+        id,
         name: nameMap[id] || 'Unknown Product',
         sales,
         percentage: totalSalesCount > 0 ? Math.round((sales / totalSalesCount) * 100) : 0

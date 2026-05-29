@@ -5,6 +5,10 @@ import Link from 'next/link';
 import Header from '@/components/storefront/Header';
 import Footer from '@/components/storefront/Footer';
 
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '');
+const whatsappMessage = encodeURIComponent('Hi Luxe Leather Co., I need help with an order or inquiry.');
+const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${whatsappMessage}` : '';
+
 export default function ContactPage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
@@ -44,73 +48,41 @@ export default function ContactPage() {
             <Header />
 
             <main className="flex flex-1 flex-col items-center">
-                <div className="max-w-[1280px] w-full px-6 md:px-10 py-16 md:py-24">
-                    {/* Heading */}
-                    <div className="mb-16">
-                        <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-4 text-center md:text-left">Get in Touch</h1>
-                        <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl text-center md:text-left">Have a question, or need assistance with an order? We&apos;re here to help. Reach out and our team will get back to you promptly.</p>
+                <div className="w-full max-w-[1040px] px-6 py-16 md:px-10 md:py-24">
+                    <div className="mx-auto mb-10 max-w-3xl text-center">
+                        <p className="mb-4 text-[11px] font-black uppercase tracking-[0.28em] text-[#c27a2a]">Customer Support</p>
+                        <h1 className="text-4xl font-black tracking-tight leading-tight md:text-5xl">Get in Touch</h1>
+                        <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-500 dark:text-slate-400 md:text-lg">
+                            Send us your question, order concern, or custom request. We&apos;ll route it to the right team and reply as soon as possible.
+                        </p>
+                        {whatsappUrl && (
+                            <div className="mt-6 flex justify-center">
+                                <a
+                                    href={whatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-5 text-sm font-black uppercase tracking-[0.16em] text-emerald-700 transition-colors hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                >
+                                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M21 11.5a8.4 8.4 0 0 1-12.5 7.3L3 20l1.4-5.2A8.5 8.5 0 1 1 21 11.5Z" />
+                                        <path d="M8.8 8.7c.2-.4.4-.4.7-.4h.5c.2 0 .5 0 .7.5l.8 1.9c.1.3 0 .5-.1.7l-.5.6c.8 1.4 1.9 2.5 3.3 3.1l.7-.7c.2-.2.4-.3.7-.2l1.8.8c.4.2.5.4.5.7v.5c0 .3 0 .6-.4.8-.6.4-1.2.6-1.9.6-3.5 0-7.8-4.2-7.8-7.7 0-.7.2-1.3.5-1.8Z" />
+                                    </svg>
+                                    Chat on WhatsApp
+                                </a>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Content Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-                        {/* Left: Contact Info */}
-                        <div className="lg:col-span-5 flex flex-col">
-                            <div className="flex flex-col gap-8">
-                                {/* Location */}
-                                <div className="flex items-start gap-4 group">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#d41132]/10 flex items-center justify-center text-[#d41132] group-hover:bg-[#d41132] group-hover:text-white transition-colors duration-300">
-                                        <span className="material-symbols-outlined">location_on</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Visit Our Workshop</h3>
-                                        <p className="text-lg font-medium group-hover:text-[#d41132] transition-colors">123 Artisan Lane, Brooklyn, NY</p>
-                                    </div>
-                                </div>
-                                {/* WhatsApp */}
-                                <div className="flex items-start gap-4 group">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#d41132]/10 flex items-center justify-center text-[#d41132] group-hover:bg-[#d41132] group-hover:text-white transition-colors duration-300">
-                                        <span className="material-symbols-outlined">chat</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">WhatsApp Support</h3>
-                                        <p className="text-lg font-medium group-hover:text-[#d41132] transition-colors">+1 (555) 123-4567</p>
-                                    </div>
-                                </div>
-                                {/* Email */}
-                                <div className="flex items-start gap-4 group">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#d41132]/10 flex items-center justify-center text-[#d41132] group-hover:bg-[#d41132] group-hover:text-white transition-colors duration-300">
-                                        <span className="material-symbols-outlined">mail</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Email Us</h3>
-                                        <p className="text-lg font-medium group-hover:text-[#d41132] transition-colors">support@luxeleather.co</p>
-                                    </div>
-                                </div>
-                                {/* Hours */}
-                                <div className="flex items-start gap-4 group">
-                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[#d41132]/10 flex items-center justify-center text-[#d41132] group-hover:bg-[#d41132] group-hover:text-white transition-colors duration-300">
-                                        <span className="material-symbols-outlined">schedule</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Working Hours</h3>
-                                        <p className="text-lg font-medium">Mon-Fri, 9am - 6pm EST</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Guarantee Badge */}
-                            <div className="mt-12 inline-flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-3 px-5 rounded-full shadow-sm w-fit">
-                                <span className="material-symbols-outlined text-yellow-500" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Guaranteed response within 24 hours</span>
-                            </div>
-                        </div>
-
-                        {/* Right: Contact Form */}
-                        <div className="lg:col-span-7">
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 h-full">
+                    <div className="mx-auto max-w-4xl">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
                                 {formStatus === 'success' ? (
                                     <div className="h-full flex flex-col items-center justify-center text-center gap-6 animate-in fade-in duration-500 min-h-[400px]">
                                         <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 mb-2">
-                                            <span className="material-symbols-outlined text-4xl">mark_email_read</span>
+                                            <svg className="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <path d="M22 7 13.5 15.5a2 2 0 0 1-3 0L2 7" />
+                                                <rect width="20" height="16" x="2" y="4" rx="2" />
+                                                <path d="m16 19 2 2 4-4" />
+                                            </svg>
                                         </div>
                                         <div className="space-y-2">
                                             <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Message Sent!</h3>
@@ -152,7 +124,9 @@ export default function ContactPage() {
                                                         <option>Other</option>
                                                     </select>
                                                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
-                                                        <span className="material-symbols-outlined">expand_more</span>
+                                                        <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="m6 9 6 6 6-6" />
+                                                        </svg>
                                                     </div>
                                                 </div>
                                             </label>
@@ -175,7 +149,10 @@ export default function ContactPage() {
                                                 ) : (
                                                     <>
                                                         <span>Send Message</span>
-                                                        <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">send</span>
+                                                        <svg className="size-5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <path d="m22 2-7 20-4-9-9-4 20-7Z" />
+                                                            <path d="M22 2 11 13" />
+                                                        </svg>
                                                     </>
                                                 )}
                                             </button>
@@ -185,7 +162,6 @@ export default function ContactPage() {
                                         </div>
                                     </form>
                                 )}
-                            </div>
                         </div>
                     </div>
                 </div>
