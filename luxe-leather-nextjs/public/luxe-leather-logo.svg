@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="1200" height="240">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&amp;display=swap');
+      .text {
+        font-family: 'Playfair Display', serif;
+        font-weight: 800;
+        font-size: 80px;
+        fill: #010613;
+        letter-spacing: 2px;
+      }
+    </style>
+  </defs>
+  <!-- Background (Optional, but good for saving as image so it's not transparent if they don't want it. Transparent is better for logos usually. Let's keep it transparent) -->
+  
+  <!-- Hanger Icon -->
+  <g transform="translate(60, 40) scale(0.18)">
+    <path fill="#d41132" d="M120-160q-17 0-28.5-11.5T80-200q0-10 4-18.5T96-232l344-258v-70q0-17 12-28.5t29-11.5q25 0 42-18t17-43q0-25-17.5-42T480-720q-25 0-42.5 17.5T420-660h-80q0-58 41-99t99-41q58 0 99 40.5t41 98.5q0 47-27.5 84T520-526v36l344 258q8 5 12 13.5t4 18.5q0 17-11.5 28.5T840-160H120Zm120-80h480L480-420 240-240Z" />
+  </g>
+  
+  <!-- Text -->
+  <text x="260" y="145" class="text">LUXE LEATHER CO.</text>
+</svg>
