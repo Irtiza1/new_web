@@ -50,7 +50,7 @@ export const getAll = async (query: {
 export const getById = async (id: string) => {
     const { data, error } = await supabase
         .from('orders')
-        .select('*, customers(name, email, phone), order_items(*, products(name, price))')
+        .select('*, customers(name, email, phone, address, city, country), order_items(*, products(name, price, image))')
         .eq('id', id)
         .single();
 
