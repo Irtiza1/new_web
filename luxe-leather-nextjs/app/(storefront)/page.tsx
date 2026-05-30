@@ -1,7 +1,5 @@
 
 import Link from "next/link";
-import Header from "@/components/storefront/Header";
-import Footer from "@/components/storefront/Footer";
 import { contentService } from "@/lib/services/contentService";
 import { getAll as getSettings } from "@/lib/services/settingsService";
 import { staticAsset } from "@/lib/staticAssets";
@@ -74,9 +72,7 @@ export default async function HomePage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1A1A1A] dark:text-white overflow-x-hidden">
-      <Header />
-
+    <div className="flex flex-col text-[#1A1A1A] dark:text-white overflow-x-hidden">
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative w-full h-[640px] flex items-center justify-center overflow-hidden">
@@ -249,8 +245,6 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }

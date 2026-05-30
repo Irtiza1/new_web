@@ -38,23 +38,23 @@ export default function AnnouncementBar() {
     }, [announcementList.length]);
 
     return (
-        <div className="w-full bg-[#1A1A1A] text-white py-2 px-6 overflow-hidden relative border-b border-white/5">
-            <div className="max-w-[1440px] mx-auto flex items-center justify-center min-h-[24px]">
+        <div className="w-full bg-[#1A1A1A] text-white px-6 border-b border-white/5 shrink-0">
+            <div className="max-w-[1440px] mx-auto relative h-9 flex items-center justify-center">
                 {announcementList.map((text, index) => (
                     <div
                         key={index}
-                        className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 transform px-6 text-center ${index === currentIndex
+                        className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out px-6 text-center ${index === currentIndex
                             ? "opacity-100 translate-y-0"
-                            : "opacity-0 translate-y-2 pointer-events-none"
+                            : "opacity-0 translate-y-1 pointer-events-none"
                             }`}
                     >
-                        <p className="text-[11px] font-bold tracking-[0.2em] uppercase">
+                        <p className="text-[11px] font-bold tracking-[0.18em] uppercase whitespace-nowrap overflow-hidden text-ellipsis max-w-full [font-family:var(--font-manrope)]">
                             {text}
                         </p>
                     </div>
                 ))}
+                <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-20deg] animate-[shimmer_8s_infinite] pointer-events-none"></div>
             </div>
-            <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-20deg] animate-[shimmer_8s_infinite]"></div>
         </div>
     );
 }

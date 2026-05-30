@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { authClient, clearAuthCookie, getAuthHeader, syncAuthCookieFromSession } from '@/lib/auth/client';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 
 type ProfileForm = {
     full_name: string;
@@ -135,7 +134,7 @@ export default function AccountPage() {
 
     return (
         <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#19130d] dark:text-white flex flex-col">
-            <Header />
+
             <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-12">
                 <div className="mb-10">
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c27a2a]">Customer account</p>
@@ -247,7 +246,7 @@ export default function AccountPage() {
                     </div>
                 )}
             </main>
-            <Footer />
+
         </div>
     );
 }

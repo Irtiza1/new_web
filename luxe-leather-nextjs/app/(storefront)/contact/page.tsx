@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 
 export default function ContactPage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -50,7 +49,7 @@ export default function ContactPage() {
 
     return (
         <div className="relative flex min-h-screen size-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-slate-900 dark:text-white group/design-root overflow-x-hidden font-[family-name:var(--font-manrope)]">
-            <Header />
+
 
             <main className="flex flex-1 flex-col items-center">
                 <div className="w-full max-w-[640px] px-4 py-10 md:px-8 md:py-14">
@@ -149,7 +148,7 @@ export default function ContactPage() {
                 </div>
             </main>
 
-            <Footer />
+
 
             {/* Custom Facebook Messenger Support Widget */}
             <MessengerWidget />

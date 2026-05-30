@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 import { contentService } from '@/lib/services/contentService';
 import { getShippingRates, type ShippingRate } from '@/lib/services/shippingService';
 import { getSizeGuides, type SizeGuide } from '@/lib/services/sizeService';
@@ -60,7 +59,7 @@ export default function ShippingPage() {
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-[#FDFDFB] dark:bg-[#120d09] text-gray-900 antialiased font-[family-name:var(--font-inter)]">
-            <Header />
+
 
             {/* Hero Section */}
             <div className="relative w-full py-24 md:py-32 bg-[#1a130e] overflow-hidden">
@@ -212,7 +211,7 @@ export default function ShippingPage() {
                 </div>
             </main>
 
-            <Footer />
+
         </div>
     );
 }

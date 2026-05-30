@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 import { STATIC_ASSET_DEFAULTS, staticAsset } from '@/lib/staticAssets';
 
 export default function OurStoryPage() {
@@ -22,7 +21,7 @@ export default function OurStoryPage() {
 
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1b0e10] dark:text-white transition-colors duration-200 font-[family-name:var(--font-manrope)]">
-            <Header />
+
 
             <main className="flex-grow">
                 {/* Hero Narrative Section */}
@@ -102,7 +101,7 @@ export default function OurStoryPage() {
                 </div>
             </main>
 
-            <Footer />
+
         </div>
     );
 }

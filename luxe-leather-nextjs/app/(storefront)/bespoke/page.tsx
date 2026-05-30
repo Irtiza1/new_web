@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 import { contentService } from '@/lib/services/contentService';
 import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
@@ -103,7 +102,7 @@ export default function BespokePage() {
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-[#FDFDFB] dark:bg-[#120d09] text-gray-900 antialiased font-[family-name:var(--font-inter)]">
-            <Header />
+
 
             {/* Hero Section */}
             <div className="relative w-full h-[60vh] flex items-center justify-center overflow-hidden">
@@ -263,7 +262,7 @@ export default function BespokePage() {
             </main>
 
             <div className="mt-40">
-                <Footer />
+
             </div>
         </div>
     );

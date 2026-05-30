@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
-import Header from "@/components/storefront/Header";
-import Footer from "@/components/storefront/Footer";
+
 
 export default function CartPage() {
     const {
@@ -58,7 +57,7 @@ export default function CartPage() {
     if (cartItems.length === 0) {
         return (
             <div className="min-h-screen flex flex-col bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-inter)]">
-                <Header />
+
                 <div className="flex-1 flex flex-col items-center justify-center px-4 py-24">
                     <div className="w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-8 border border-gray-100 dark:border-white/5">
                         <span className="material-symbols-outlined text-4xl text-gray-300">shopping_cart_off</span>
@@ -74,14 +73,14 @@ export default function CartPage() {
                         Explore Shop
                     </Link>
                 </div>
-                <Footer />
+
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-inter)]">
-            <Header />
+
             <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-32 pb-20">
                 <h1 className="text-4xl md:text-5xl font-black text-[#1c140d] dark:text-white uppercase tracking-tighter mb-12">Your Cart</h1>
 
@@ -235,7 +234,7 @@ export default function CartPage() {
                     </div>
                 </div>
             </div>
-            <Footer />
+
         </div>
     );
 }

@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 import ProductDetailModal, { type ShopProduct } from '@/components/storefront/ProductDetailModal';
 import { useCart } from '@/contexts/CartContext';
 import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
@@ -142,7 +141,7 @@ function ShopContent() {
 
     return (
         <div id="shop-main-container" className="bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#0e121b] dark:text-white min-h-screen flex flex-col font-[family-name:var(--font-manrope)] overflow-y-auto h-screen">
-            <Header />
+
 
             {/* Main Content */}
             <main className="flex-grow w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-8 md:py-12">
@@ -328,7 +327,7 @@ function ShopContent() {
                 </div>
             </section>
 
-            <Footer />
+
 
             <ProductDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} product={selectedProduct} />
         </div>

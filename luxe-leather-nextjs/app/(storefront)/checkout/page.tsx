@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { useCart } from '@/contexts/CartContext';
 import { getStripe } from '@/lib/stripe-client';
-import Header from '@/components/storefront/Header';
-import Footer from '@/components/storefront/Footer';
+
 import StripePaymentForm from '@/components/storefront/StripePaymentForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -84,7 +83,7 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) {
         return (
             <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0e121b]">
-                <Header />
+
                 <main className="flex-grow flex flex-col items-center justify-center p-6 text-center">
                     <span className="material-symbols-outlined text-6xl text-gray-300 mb-4">shopping_cart_off</span>
                     <h2 className="text-2xl font-bold mb-2">Your bag is empty</h2>
@@ -93,14 +92,14 @@ export default function CheckoutPage() {
                         Return to Shop
                     </Link>
                 </main>
-                <Footer />
+
             </div>
         );
     }
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0e121b] font-[family-name:var(--font-manrope)]">
-            <Header />
+
 
             <main className="flex-grow w-full max-w-[1200px] mx-auto px-6 lg:px-12 py-12 md:py-20">
                 <div className="flex flex-col lg:flex-row gap-12 items-start">
@@ -305,7 +304,7 @@ export default function CheckoutPage() {
                 </div>
             </main>
 
-            <Footer />
+
         </div>
     );
 }
