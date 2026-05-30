@@ -82,7 +82,7 @@ export default function AdminMediaPage() {
         const res = await fetch('/api/media', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) { showToast(`Image "${file.name}" uploaded successfully.`, 'success'); load(); }
-        else showToast(data.message || 'Image upload failed.', 'error');
+        else showToast(data.message || data.error || 'Image upload failed.', 'error');
         setUploading(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -102,7 +102,8 @@ export default function AdminMediaPage() {
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
-                if ((await res.json()).success) {
+                const data = await res.json();
+                if (data.success) {
                     showToast(`Image "${name}" was deleted successfully.`, 'success');
                     setFiles(prev => prev.filter(f => f.name !== name));
                     setSelectedIds(prev => {
@@ -111,7 +112,7 @@ export default function AdminMediaPage() {
                         return next;
                     });
                 } else {
-                    showToast(`Failed to delete image "${name}".`, 'error');
+                    showToast(data.message || data.error || `Failed to delete image "${name}".`, 'error');
                 }
             }
         });

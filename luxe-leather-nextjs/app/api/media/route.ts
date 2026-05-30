@@ -73,17 +73,34 @@ export async function GET(request: Request) {
     const inUseUrls = new Set<string>();
     
     // Check products
-    const { data: productsData } = await supabaseAdmin.from('products').select('image'); // note: we don't have additional_images array in our schema, just 'image'
+    const { data: productsData } = await supabaseAdmin.from('products').select('image, images');
     if (productsData) {
         productsData.forEach(p => {
             if (p.image) inUseUrls.add(p.image);
+            if (p.images && Array.isArray(p.images)) {
+                p.images.forEach((img: string) => {
+                    if (img) inUseUrls.add(img);
+                });
+            }
         });
     }
 
-    // Check settings logo
-    const { data: settingsData } = await supabaseAdmin.from('site_settings').select('value').eq('key', 'logo_url').maybeSingle();
-    if (settingsData && settingsData.value) {
-        inUseUrls.add(settingsData.value);
+    // Check categories
+    const { data: categoriesData } = await supabaseAdmin.from('categories').select('image_url');
+    if (categoriesData) {
+        categoriesData.forEach(c => {
+            if (c.image_url) inUseUrls.add(c.image_url);
+        });
+    }
+
+    // Check all site settings that might contain image URLs
+    const { data: settingsData } = await supabaseAdmin.from('site_settings').select('value');
+    if (settingsData) {
+        settingsData.forEach(s => {
+            if (s.value && (s.value.includes('http://') || s.value.includes('https://') || s.value.includes('/media/'))) {
+                inUseUrls.add(s.value);
+            }
+        });
     }
 
     // Combine all in-use URLs into a single string for robust substring matching

@@ -45,7 +45,7 @@ export default function AdminSettingsPage() {
             });
 
             const data = await res.json();
-            if (!data.success) throw new Error(data.message);
+            if (!data.success) throw new Error(data.message || data.error || 'Failed to upload logo');
 
             setSettingsState(prev => ({ ...prev, logo_url: data.data.url }));
         } catch (error) {
@@ -73,11 +73,11 @@ export default function AdminSettingsPage() {
             if (data.success) {
                 showToast('Settings saved successfully!');
             } else {
-                showToast('Failed to save settings', 'error');
+                showToast(data.message || data.error || 'Failed to save settings', 'error');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to save settings:', err);
-            showToast('Failed to save settings', 'error');
+            showToast(err.message || 'Failed to save settings', 'error');
         } finally {
             setSaving(false);
         }
@@ -116,8 +116,12 @@ export default function AdminSettingsPage() {
                                         disabled={saving}
                                         className="flex items-center gap-2 px-5 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white text-sm font-bold rounded-lg shadow-md transition-colors disabled:opacity-50"
                                     >
-                                        <span className="material-symbols-outlined text-[20px]">save</span>
-                                        Save Changes
+                                        {saving ? (
+                                            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-[20px]">save</span>
+                                        )}
+                                        {saving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
                             </div>
@@ -256,6 +260,13 @@ export default function AdminSettingsPage() {
                                             Enter your numeric Facebook Page ID (e.g. `61590459932071`). This embeds the official direct-chat plugin.
                                         </p>
                                     </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">WhatsApp Number</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2.5 text-gray-400 material-symbols-outlined text-[20px]">call</span>
+                                            <input className="w-full pl-10 pr-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-[#0d141b] dark:text-white focus:ring-2 focus:ring-[#d41132] focus:border-transparent outline-none transition-all" placeholder="e.g. +1234567890" type="text" value={settings.whatsapp_number || ''} onChange={(e) => setSettingsState({ ...settings, whatsapp_number: e.target.value })} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -265,10 +276,11 @@ export default function AdminSettingsPage() {
                     {activeTab === 'shipping' && (
                         <section className="bg-white dark:bg-[#1a2632] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#2d3b4a] overflow-hidden">
                             <div className="px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
-                                <h2 className="text-xl font-bold text-[#0d141b] dark:text-white flex items-center gap-2">
+                                <h2 className="text-xl font-bold text-[#0d141b] dark:text-white flex items-center gap-2 mb-1">
                                     <span className="material-symbols-outlined text-[#d41132]">local_shipping</span>
-                                    Shipping Configuration
+                                    Global Shipping Configuration
                                 </h2>
+                                <p className="text-sm text-[#4c739a] dark:text-[#94a3b8]">Set your global threshold for free shipping. For regional rates and zones, use the <a href="/admin/shipping-and-sizing" className="text-[#d41132] font-bold hover:underline">Shipping & Sizing</a> page.</p>
                             </div>
                             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="flex flex-col gap-2">

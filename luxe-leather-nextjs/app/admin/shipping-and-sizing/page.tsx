@@ -137,13 +137,13 @@ export default function AdminShippingAndSizingPage() {
 
     const handleSaveZone = async () => {
         setSaving(true);
-        const payload = { name: zoneForm.name, regions: zoneForm.regions, handling_days: parseInt(zoneForm.handling_days), rate: parseFloat(zoneForm.rate), free_above: zoneForm.free_above ? parseFloat(zoneForm.free_above) : null, is_active: zoneForm.is_active };
+        const payload = { name: zoneForm.name, regions: zoneForm.regions, handling_days: parseInt(zoneForm.handling_days || '0'), rate: parseFloat(zoneForm.rate || '0'), free_above: zoneForm.free_above ? parseFloat(zoneForm.free_above) : null, is_active: zoneForm.is_active };
         const method = editingZone ? 'PUT' : 'POST';
         const url = editingZone ? `/api/shipping-zones?id=${editingZone.id}` : '/api/shipping-zones';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.success) { showToast(editingZone ? `Shipping Zone "${zoneForm.name}" updated successfully.` : `Shipping Zone "${zoneForm.name}" created successfully.`, 'success'); setShowZoneModal(false); loadZones(); }
-        else showToast(data.message || 'Failed to save shipping zone.', 'error');
+        else showToast(data.message || data.error || 'Failed to save shipping zone.', 'error');
         setSaving(false);
     };
 
@@ -177,7 +177,7 @@ export default function AdminShippingAndSizingPage() {
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sizeForm) });
         const data = await res.json();
         if (data.success) { showToast(editingSize ? `Size Guide updated successfully.` : `Size Guide created successfully.`, 'success'); setShowSizeModal(false); loadSizes(); }
-        else showToast(data.message || 'Failed to save size guide.', 'error');
+        else showToast(data.message || data.error || 'Failed to save size guide.', 'error');
         setSaving(false);
     };
 
@@ -200,11 +200,17 @@ export default function AdminShippingAndSizingPage() {
     const handleSaveContent = async () => {
         setSavingContent(true);
         try {
-            await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: 'shipping_hero_title', content: content.shipping_hero_title, type: 'text', title: 'Shipping Hero Title', section: 'Shipping' }) });
-            await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: 'shipping_hero_subtitle', content: content.shipping_hero_subtitle, type: 'text', title: 'Shipping Hero Subtitle', section: 'Shipping' }) });
+            const res1 = await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: 'shipping_hero_title', content: content.shipping_hero_title, type: 'text', title: 'Shipping Hero Title', section: 'Shipping' }) });
+            const data1 = await res1.json();
+            if (!data1.success) throw new Error(data1.message || data1.error || 'Failed to save title');
+
+            const res2 = await fetch('/api/cms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: 'shipping_hero_subtitle', content: content.shipping_hero_subtitle, type: 'text', title: 'Shipping Hero Subtitle', section: 'Shipping' }) });
+            const data2 = await res2.json();
+            if (!data2.success) throw new Error(data2.message || data2.error || 'Failed to save subtitle');
+
             showToast('Shipping page content updated successfully.', 'success');
-        } catch {
-            showToast('Failed to update content.', 'error');
+        } catch (err: any) {
+            showToast(err.message || 'Failed to update content.', 'error');
         }
         setSavingContent(false);
     };
@@ -228,7 +234,10 @@ export default function AdminShippingAndSizingPage() {
                     );
                     const successCount = results.filter(r => r.success).length;
                     const failCount = selectedIds.size - successCount;
-                    if (failCount > 0) showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    if (failCount > 0) {
+                        const errorMessages = results.filter(r => !r.success).map(r => r.message || 'Unknown error').join(', ');
+                        showToast(`Bulk delete partial failure: ${successCount} deleted, ${failCount} failed. (${errorMessages})`, 'error');
+                    }
                     else showToast(`${successCount} items were deleted successfully.`, 'success');
                     
                     if (activeMainTab === 'rates') { loadZones(); setZoneSelectedIds(new Set()); }

@@ -48,5 +48,35 @@ export const contentService = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    async upsertContentBySlug(slug: string, content: string, title?: string, section?: string, type: string = 'text'): Promise<void> {
+        // Try to find if it exists
+        const { data } = await supabase
+            .from('site_content')
+            .select('id')
+            .eq('slug', slug)
+            .maybeSingle();
+
+        if (data && data.id) {
+            // Update
+            const { error } = await supabase
+                .from('site_content')
+                .update({ content, updated_at: new Date().toISOString() })
+                .eq('id', data.id);
+            if (error) throw error;
+        } else {
+            // Insert
+            const { error } = await supabase
+                .from('site_content')
+                .insert([{
+                    slug,
+                    content,
+                    title: title || slug,
+                    description: section || 'CMS Content',
+                    content_type: type
+                }]);
+            if (error) throw error;
+        }
     }
 };
