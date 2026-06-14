@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { authClient, setAuthCookie, signInWithGoogle, syncAuthCookieFromSession } from '@/lib/auth/client';
 import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
 function LoginContent() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirectTo') || '/account';
     const [email, setEmail] = useState('');

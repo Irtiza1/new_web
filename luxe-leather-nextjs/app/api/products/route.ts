@@ -65,7 +65,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
 
     // Map the first image to the main `image` column for legacy support,
     // but ensure the entire `images` array is also saved to the database.
-    const productData: any = { ...data };
+    const productData: Record<string, unknown> = { ...data };
     if (data.images && data.images.length > 0) {
         productData.image = data.images[0];
         productData.images = data.images;

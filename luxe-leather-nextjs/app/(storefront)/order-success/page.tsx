@@ -20,7 +20,7 @@ function OrderSuccessContent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+     
     useEffect(() => {
         const paymentIntent = searchParams.get('payment_intent');
         const orderId = searchParams.get('order_id');
@@ -28,6 +28,7 @@ function OrderSuccessContent() {
 
         if (redirectStatus === 'succeeded' && orderId) {
             // Payment succeeded via Stripe redirect
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setOrder({
                 id: orderId,
                 total: 0, // We don't have total in URL, but order is confirmed

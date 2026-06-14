@@ -209,7 +209,9 @@ export default function AdminShippingAndSizingPage() {
             if (!data2.success) throw new Error(data2.message || data2.error || 'Failed to save subtitle');
 
             showToast('Shipping page content updated successfully.', 'success');
-        } catch (err: any) {
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const err = error as any;
             showToast(err.message || 'Failed to update content.', 'error');
         }
         setSavingContent(false);

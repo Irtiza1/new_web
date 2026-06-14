@@ -93,6 +93,7 @@ describe('analyticsService - getTrafficSummary', () => {
         const mockGte = vi.fn().mockReturnValue({ lte: mockLte });
         const mockSelect = vi.fn().mockReturnValue({ gte: mockGte });
         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from as any).mockReturnValue({
             select: mockSelect,
         });
@@ -150,6 +151,7 @@ describe('analyticsService - getTrafficSummary', () => {
         const mockGte = vi.fn().mockReturnValue({ lte: mockLte });
         const mockSelect = vi.fn().mockReturnValue({ gte: mockGte });
         
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase.from as any).mockReturnValue({
             select: mockSelect,
         });

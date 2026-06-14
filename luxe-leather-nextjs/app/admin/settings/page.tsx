@@ -75,7 +75,9 @@ export default function AdminSettingsPage() {
             } else {
                 showToast(data.message || data.error || 'Failed to save settings', 'error');
             }
-        } catch (err: any) {
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const err = error as any;
             console.error('Failed to save settings:', err);
             showToast(err.message || 'Failed to save settings', 'error');
         } finally {

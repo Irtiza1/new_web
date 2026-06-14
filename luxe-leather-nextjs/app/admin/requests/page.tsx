@@ -75,20 +75,17 @@ export default function AdminRequestsPage() {
         return matchesStatus && matchesSearch;
     });
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchRequests();
-    }, [statusFilter]); // Reload when status filter changes
+    }, [statusFilter]);
 
     // Debounce search
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchRequests();
         }, 500);
         return () => clearTimeout(timer);
     }, [searchQuery]);
-
     const fetchRequests = async () => {
         try {
             setLoading(true);

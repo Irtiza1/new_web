@@ -50,7 +50,7 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Pro
 
     // Map the first image to the main `image` column for legacy support,
     // but ensure the entire `images` array is also saved to the database.
-    const updateData: any = { ...updates };
+    const updateData: Record<string, unknown> = { ...updates };
     if (updates.images && updates.images.length > 0) {
         updateData.image = updates.images[0];
         updateData.images = updates.images;

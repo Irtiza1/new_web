@@ -174,8 +174,6 @@ export const update = async (id: string, updates: Partial<Order>) => {
  */
 export const remove = async (id: string) => {
     // Capture state to restore stock
-    const { data: order } = await supabase.from('orders').select('*, order_items(product_id, quantity)').eq('id', id).single();
-
     const { error } = await supabase
         .from('orders')
         // When an order is deleted from admin panel, it is effectively CANCELLED as well

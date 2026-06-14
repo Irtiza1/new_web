@@ -102,20 +102,20 @@ export async function POST(req: NextRequest){
                 notes: data.customer.notes || null,
                 payment_status: isDummy ? 'paid' : 'unpaid',
                 items: data.items.map((item) => {
-                    let size = null;
-                    let color = null;
-                    let variant = item.variant || null;
+                    let size: string | undefined = undefined;
+                    let color: string | undefined = undefined;
+                    let variant: string | undefined = item.variant || undefined;
                     
                     if (variant) {
                         if (variant.startsWith('Size: ')) {
                             const parts = variant.split(', Color: ');
                             size = parts[0].replace('Size: ', '');
-                            color = parts[1] || null;
-                            variant = null; // Standard order, no bespoke variant string
+                            color = parts[1] || undefined;
+                            variant = undefined; // Standard order, no bespoke variant string
                         } else if (variant.startsWith('Custom Size: ')) {
                             const parts = variant.split(', Color: ');
                             variant = parts[0];
-                            color = parts[1] || null;
+                            color = parts[1] || undefined;
                         }
                     }
 
