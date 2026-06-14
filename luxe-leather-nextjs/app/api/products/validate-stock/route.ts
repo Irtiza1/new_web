@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
         const { data: products, error } = await supabase
             .from('products')
-            .select('id, name, stock')
+            .select('id, name')
             .in('id', ids);
 
         if (error) {
@@ -33,13 +33,7 @@ export async function POST(req: NextRequest) {
                     message: `Product ${item.name} is no longer available.`
                 });
             }
-
-            if (product.stock < item.quantity) {
-                return NextResponse.json({
-                    success: false,
-                    message: `Insufficient stock for ${product.name}. Only ${product.stock} available.`
-                });
-            }
+            // Stock checking logic removed
         }
 
         return NextResponse.json({ success: true });

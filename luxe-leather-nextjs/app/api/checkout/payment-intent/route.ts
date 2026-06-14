@@ -40,12 +40,12 @@ export async function POST(req: NextRequest){
             }, { status: 503, statusText: "Stripe is not configured" });
         }
 
-        // Step 0: Pre-flight Stock Check
+        // Step 0: Pre-flight checks (Stock validation removed)
         for (const item of data.items) {
             const productId = String(item.id);
             const { data: productData, error: productError } = await supabase
                 .from('products')
-                .select('stock, name')
+                .select('name')
                 .eq('id', productId)
                 .single();
                 
@@ -53,13 +53,6 @@ export async function POST(req: NextRequest){
                 return NextResponse.json({
                     success: false,
                     message: `Product ${item.name} not found.`,
-                }, { status: 400 });
-            }
-            
-            if (productData.stock < item.quantity) {
-                return NextResponse.json({
-                    success: false,
-                    message: `Insufficient stock for ${productData.name}. Only ${productData.stock} available.`,
                 }, { status: 400 });
             }
         }
@@ -138,14 +131,7 @@ export async function POST(req: NextRequest){
                 }),
             });
 
-            // Step 2.5: Stock Deduction
-            for (const item of data.items) {
-                const productId = String(item.id);
-                const { data: currentProduct } = await supabase.from('products').select('stock').eq('id', productId).single();
-                if (currentProduct) {
-                    await supabase.from('products').update({ stock: Math.max(0, currentProduct.stock - item.quantity) }).eq('id', productId);
-                }
-            }
+            // Step 2.5: Stock Deduction removed
 
             if (isDummy) {
                 return NextResponse.json({

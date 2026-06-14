@@ -146,34 +146,7 @@ export const update = async (id: string, updates: Partial<Order>) => {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
 
-    // Restore stock if the order is newly cancelled
-    if (before && before.status !== 'CANCELLED' && updates.status === 'CANCELLED') {
-        if (before.order_items && Array.isArray(before.order_items)) {
-            for (const item of before.order_items) {
-                // We use RPC for atomic increment if available, otherwise fallback to fetch and update
-                try {
-                    const { error: rpcError } = await supabase.rpc('increment_stock', {
-                        p_product_id: item.product_id,
-                        p_amount: item.quantity
-                    });
-                    
-                    if (rpcError) {
-                        // Fallback if RPC doesn't exist
-                        const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-                        if (prod) {
-                            await supabase.from('products').update({ stock: prod.stock + item.quantity }).eq('id', item.product_id);
-                        }
-                    }
-                } catch {
-                    // Fallback if RPC doesn't exist
-                    const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-                    if (prod) {
-                        await supabase.from('products').update({ stock: prod.stock + item.quantity }).eq('id', item.product_id);
-                    }
-                }
-            }
-        }
-    }
+    // Stock restoration logic removed
 
     if (before) {
         const changedFields: Record<string, { from: unknown; to: unknown }> = {};
@@ -213,31 +186,7 @@ export const remove = async (id: string) => {
         throw new AppError(error.message, 500, 'DB_ERROR');
     }
 
-    // Restore stock if the order wasn't already cancelled
-    if (order && order.status !== 'CANCELLED') {
-        if (order.order_items && Array.isArray(order.order_items)) {
-            for (const item of order.order_items) {
-                try {
-                    const { error: rpcError } = await supabase.rpc('increment_stock', {
-                        p_product_id: item.product_id,
-                        p_amount: item.quantity
-                    });
-                    
-                    if (rpcError) {
-                        const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-                        if (prod) {
-                            await supabase.from('products').update({ stock: prod.stock + item.quantity }).eq('id', item.product_id);
-                        }
-                    }
-                } catch {
-                    const { data: prod } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-                    if (prod) {
-                        await supabase.from('products').update({ stock: prod.stock + item.quantity }).eq('id', item.product_id);
-                    }
-                }
-            }
-        }
-    }
+    // Stock restoration logic removed
 
     await auditLog('orders', id, 'DELETE', { isDeleted: { from: false, to: true } });
 };

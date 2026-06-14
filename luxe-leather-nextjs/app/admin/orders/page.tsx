@@ -31,6 +31,7 @@ interface OrderItem {
     price: number;
     size?: string;
     color?: string;
+    variant?: string;
     products?: {
         name: string;
         image?: string;
