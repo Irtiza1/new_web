@@ -49,6 +49,11 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         colors: [],
         allow_custom_sizing: false,
         custom_sizing_price: 0,
+        shipping_info: {
+            policy: 'Free Worldwide Shipping',
+            delivery_regular: '3-5 Working Days',
+            delivery_custom: '12-15 Working Days'
+        },
         is_featured: false,
         featured_tag: null,
         isActive: true,
@@ -73,6 +78,11 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     colors: initialData.colors || [],
                     allow_custom_sizing: initialData.allow_custom_sizing || false,
                     custom_sizing_price: initialData.custom_sizing_price || 0,
+                    shipping_info: initialData.shipping_info || {
+                        policy: 'Free Worldwide Shipping',
+                        delivery_regular: '3-5 Working Days',
+                        delivery_custom: '12-15 Working Days'
+                    },
                     is_featured: initialData.is_featured || false,
                     featured_tag: initialData.featured_tag || null,
                     isActive: initialData.isActive !== undefined ? initialData.isActive : true,
@@ -92,6 +102,11 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     colors: [],
                     allow_custom_sizing: false,
                     custom_sizing_price: 0,
+                    shipping_info: {
+                        policy: 'Free Worldwide Shipping',
+                        delivery_regular: '3-5 Working Days',
+                        delivery_custom: '12-15 Working Days'
+                    },
                     is_featured: false,
                     featured_tag: null,
                     isActive: true,
@@ -399,6 +414,51 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 </div>
                             )}
                         </div>
+
+                        <div className="h-px w-full bg-slate-200 dark:bg-slate-700 my-2"></div>
+                        
+                        {/* Shipping Details */}
+                        <div className="flex flex-col gap-4">
+                            <div>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Shipping Details</h4>
+                                <p className="text-xs text-slate-500">Configure delivery expectations for this product.</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-3">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[10px] uppercase font-bold text-gray-500">Shipping Policy</label>
+                                    <input 
+                                        type="text" 
+                                        value={formData.shipping_info?.policy || ''} 
+                                        onChange={(e) => setFormData({ ...formData, shipping_info: { ...formData.shipping_info, policy: e.target.value } })} 
+                                        className="h-10 px-3 bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 rounded-md text-sm outline-none focus:border-[#d41132]" 
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-gray-500">Regular Delivery Time</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.shipping_info?.delivery_regular || ''} 
+                                            onChange={(e) => setFormData({ ...formData, shipping_info: { ...formData.shipping_info, delivery_regular: e.target.value } })} 
+                                            className="h-10 px-3 bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 rounded-md text-sm outline-none focus:border-[#d41132]" 
+                                            placeholder="e.g. 3-5 Working Days"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[10px] uppercase font-bold text-gray-500">Custom Delivery Time</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.shipping_info?.delivery_custom || ''} 
+                                            onChange={(e) => setFormData({ ...formData, shipping_info: { ...formData.shipping_info, delivery_custom: e.target.value } })} 
+                                            className="h-10 px-3 bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 rounded-md text-sm outline-none focus:border-[#d41132]" 
+                                            placeholder="e.g. 12-15 Working Days"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* Description */}

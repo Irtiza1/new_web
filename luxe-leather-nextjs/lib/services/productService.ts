@@ -101,6 +101,11 @@ export const create = async (productData: Partial<Product> & Record<string, unkn
         colors: productData.colors || [],
         allow_custom_sizing: productData.allow_custom_sizing || false,
         custom_sizing_price: productData.custom_sizing_price || 0,
+        shipping_info: productData.shipping_info || {
+            policy: "Free Worldwide Shipping",
+            delivery_regular: "3-5 Working Days",
+            delivery_custom: "12-15 Working Days"
+        },
     };
 
     const { data, error } = await supabase

@@ -31,6 +31,11 @@ export type Product = {
     specs?: { label: string; value: string }[];
     colors?: { name: string; hex: string }[];
     allow_custom_sizing?: boolean;
+    shipping_info?: {
+        policy?: string;
+        delivery_regular?: string;
+        delivery_custom?: string;
+    };
     customSizingPrice?: number; // Base price for custom sizing
     custom_sizing_price?: number; // alias for db column
     isActive: boolean; // Soft delete flag — false = archived/hidden from storefront

@@ -19,7 +19,12 @@ const productSchema = z.object({
     images: z.array(z.string()).optional(),
     is_featured: z.boolean().optional(),
     featured_tag: z.string().nullable().optional(),
-    // Add other fields as necessary based on Supabase schema
+    sizes: z.array(z.string()).optional(),
+    specs: z.array(z.any()).optional(),
+    colors: z.array(z.any()).optional(),
+    allow_custom_sizing: z.boolean().optional(),
+    custom_sizing_price: z.number().optional(),
+    shipping_info: z.any().optional(),
 });
 
 const querySchema = z.object({

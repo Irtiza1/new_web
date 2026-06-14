@@ -4,14 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { STATIC_ASSET_DEFAULTS } from "@/lib/staticAssets";
 
-interface ReviewData {
-    id: string;
-    customer_name: string;
-    rating: number;
-    comment: string | null;
-    is_featured: boolean;
-    created_at: string;
-}
+
 
 export interface ShopProduct {
     id: string | number;
@@ -28,6 +21,11 @@ export interface ShopProduct {
     badge?: string | null;
     salesCount?: number;
     customSizingPrice?: number;
+    shipping_info?: {
+        policy?: string;
+        delivery_regular?: string;
+        delivery_custom?: string;
+    };
     createdAt: string;
 }
 
@@ -55,8 +53,6 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isZoomed, setIsZoomed] = useState(false);
     const imgRef = useRef<HTMLDivElement>(null);
-    const [productReviews, setProductReviews] = useState<ReviewData[]>([]);
-    const [reviewsLoading, setReviewsLoading] = useState(false);
     const [productFallbackImage, setProductFallbackImage] = useState(STATIC_ASSET_DEFAULTS.product_fallback_image);
 
     useEffect(() => {
@@ -67,7 +63,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                     setProductFallbackImage(data.data.product_fallback_image);
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     // Reset state when product changes
@@ -80,35 +76,6 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
         setIsZoomed(false);
     }, [product?.id]);
 
-    // Fetch real reviews for this product
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-    useEffect(() => {
-        if (!product?.id) return;
-        setReviewsLoading(true);
-        fetch('/api/reviews')
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    // Filter for approved reviews for this product
-                    const approvedReviews = (data.data || []).filter(
-                        (r: { status: string; product_id: string }) => r.status === 'approved' &&
-                            (r.product_id === String(product.id) || r.product_id === product.id)
-                    );
-                    // If no product-specific reviews, show all featured approved reviews
-                    if (approvedReviews.length === 0) {
-                        const featured = (data.data || []).filter(
-                            (r: { status: string; is_featured: boolean }) => r.status === 'approved' && r.is_featured
-                        );
-                        setProductReviews(featured);
-                    } else {
-                        setProductReviews(approvedReviews);
-                    }
-                }
-            })
-            .catch(() => setProductReviews([]))
-            .finally(() => setReviewsLoading(false));
-    }, [product?.id]);
-
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!imgRef.current) return;
         const { left, top, width, height } = imgRef.current.getBoundingClientRect();
@@ -119,8 +86,8 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
 
     if (!isOpen || !product) return null;
 
-    // Get the product image
-    const allImages = [product.image || productFallbackImage, ...(product.images || [])];
+    // Get the product image and remove duplicates
+    const allImages = Array.from(new Set([product.image || productFallbackImage, ...(product.images || [])])).filter(Boolean);
     const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     const productDescription = product.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
@@ -129,91 +96,56 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const productColors = (product.colors && product.colors.length > 0) ? product.colors.map((c: any) => ({ name: c.name, color: c.hex || c.color })) : fallbackColors;
     const allowCustomSizing = product.allow_custom_sizing ?? true; // Defaults to true if legacy, or false based on db? let's default to true for existing storefront compatibility
 
-    const defaultSpecs = [
-        { label: 'Material', value: '100% Full-Grain Leather' },
-        { label: 'Artisanship', value: 'Master Hand-Stitched' },
-        { label: 'Hardware', value: 'Solid Brass / YKK Japan' },
-        { label: 'Tanning', value: 'Eco-Vegetable Tanned' },
-        { label: 'Thread', value: 'Nylon Bonded' },
-        { label: 'Origin', value: 'Artisan Workshop' }
-    ];
-    const productSpecs = (product.specs && product.specs.length > 0) ? product.specs : defaultSpecs;
+    // const defaultSpecs = [
+    //     { label: 'Material', value: '100% Full-Grain Leather' },
+    //     { label: 'Artisanship', value: 'Master Hand-Stitched' },
+    //     { label: 'Hardware', value: 'Solid Brass / YKK Japan' },
+    //     { label: 'Tanning', value: 'Eco-Vegetable Tanned' },
+    //     { label: 'Thread', value: 'Nylon Bonded' },
+    //     { label: 'Origin', value: 'Artisan Workshop' }
+    // ];
+    const productSpecs = (product.specs && product.specs.length > 0) ? product.specs : [];
 
     const renderTabContent = () => {
         switch (activeTab) {
             case 'specs':
                 return (
                     <div className="grid grid-cols-2 gap-y-5 gap-x-8">
-                        {productSpecs.map((spec: any, i: number) => (
-                            <div key={i} className="flex flex-col gap-1 border-l-2 border-[#c27a2a]/20 pl-3">
-                                <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">{spec.label}</span>
-                                <span className="text-[#1c140d] dark:text-white font-medium text-sm">{spec.value}</span>
-                            </div>
-                        ))}
-                    </div>
-                );
-            case 'reviews':
-                return (
-                    <div className="space-y-4">
-                        {reviewsLoading ? (
-                            <div className="flex items-center justify-center py-8">
-                                <span className="material-symbols-outlined animate-spin text-xl text-gray-400">progress_activity</span>
-                            </div>
-                        ) : productReviews.length === 0 ? (
-                            <div className="text-center py-6">
-                                <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-gray-600 block mb-2">rate_review</span>
-                                <p className="text-xs text-gray-400">No reviews yet for this product.</p>
-                            </div>
+                        {productSpecs.length > 0 ? (
+                            productSpecs.map((spec: any, i: number) => (
+                                <div key={i} className="flex flex-col gap-1 border-l-2 border-[#c27a2a]/20 pl-3">
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">{spec.label}</span>
+                                    <span className="text-[#1c140d] dark:text-white font-medium text-sm">{spec.value}</span>
+                                </div>
+                            ))
                         ) : (
-                            productReviews.map((review) => {
-                                const timeAgo = (() => {
-                                    const diff = Date.now() - new Date(review.created_at).getTime();
-                                    const days = Math.floor(diff / 86400000);
-                                    if (days === 0) return 'Today';
-                                    if (days === 1) return '1 day ago';
-                                    if (days < 7) return `${days} days ago`;
-                                    if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
-                                    return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
-                                })();
-                                return (
-                                    <div key={review.id} className="border-b border-gray-50 dark:border-white/5 pb-3">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex gap-0.5 text-[#fbbf24]">
-                                                    {[...Array(review.rating)].map((_, i) => (
-                                                        <span key={i} className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                                    ))}
-                                                    {[...Array(5 - review.rating)].map((_, i) => (
-                                                        <span key={i} className="material-symbols-outlined text-[12px] text-gray-200 dark:text-gray-600">star</span>
-                                                    ))}
-                                                </div>
-                                                {review.is_featured && (
-                                                    <span className="text-[8px] font-black uppercase tracking-widest bg-amber-100 dark:bg-amber-900/30 text-amber-600 px-1.5 py-0.5 rounded">Featured</span>
-                                                )}
-                                            </div>
-                                            <span className="text-[10px] text-gray-400 font-bold uppercase">{timeAgo}</span>
-                                        </div>
-                                        {review.comment && <p className="text-xs text-gray-600 dark:text-gray-400 italic">&quot;{review.comment}&quot;</p>}
-                                        <p className="text-[10px] font-black text-[#1c140d] dark:text-white mt-1 uppercase">— {review.customer_name}</p>
-                                    </div>
-                                );
-                            })
+                            <div className="col-span-2 text-center py-4">
+                                <p className="text-gray-400 text-sm">No specs available</p>
+                            </div>
                         )}
                     </div>
                 );
             case 'shipping':
+                const shippingInfo = product.shipping_info || {
+                    policy: "Free Worldwide Shipping",
+                    delivery_regular: "3-5 Working Days",
+                    delivery_custom: "12-15 Working Days"
+                };
+                
                 return (
                     <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                            <span className="material-symbols-outlined text-sm mt-1">local_shipping</span>
-                            <p><strong>Free Worldwide Shipping</strong> on all orders above $150.</p>
-                        </div>
+                        {shippingInfo.policy && (
+                            <div className="flex items-start gap-3">
+                                <span className="material-symbols-outlined text-sm mt-1">local_shipping</span>
+                                <p><strong>{shippingInfo.policy}</strong></p>
+                            </div>
+                        )}
                         <div className="flex items-start gap-3 border-t border-gray-100 dark:border-white/5 pt-3">
                             <span className="material-symbols-outlined text-sm mt-1">history</span>
                             <div>
                                 <p className="font-bold">Estimated Delivery:</p>
-                                <p className="text-xs">• Regular Sizes: 3-5 Working Days</p>
-                                <p className="text-xs">• Custom/Bespoke Orders: 12-15 Working Days</p>
+                                {shippingInfo.delivery_regular && <p className="text-xs">• Regular Sizes: {shippingInfo.delivery_regular}</p>}
+                                {shippingInfo.delivery_custom && <p className="text-xs">• Custom/Bespoke Orders: {shippingInfo.delivery_custom}</p>}
                             </div>
                         </div>
                     </div>
@@ -324,7 +256,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
 
                     {/* Tabs Header */}
                     <div className="flex gap-6 border-b border-gray-100 dark:border-white/10 mb-6">
-                        {['specs', 'reviews', 'shipping'].map((tab) => (
+                        {['specs', 'shipping'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -398,7 +330,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                 <div className="flex flex-wrap gap-2">
                                     {productSizes.map((size, i) => (
                                         <button
-                                            key={size}
+                                            key={`${size}-${i}`}
                                             onClick={() => setSelectedSize(i)}
                                             className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border font-bold text-sm transition-all ${selectedSize === i ? 'border-[#c27a2a] bg-[#c27a2a]/5 text-[#c27a2a]' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'}`}
                                         >
