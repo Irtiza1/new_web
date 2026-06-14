@@ -116,6 +116,9 @@ export const create = async (orderData: Partial<Order> & { items?: unknown[] }) 
             product_id: String(item.product_id || item.productId),
             quantity: Number(item.quantity),
             price: Number(item.price),
+            variant: item.variant ? String(item.variant) : null,
+            color: item.color ? String(item.color) : null,
+            size: item.size ? String(item.size) : null,
         }));
         await supabase.from('order_items').insert(orderItems);
     }

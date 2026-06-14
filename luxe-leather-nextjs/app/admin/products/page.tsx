@@ -25,6 +25,7 @@ export default function AdminProductsPage() {
     const [filteredProducts, setFilteredProducts] = useState<ExtendedProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState('Active');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -82,6 +83,12 @@ export default function AdminProductsPage() {
     useEffect(() => {
         let result = products;
 
+        if (selectedStatus === 'Active') {
+            result = result.filter(p => p.isActive);
+        } else if (selectedStatus === 'Archived') {
+            result = result.filter(p => !p.isActive);
+        }
+
         if (selectedCategory !== 'All') {
             result = result.filter(p => p.category === selectedCategory);
         }
@@ -94,9 +101,17 @@ export default function AdminProductsPage() {
             );
         }
 
+        // Sort so active products are at the top
+        result = [...result].sort((a, b) => {
+            if (a.isActive === b.isActive) {
+                return a.name.localeCompare(b.name);
+            }
+            return a.isActive ? -1 : 1;
+        });
+
         setFilteredProducts(result);
         setCurrentPage(1);
-    }, [products, searchTerm, selectedCategory]);
+    }, [products, searchTerm, selectedCategory, selectedStatus]);
 
     const fetchProducts = async () => {
         setIsLoading(true);
@@ -320,8 +335,6 @@ export default function AdminProductsPage() {
     // Calculate stats
     const activeProducts = products.filter(p => p.isActive);
     const archivedCount = products.filter(p => !p.isActive).length;
-    const totalInventory = activeProducts.reduce((acc, curr) => acc + curr.stock, 0);
-    const lowStockCount = activeProducts.filter(p => p.stock < 5).length;
 
 
     return (
@@ -343,14 +356,6 @@ export default function AdminProductsPage() {
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Products</p>
                         <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{activeProducts.length} <span className="text-xs font-medium text-gray-400">active</span></p>
                     </div>
-                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
-                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Inventory</p>
-                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{totalInventory} units</p>
-                    </div>
-                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
-                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Low Stock Alerts</p>
-                        <p className={`text-base font-black leading-none mt-0.5 ${lowStockCount > 0 ? 'text-[#d41132]' : 'text-emerald-500'}`}>{lowStockCount}</p>
-                    </div>
                     {archivedCount > 0 && (
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800">
                             <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Archived</p>
@@ -371,6 +376,15 @@ export default function AdminProductsPage() {
                             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-[#1a2632] border border-[#e5e7eb] dark:border-[#2d3b4a] focus:ring-2 focus:ring-[#d41132] outline-none transition-all dark:text-white"
                         />
                     </div>
+                    <AdminFilterTabs
+                        tabs={[
+                            { label: 'Active', value: 'Active' },
+                            { label: 'Archived', value: 'Archived' },
+                            { label: 'All Statuses', value: 'All' }
+                        ]}
+                        activeTab={selectedStatus}
+                        onTabChange={setSelectedStatus}
+                    />
                     <AdminFilterTabs
                         tabs={[
                             { label: 'All Categories', value: 'All' },
@@ -403,7 +417,7 @@ export default function AdminProductsPage() {
             }
         >
             <AdminTable
-                headers={['Product', 'Category', 'Price', 'Stock', 'Actions']}
+                headers={['Product', 'Category', 'Price', 'Actions']}
                 onSelectAll={toggleSelectAll}
                 isAllSelected={filteredProducts.length > 0 && filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(p => selectedIds.has(p.id))}
             >
@@ -469,18 +483,6 @@ export default function AdminProductsPage() {
                                 ) : (
                                     <span>${product.price.toFixed(2)}</span>
                                 )}
-                            </td>
-                            <td className="px-6 py-4 text-sm">
-                                <div className="flex flex-col">
-                                    <span className={`font-bold ${product.stock === 0 ? 'text-red-500' :
-                                        product.stock < 5 ? 'text-amber-500' : 'text-emerald-500'
-                                        }`}>
-                                        {product.stock} units
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                        {product.stock === 0 ? 'Out of Stock' : product.stock < 5 ? 'Low Stock' : 'In Stock'}
-                                    </span>
-                                </div>
                             </td>
                             <td className="px-6 py-4 text-right relative">
                                 <button

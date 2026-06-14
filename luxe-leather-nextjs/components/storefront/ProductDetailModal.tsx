@@ -363,11 +363,10 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         <div className="mt-auto">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0}
                                 className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:grayscale"
                             >
                                 <span className="material-symbols-outlined">shopping_bag</span>
-                                {product.stock === 0 ? 'Out of Stock' : 'Add to Collection'}
+                                Add to Collection
                             </button>
                         </div>
                     </div>

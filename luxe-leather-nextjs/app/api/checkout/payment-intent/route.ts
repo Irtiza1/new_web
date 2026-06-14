@@ -108,13 +108,34 @@ export async function POST(req: NextRequest){
                 shipping: 0,
                 notes: data.customer.notes || null,
                 payment_status: isDummy ? 'paid' : 'unpaid',
-                items: data.items.map((item) => ({
-                    product_id: String(item.id),
-                    quantity: item.quantity,
-                    price: item.price,
-                    name: item.name,
-                    variant: item.variant,
-                })),
+                items: data.items.map((item) => {
+                    let size = null;
+                    let color = null;
+                    let variant = item.variant || null;
+                    
+                    if (variant) {
+                        if (variant.startsWith('Size: ')) {
+                            const parts = variant.split(', Color: ');
+                            size = parts[0].replace('Size: ', '');
+                            color = parts[1] || null;
+                            variant = null; // Standard order, no bespoke variant string
+                        } else if (variant.startsWith('Custom Size: ')) {
+                            const parts = variant.split(', Color: ');
+                            variant = parts[0];
+                            color = parts[1] || null;
+                        }
+                    }
+
+                    return {
+                        product_id: String(item.id),
+                        quantity: item.quantity,
+                        price: item.price,
+                        name: item.name,
+                        variant,
+                        color,
+                        size,
+                    };
+                }),
             });
 
             // Step 2.5: Stock Deduction

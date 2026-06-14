@@ -369,7 +369,7 @@ export default function AdminOrdersPage() {
                 order.items_count,
                 order.total,
                 order.status,
-                new Date(order.created_at).toLocaleDateString()
+                new Date(order.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })
             ].join(','))
         ].join('\n');
 
@@ -427,7 +427,7 @@ export default function AdminOrdersPage() {
             filters={
                 <div className="flex flex-col lg:flex-row justify-between items-center gap-4 w-full">
                     {/* Search */}
-                    <div className="relative w-full lg:w-full md:w-96 group">
+                    <div className="relative w-full lg:w-96 shrink-0 group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span className="material-symbols-outlined text-slate-400">search</span>
                         </div>
@@ -440,17 +440,19 @@ export default function AdminOrdersPage() {
                         />
                     </div>
                     {/* Status Filters */}
-                    <AdminFilterTabs
-                        tabs={[
-                            { label: 'All Orders', value: 'all' },
-                            { label: 'Pending', value: 'PENDING' },
-                            { label: 'Processing', value: 'PROCESSING' },
-                            { label: 'Shipped', value: 'SHIPPED' },
-                            { label: 'Delivered', value: 'DELIVERED' },
-                        ]}
-                        activeTab={statusFilter}
-                        onTabChange={setStatusFilter}
-                    />
+                    <div className="flex-1 w-full overflow-x-auto flex lg:justify-end hide-scrollbar">
+                        <AdminFilterTabs
+                            tabs={[
+                                { label: 'All Orders', value: 'all' },
+                                { label: 'Pending', value: 'PENDING' },
+                                { label: 'Processing', value: 'PROCESSING' },
+                                { label: 'Shipped', value: 'SHIPPED' },
+                                { label: 'Delivered', value: 'DELIVERED' },
+                            ]}
+                            activeTab={statusFilter}
+                            onTabChange={setStatusFilter}
+                        />
+                    </div>
                 </div>
             }
             pagination={
@@ -528,7 +530,7 @@ export default function AdminOrdersPage() {
                             </td>
                             <td className="py-4 px-6">
                                 <span className="text-sm text-slate-500 dark:text-slate-400">
-                                    {isMounted ? new Date(order.created_at).toLocaleDateString() : '...'}
+                                    {isMounted ? new Date(order.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
                                 </span>
                             </td>
                             <td className="py-4 px-6 text-right relative">

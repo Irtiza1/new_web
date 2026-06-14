@@ -220,8 +220,8 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         </div>
                     </div>
 
-                    {/* Pricing & Stock */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Pricing */}
+                    <div className="grid grid-cols-1 gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-bold text-[#0d141b] dark:text-white">Price ($)</label>
                             <input
@@ -230,17 +230,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 min="0" step="0.01"
                                 value={formData.price}
                                 onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                                className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-bold text-[#0d141b] dark:text-white">Stock</label>
-                            <input
-                                required
-                                type="number"
-                                min="0"
-                                value={formData.stock}
-                                onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
                                 className="w-full px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
                             />
                         </div>
