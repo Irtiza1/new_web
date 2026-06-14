@@ -45,8 +45,10 @@ function LoginContent() {
         }
 
         setAuthCookie(data.session.access_token);
-        router.replace(redirectTo);
-        router.refresh();
+        
+        // Use a hard redirect so the browser tab shows a loading spinner,
+        // preventing the UI from looking 'stuck' while the dev server compiles the next page.
+        window.location.href = redirectTo;
     };
 
     const handleGoogleSignIn = async () => {

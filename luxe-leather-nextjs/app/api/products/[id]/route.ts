@@ -42,11 +42,15 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Pro
     const body = await req.json();
     const updates = updateProductSchema.parse(body);
 
-    // Map images to image
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Map the first image to the main `image` column for legacy support,
+    // but ensure the entire `images` array is also saved to the database.
     const updateData: any = { ...updates };
     if (updates.images && updates.images.length > 0) {
         updateData.image = updates.images[0];
+        updateData.images = updates.images;
+    } else if (updates.images && updates.images.length === 0) {
+        updateData.image = '';
+        updateData.images = [];
     }
 
     const product = await productService.update(id, updateData);

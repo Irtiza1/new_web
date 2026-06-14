@@ -92,6 +92,7 @@ export const create = async (productData: Partial<Product> & Record<string, unkn
         stock: productData.stock ?? 0,
         category: productData.category,
         image: productData.image || (Array.isArray(productData.images) && productData.images[0]) || '',
+        images: productData.images || [],
         badge: productData.badge || null,
         rating: productData.rating ?? 0,
         reviews: productData.reviews ?? 0,

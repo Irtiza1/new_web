@@ -9,6 +9,7 @@
     "e2e:prepare": "node scripts/fetch_e2e_tokens.js",
     "test:e2e:ci": "npm run e2e:prepare && npm run test:e2e",
     "assets:upload-static": "node scripts/upload_static_assets_to_supabase.mjs",
+    "seed:admin": "node scripts/seed_admin.js",
     "start": "next start",
     "lint": "eslint"
   },

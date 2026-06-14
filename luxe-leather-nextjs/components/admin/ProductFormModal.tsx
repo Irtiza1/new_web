@@ -41,6 +41,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         price: 0,
         category: 'Accessories',
         image: '',
+        images: [],
         stock: 0,
         is_featured: false,
         featured_tag: null,
@@ -57,6 +58,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     price: initialData.price,
                     category: initialData.category,
                     image: initialData.image || '',
+                    images: initialData.images && initialData.images.length > 0 
+                        ? initialData.images 
+                        : (initialData.image ? [initialData.image] : []),
                     stock: initialData.stock,
                     is_featured: initialData.is_featured || false,
                     featured_tag: initialData.featured_tag || null,
@@ -69,6 +73,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     price: 0,
                     category: 'Accessories',
                     image: '',
+                    images: [],
                     stock: 0,
                     is_featured: false,
                     featured_tag: null,
@@ -113,7 +118,15 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             const data = await res.json();
             if (!data.success) throw new Error(data.message);
 
-            setFormData(prev => ({ ...prev, image: data.data.url }));
+            setFormData(prev => {
+                const newImages = [...(prev.images || []), data.data.url];
+                return { 
+                    ...prev, 
+                    images: newImages,
+                    // Optionally keep image synced to the first image for safety
+                    image: newImages[0] 
+                };
+            });
         } catch (error) {
             console.error('Upload failed:', error);
             showToast('Failed to upload image', 'error');
@@ -213,46 +226,54 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         </label>
                     </div>
 
-                    {/* Image */}
+                    {/* Image Gallery */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Product Image</label>
-                        <div className="flex gap-4 items-center">
-                            {formData.image && (
-                                <img
-                                    src={formData.image}
-                                    alt="Preview"
-                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-                                />
-                            )}
-                            <div className="flex-1 flex gap-2">
-                                <input
-                                    type="text"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="flex-1 px-4 py-2 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all"
-                                    placeholder="https://example.com/image.webp"
-                                />
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                    accept="image/*"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isUploading}
-                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center justify-center"
-                                >
-                                    {isUploading ? (
-                                        <span className="material-symbols-outlined animate-spin">refresh</span>
-                                    ) : (
-                                        <span className="material-symbols-outlined">cloud_upload</span>
+                        <label className="text-sm font-bold text-[#0d141b] dark:text-white">Product Images</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {(formData.images || []).map((img, idx) => (
+                                <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 aspect-square">
+                                    <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            const newImages = [...(formData.images || [])];
+                                            newImages.splice(idx, 1);
+                                            setFormData({ ...formData, images: newImages, image: newImages[0] || '' });
+                                        }}
+                                        className="absolute top-2 right-2 bg-black/50 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">close</span>
+                                    </button>
+                                    {idx === 0 && (
+                                        <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] font-bold text-center py-1">
+                                            PRIMARY
+                                        </span>
                                     )}
-                                </button>
+                                </div>
+                            ))}
+                            {/* Upload Button Box */}
+                            <div 
+                                onClick={() => !isUploading && fileInputRef.current?.click()}
+                                className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#d41132] hover:bg-red-50 dark:hover:bg-[#d41132]/10 transition-colors aspect-square ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {isUploading ? (
+                                    <span className="material-symbols-outlined animate-spin text-gray-400">refresh</span>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-gray-400 mb-1">add_photo_alternate</span>
+                                        <span className="text-xs text-gray-500 font-medium text-center px-2">Upload Image</span>
+                                    </>
+                                )}
                             </div>
                         </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            accept="image/*"
+                        />
+                        {/* </div> removed here to keep featured toggle inside the wrapper */}
 
                         <div className="flex items-center mt-2">
                             <label className="flex items-center gap-3 cursor-pointer">

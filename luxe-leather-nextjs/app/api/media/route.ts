@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const BUCKET = 'media';
-const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
 
 function safeFolderName(value: FormDataEntryValue | null): string {
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     }
 
     if (file.size > MAX_UPLOAD_BYTES) {
-        return NextResponse.json({ success: false, message: 'Image must be smaller than 6MB' }, { status: 400 });
+        return NextResponse.json({ success: false, message: 'Image must be smaller than 20MB' }, { status: 400 });
     }
 
     const folderName = safeFolderName(formData.get('bucket'));
