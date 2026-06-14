@@ -22,6 +22,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
     const [categories, setCategories] = useState<string[]>([
         'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'
     ]);
+    const [sizesInput, setSizesInput] = useState('');
 
     useEffect(() => {
         setMounted(true);
@@ -43,6 +44,11 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         image: '',
         images: [],
         stock: 0,
+        sizes: [],
+        specs: [],
+        colors: [],
+        allow_custom_sizing: false,
+        custom_sizing_price: 0,
         is_featured: false,
         featured_tag: null,
         isActive: true,
@@ -62,10 +68,16 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         ? initialData.images 
                         : (initialData.image ? [initialData.image] : []),
                     stock: initialData.stock,
+                    sizes: initialData.sizes || [],
+                    specs: initialData.specs || [],
+                    colors: initialData.colors || [],
+                    allow_custom_sizing: initialData.allow_custom_sizing || false,
+                    custom_sizing_price: initialData.custom_sizing_price || 0,
                     is_featured: initialData.is_featured || false,
                     featured_tag: initialData.featured_tag || null,
                     isActive: initialData.isActive !== undefined ? initialData.isActive : true,
                 });
+                setSizesInput((initialData.sizes || []).join(', '));
             } else {
                 setFormData({
                     name: '',
@@ -75,10 +87,16 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     image: '',
                     images: [],
                     stock: 0,
+                    sizes: [],
+                    specs: [],
+                    colors: [],
+                    allow_custom_sizing: false,
+                    custom_sizing_price: 0,
                     is_featured: false,
                     featured_tag: null,
                     isActive: true,
                 });
+                setSizesInput('');
             }
         }
     }, [isOpen, initialData]);
@@ -87,7 +105,11 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         e.preventDefault();
         setIsLoading(true);
         try {
-            await onSubmit(formData);
+            const finalData = {
+                ...formData,
+                sizes: sizesInput.split(',').map(s => s.trim()).filter(Boolean)
+            };
+            await onSubmit(finalData);
             onClose();
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -299,6 +321,84 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Dynamic Details: Sizes, Colors, Specs, Bespoke */}
+                    <div className="flex flex-col gap-6 p-5 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Storefront Details</h3>
+                        
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-bold text-[#0d141b] dark:text-white">Sizes (comma separated)</label>
+                            <input
+                                type="text"
+                                value={sizesInput}
+                                onChange={(e) => setSizesInput(e.target.value)}
+                                className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none"
+                                placeholder="e.g. S, M, L, XL"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm font-bold text-[#0d141b] dark:text-white">Colors</label>
+                                <button type="button" onClick={() => setFormData({...formData, colors: [...(formData.colors || []), {name: 'New Color', hex: '#000000'}]})} className="text-xs font-bold text-[#d41132] hover:text-[#b30f2a]">
+                                    + Add Color
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {(formData.colors || []).map((color: any, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center">
+                                        <input type="color" value={color.hex} onChange={(e) => { const newC = [...(formData.colors||[])]; newC[idx].hex = e.target.value; setFormData({...formData, colors: newC})}} className="w-10 h-10 rounded cursor-pointer border-0 p-0" />
+                                        <input type="text" value={color.name} onChange={(e) => { const newC = [...(formData.colors||[])]; newC[idx].name = e.target.value; setFormData({...formData, colors: newC})}} className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-sm" placeholder="Color Name" />
+                                        <button type="button" onClick={() => { const newC = [...(formData.colors||[])]; newC.splice(idx,1); setFormData({...formData, colors: newC})}} className="p-2 text-slate-400 hover:text-red-500">
+                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm font-bold text-[#0d141b] dark:text-white">Specifications</label>
+                                <button type="button" onClick={() => setFormData({...formData, specs: [...(formData.specs || []), {label: 'Spec', value: 'Value'}]})} className="text-xs font-bold text-[#d41132] hover:text-[#b30f2a]">
+                                    + Add Spec
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {(formData.specs || []).map((spec: any, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center">
+                                        <input type="text" value={spec.label} onChange={(e) => { const newS = [...(formData.specs||[])]; newS[idx].label = e.target.value; setFormData({...formData, specs: newS})}} className="w-1/3 px-3 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-sm" placeholder="Label (e.g. Material)" />
+                                        <input type="text" value={spec.value} onChange={(e) => { const newS = [...(formData.specs||[])]; newS[idx].value = e.target.value; setFormData({...formData, specs: newS})}} className="flex-1 px-3 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 text-sm" placeholder="Value (e.g. 100% Leather)" />
+                                        <button type="button" onClick={() => { const newS = [...(formData.specs||[])]; newS.splice(idx,1); setFormData({...formData, specs: newS})}} className="p-2 text-slate-400 hover:text-red-500">
+                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="h-px w-full bg-slate-200 dark:bg-slate-700 my-2"></div>
+                        
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Enable Bespoke / Custom Fit</h4>
+                                    <p className="text-xs text-slate-500">Allow customers to submit custom measurements.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" checked={formData.allow_custom_sizing || false} onChange={(e) => setFormData({ ...formData, allow_custom_sizing: e.target.checked })} />
+                                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
+                                </label>
+                            </div>
+                            
+                            {formData.allow_custom_sizing && (
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Bespoke Price ($)</label>
+                                    <input type="number" min="0" step="0.01" value={formData.custom_sizing_price || 0} onChange={(e) => setFormData({ ...formData, custom_sizing_price: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none" />
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Description */}

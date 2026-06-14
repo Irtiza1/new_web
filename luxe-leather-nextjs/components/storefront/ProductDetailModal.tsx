@@ -37,7 +37,7 @@ interface ProductDetailModalProps {
     product: ShopProduct | null;
 }
 
-const defaultColors = [
+const fallbackColors = [
     { name: "Saddle Tan", color: "#A0522D" },
     { name: "Espresso", color: "#3D2B1F" },
     { name: "Nero", color: "#000000" },
@@ -124,21 +124,27 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     const productDescription = product.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
-    const displayPrice = isCustomSize ? (product.customSizingPrice || product.price + 50) : product.price;
+    const displayPrice = isCustomSize ? (product.custom_sizing_price || product.customSizingPrice || product.price + 50) : product.price;
+
+    const productColors = (product.colors && product.colors.length > 0) ? product.colors.map((c: any) => ({ name: c.name, color: c.hex || c.color })) : fallbackColors;
+    const allowCustomSizing = product.allow_custom_sizing ?? true; // Defaults to true if legacy, or false based on db? let's default to true for existing storefront compatibility
+
+    const defaultSpecs = [
+        { label: 'Material', value: '100% Full-Grain Leather' },
+        { label: 'Artisanship', value: 'Master Hand-Stitched' },
+        { label: 'Hardware', value: 'Solid Brass / YKK Japan' },
+        { label: 'Tanning', value: 'Eco-Vegetable Tanned' },
+        { label: 'Thread', value: 'Nylon Bonded' },
+        { label: 'Origin', value: 'Artisan Workshop' }
+    ];
+    const productSpecs = (product.specs && product.specs.length > 0) ? product.specs : defaultSpecs;
 
     const renderTabContent = () => {
         switch (activeTab) {
             case 'specs':
                 return (
                     <div className="grid grid-cols-2 gap-y-5 gap-x-8">
-                        {[
-                            { label: 'Material', value: '100% Full-Grain Leather' },
-                            { label: 'Artisanship', value: 'Master Hand-Stitched' },
-                            { label: 'Hardware', value: 'Solid Brass / YKK Japan' },
-                            { label: 'Tanning', value: 'Eco-Vegetable Tanned' },
-                            { label: 'Thread', value: 'Nylon Bonded' },
-                            { label: 'Origin', value: 'Artisan Workshop' }
-                        ].map((spec, i) => (
+                        {productSpecs.map((spec: any, i: number) => (
                             <div key={i} className="flex flex-col gap-1 border-l-2 border-[#c27a2a]/20 pl-3">
                                 <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">{spec.label}</span>
                                 <span className="text-[#1c140d] dark:text-white font-medium text-sm">{spec.value}</span>
@@ -219,8 +225,8 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
 
     const handleAddToCart = () => {
         const variant = isCustomSize
-            ? `Custom Size: ${Object.entries(customMeasurements).map(([k, v]) => `${k}: ${v}`).join(', ')}, Color: ${defaultColors[selectedColor].name}`
-            : `Size: ${productSizes[selectedSize]}, Color: ${defaultColors[selectedColor].name}`;
+            ? `Custom Size: ${Object.entries(customMeasurements).map(([k, v]) => `${k}: ${v}`).join(', ')}, Color: ${productColors[selectedColor]?.name || ''}`
+            : `Size: ${productSizes[selectedSize]}, Color: ${productColors[selectedColor]?.name || ''}`;
 
         addToCart({
             id: String(product.id),
@@ -259,15 +265,15 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         <div
                             className="absolute inset-0 pointer-events-none transition-opacity duration-500"
                             style={{
-                                backgroundColor: defaultColors[selectedColor].color,
+                                backgroundColor: productColors[selectedColor]?.color,
                                 opacity: selectedColor === 0 ? 0 : 0.12,
                                 mixBlendMode: 'multiply'
                             }}
                         />
                         {/* Color name badge */}
                         <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full border border-white/50 flex-shrink-0" style={{ backgroundColor: defaultColors[selectedColor].color }} />
-                            <span className="text-white">{defaultColors[selectedColor].name}</span>
+                            <div className="w-3 h-3 rounded-full border border-white/50 flex-shrink-0" style={{ backgroundColor: productColors[selectedColor]?.color }} />
+                            <span className="text-white">{productColors[selectedColor]?.name}</span>
                         </div>
                         {product.badge && (
                             <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase text-[#c27a2a] shadow-sm">
@@ -335,30 +341,32 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                     </div>
 
                     {/* Custom Sizing Toggle */}
-                    <div className="bg-[#f0efe8]/50 dark:bg-white/5 p-4 rounded-xl border border-dashed border-[#c27a2a]/30 mb-8">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-[#c27a2a]">architecture</span>
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-tight">Need a custom fit?</p>
-                                    <p className="text-[10px] text-gray-500">Provide your exact measurements.</p>
+                    {allowCustomSizing && (
+                        <div className="bg-[#f0efe8]/50 dark:bg-white/5 p-4 rounded-xl border border-dashed border-[#c27a2a]/30 mb-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-[#c27a2a]">architecture</span>
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-tight">Need a custom fit?</p>
+                                        <p className="text-[10px] text-gray-500">Provide your exact measurements.</p>
+                                    </div>
                                 </div>
+                                <button
+                                    onClick={() => setIsCustomSize(!isCustomSize)}
+                                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isCustomSize ? 'bg-[#c27a2a] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-[#c27a2a]'}`}
+                                >
+                                    {isCustomSize ? 'Use Regular' : 'Enable Bespoke'}
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setIsCustomSize(!isCustomSize)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isCustomSize ? 'bg-[#c27a2a] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-[#c27a2a]'}`}
-                            >
-                                {isCustomSize ? 'Use Regular' : 'Enable Bespoke'}
-                            </button>
                         </div>
-                    </div>
+                    )}
 
                     <div className="flex flex-col gap-8 flex-1">
                         {/* Colors */}
                         <div className="space-y-3">
-                            <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#c27a2a] normal-case font-normal ml-1">{defaultColors[selectedColor].name}</span></span>
+                            <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#c27a2a] normal-case font-normal ml-1">{productColors[selectedColor]?.name}</span></span>
                             <div className="flex gap-3">
-                                {defaultColors.map((c, i) => (
+                                {productColors.map((c: any, i: number) => (
                                     <label key={i} className="relative cursor-pointer group">
                                         <input
                                             type="radio"

@@ -28,7 +28,11 @@ export type Product = {
     rating?: number;
     reviews?: number;
     salesCount?: number; // For sorting by popularity
+    specs?: { label: string; value: string }[];
+    colors?: { name: string; hex: string }[];
+    allow_custom_sizing?: boolean;
     customSizingPrice?: number; // Base price for custom sizing
+    custom_sizing_price?: number; // alias for db column
     isActive: boolean; // Soft delete flag — false = archived/hidden from storefront
     is_featured?: boolean; // Front-end toggle for featured products
     featured_tag?: string | null;
@@ -83,6 +87,7 @@ export type OrderItem = {
     product_id: string;
     quantity: number;
     price: number;
+    variant?: string;
     color?: string;
     size?: string;
 };

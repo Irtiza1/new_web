@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { createOrderNumber } from '@/lib/utils/orderNumber';
 
 interface OrderSummary {
     id: string;
@@ -112,7 +113,7 @@ function OrderSuccessContent() {
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 space-y-3 border border-slate-200 dark:border-slate-700">
                     <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Order ID</span>
-                        <span className="font-mono font-bold text-slate-900 dark:text-white">#{order.id.slice(-8).toUpperCase()}</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white">{createOrderNumber(new Date(), order.id)}</span>
                     </div>
                     {order.total > 0 && (
                         <>

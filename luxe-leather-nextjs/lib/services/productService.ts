@@ -97,6 +97,10 @@ export const create = async (productData: Partial<Product> & Record<string, unkn
         rating: productData.rating ?? 0,
         reviews: productData.reviews ?? 0,
         sizes: productData.sizes || [],
+        specs: productData.specs || [],
+        colors: productData.colors || [],
+        allow_custom_sizing: productData.allow_custom_sizing || false,
+        custom_sizing_price: productData.custom_sizing_price || 0,
     };
 
     const { data, error } = await supabase

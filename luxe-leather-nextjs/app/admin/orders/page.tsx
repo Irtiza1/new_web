@@ -672,6 +672,12 @@ export default function AdminOrdersPage() {
                                                                     {item.size && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded font-medium">Size: {item.size}</span>}
                                                                     {item.color && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded font-medium">Color: {item.color}</span>}
                                                                 </div>
+                                                                {item.variant && (
+                                                                    <div className="mt-1 flex gap-1 items-start flex-wrap">
+                                                                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">Bespoke / Custom Size</span>
+                                                                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{item.variant.replace('Custom Size:', '')}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <div className="text-right shrink-0">
