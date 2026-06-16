@@ -60,7 +60,11 @@ export function getAccessTokenFromRequest(req: NextRequest): string | null {
 
     const explicitToken = req.cookies.get('sb-access-token')?.value;
     if (explicitToken) {
-        return explicitToken;
+        try {
+            return decodeURIComponent(explicitToken);
+        } catch {
+            return explicitToken;
+        }
     }
 
     for (const cookie of req.cookies.getAll()) {
@@ -107,16 +111,19 @@ async function roleFromDatabase(userId: string): Promise<Role | null> {
 export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
     const token = getAccessTokenFromRequest(req);
     if (!token) {
+        console.error('getAuthUser: No token found in request');
         return null;
     }
 
     const client = createAuthClient();
     if (!client) {
+        console.error('getAuthUser: Failed to create Auth Client (Missing env vars?)');
         return null;
     }
 
     const { data, error } = await client.auth.getUser(token);
     if (error || !data.user) {
+        console.error('getAuthUser: Supabase getUser failed', error?.message || 'No user returned');
         return null;
     }
 
