@@ -243,27 +243,21 @@ function ShopContent() {
                                                 {product.badge}
                                             </span>
                                         )}
-                                        {product.stock !== undefined && product.stock === 0 ? (
-                                            <span className="absolute bottom-4 right-4 bg-white text-red-500 font-bold text-[10px] uppercase tracking-widest px-3 py-2 rounded shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                                                Out of Stock
-                                            </span>
-                                        ) : (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    addToCart({
-                                                        id: String(product.id),
-                                                        name: product.name,
-                                                        price: product.price,
-                                                        image: getProductImage(product),
-                                                        variant: product.sizes ? `Size: ${product.sizes[0]}` : 'Standard'
-                                                    });
-                                                }}
-                                                className="absolute bottom-4 right-4 bg-white text-[#0e121b] p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#0e121b] hover:text-white"
-                                            >
-                                                <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                addToCart({
+                                                    id: String(product.id),
+                                                    name: product.name,
+                                                    price: product.price,
+                                                    image: getProductImage(product),
+                                                    variant: product.sizes ? `Size: ${product.sizes[0]}` : 'Standard'
+                                                });
+                                            }}
+                                            className="absolute bottom-4 right-4 bg-white text-[#0e121b] p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#0e121b] hover:text-white"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
+                                        </button>
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-lg group-hover:text-[#4e6797] transition-colors">{product.name}</h3>
@@ -277,9 +271,7 @@ function ShopContent() {
                                         <div className="flex items-center gap-2 mt-2">
                                             <p className="font-bold text-[#c27a2a] uppercase tracking-widest text-[11px]">${Number(product.price || 0).toFixed(2)}</p>
                                         </div>
-                                        {product.stock !== undefined && product.stock === 0 && (
-                                            <p className="text-xs text-red-500 font-medium mt-1">Out of stock</p>
-                                        )}
+
                                     </div>
                                 </div>
                             ))

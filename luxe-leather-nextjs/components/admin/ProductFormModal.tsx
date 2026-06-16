@@ -94,7 +94,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     name: '',
                     description: '',
                     price: 0,
-                    category: 'Accessories',
+                    category: categories.length > 0 ? categories[0] : 'Accessories',
                     image: '',
                     images: [],
                     stock: 0,
@@ -115,7 +115,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                 setSizesInput('');
             }
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, categories]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -145,7 +145,10 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             formDataUpload.append('file', file);
             formDataUpload.append('bucket', 'product-images');
             
-            const customName = `${formData.category || 'item'}-${formData.name || 'product'}`;
+            const imageCount = (formData.images || []).length + 1;
+            const designation = imageCount === 1 ? 'primary' : 'secondary';
+            const paddedCount = imageCount.toString().padStart(2, '0');
+            const customName = `${formData.name || 'product'}-${designation}-${paddedCount}`;
             formDataUpload.append('customName', customName);
 
             const res = await fetch('/api/media', {
