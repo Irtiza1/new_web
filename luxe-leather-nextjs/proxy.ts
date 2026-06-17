@@ -125,12 +125,14 @@ export async function proxy(req: NextRequest) {
     }
 
     const user = await getAuthUser(req);
-    if (!user) {
-        console.error('proxy.ts: Authentication failed. Redirecting to login. URL:', req.nextUrl.pathname);
+    if (!user || typeof user === 'string') {
+        const errorReason = typeof user === 'string' ? user : 'unknown_error';
+        console.error('proxy.ts: Authentication failed. Redirecting to login. Reason:', errorReason);
         if (req.nextUrl.pathname.startsWith('/admin')) {
             const loginUrl = req.nextUrl.clone();
             loginUrl.pathname = '/login';
             loginUrl.searchParams.set('redirectTo', req.nextUrl.pathname + req.nextUrl.search);
+            loginUrl.searchParams.set('authError', errorReason);
             return NextResponse.redirect(loginUrl);
         }
 

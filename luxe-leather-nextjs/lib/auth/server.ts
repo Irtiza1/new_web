@@ -108,23 +108,23 @@ async function roleFromDatabase(userId: string): Promise<Role | null> {
     return data.role;
 }
 
-export async function getAuthUser(req: NextRequest): Promise<AuthUser | null> {
+export async function getAuthUser(req: NextRequest): Promise<AuthUser | string | null> {
     const token = getAccessTokenFromRequest(req);
     if (!token) {
         console.error('getAuthUser: No token found in request');
-        return null;
+        return 'no_token_found';
     }
 
     const client = createAuthClient();
     if (!client) {
         console.error('getAuthUser: Failed to create Auth Client (Missing env vars?)');
-        return null;
+        return 'missing_env_vars';
     }
 
     const { data, error } = await client.auth.getUser(token);
     if (error || !data.user) {
         console.error('getAuthUser: Supabase getUser failed', error?.message || 'No user returned');
-        return null;
+        return `supabase_error_${error?.message || 'no_user'}`;
     }
 
     const role = (await roleFromDatabase(data.user.id)) ?? roleFromUserMetadata(data.user);
