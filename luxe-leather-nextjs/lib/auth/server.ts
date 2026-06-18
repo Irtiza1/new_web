@@ -139,7 +139,7 @@ export async function getAuthUser(req: NextRequest): Promise<AuthUser | string |
 
 export async function requirePermission(req: NextRequest, permission: Permission): Promise<AuthUser> {
     const user = await getAuthUser(req);
-    if (!user) {
+    if (!user || typeof user === 'string') {
         throw new Response('Unauthorized', { status: 401 });
     }
 

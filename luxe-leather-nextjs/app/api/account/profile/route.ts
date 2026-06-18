@@ -49,7 +49,7 @@ function normalizePatch(data: z.infer<typeof profileUpdateSchema>): Partial<User
 
 export const GET = apiHandler(async (req: NextRequest) => {
     const user = await getAuthUser(req);
-    if (!user) {
+    if (!user || typeof user === 'string') {
         throw new Response('Unauthorized', { status: 401 });
     }
 
@@ -65,7 +65,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
 
 export const PUT = apiHandler(async (req: NextRequest) => {
     const user = await getAuthUser(req);
-    if (!user) {
+    if (!user || typeof user === 'string') {
         throw new Response('Unauthorized', { status: 401 });
     }
 
