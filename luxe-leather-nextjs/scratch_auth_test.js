@@ -19,11 +19,19 @@ async function testAuth() {
 
     console.log('Logged in successfully. Access token:', data.session.access_token.slice(0, 20) + '...');
 
-    console.log('Fetching /admin from https://luxe-leather.vercel.app/admin...');
-    const res = await fetch('https://luxe-leather.vercel.app/admin', {
+    console.log('Fetching POST /api/products from https://luxe-leather.vercel.app/api/products...');
+    const res = await fetch('https://luxe-leather.vercel.app/api/products', {
+        method: 'POST',
         headers: {
+            'Content-Type': 'application/json',
             'Cookie': `sb-access-token=${encodeURIComponent(data.session.access_token)}`
         },
+        body: JSON.stringify({
+            name: "Test",
+            price: 10,
+            stock: 10,
+            category: "Jackets"
+        }),
         redirect: 'manual'
     });
 

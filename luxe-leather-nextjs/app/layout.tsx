@@ -9,6 +9,7 @@ import GlobalCart from "@/components/storefront/GlobalCart";
 import BackToTop from "@/components/ui/BackToTop";
 import { Suspense } from 'react';
 import TrafficTracker from '@/components/storefront/TrafficTracker';
+import { AuthProvider } from '@/contexts/AuthProvider';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -72,16 +73,18 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className={`${inter.variable} ${manrope.variable} ${playfair.variable} antialiased`}>
-        <ThemeProvider>
-          <CartProvider>
-            {children}
-            <GlobalCart />
-            <BackToTop />
-            <Suspense fallback={null}>
-              <TrafficTracker />
-            </Suspense>
-          </CartProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <CartProvider>
+              {children}
+              <GlobalCart />
+              <BackToTop />
+              <Suspense fallback={null}>
+                <TrafficTracker />
+              </Suspense>
+            </CartProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

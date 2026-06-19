@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Product } from '@/lib/supabase';
 import { useToast } from '@/contexts/ToastContext';
-import { getAuthHeader } from '@/lib/auth/client';
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -152,10 +151,8 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
             const customName = `${formData.name || 'product'}-${designation}-${paddedCount}`;
             formDataUpload.append('customName', customName);
 
-            const authHeader = await getAuthHeader();
             const res = await fetch('/api/media', {
                 method: 'POST',
-                headers: authHeader,
                 body: formDataUpload,
             });
 
