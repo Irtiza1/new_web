@@ -30,28 +30,8 @@ export default function TrafficTracker() {
         return { deviceType, os, browser };
     };
 
-    // Helper: Fetch location securely and cache it in localStorage to avoid rate-limiting
-    const fetchGeo = async () => {
-        try {
-            const cachedGeo = localStorage.getItem('visitor_geo');
-            if (cachedGeo) return JSON.parse(cachedGeo);
-
-            // ipapi.co is free for basic client-side rate-limits
-            const res = await fetch('https://ipapi.co/json/');
-            const data = await res.json();
-            
-            const geo = {
-                country: data.country_name || 'Unknown',
-                region: data.region || 'Unknown',
-                city: data.city || 'Unknown'
-            };
-            
-            localStorage.setItem('visitor_geo', JSON.stringify(geo));
-            return geo;
-        } catch {
-            return { country: 'Unknown', region: 'Unknown', city: 'Unknown' };
-        }
-    };
+    // We no longer fetch geolocation on the client to avoid CORS issues and adblockers.
+    // Instead, the backend reads Vercel edge headers (x-vercel-ip-country, etc).
 
     const sendEvent = useCallback(async (eventType: string, metadata?: Record<string, unknown>) => {
         try {
@@ -61,7 +41,6 @@ export default function TrafficTracker() {
                 sessionStorage.setItem('analytics_session_id', sessionId);
             }
 
-            const geo = await fetchGeo();
             const { deviceType, os, browser } = parseUserAgent(navigator.userAgent);
             const path = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
 
@@ -73,9 +52,9 @@ export default function TrafficTracker() {
                     path,
                     referrer: document.referrer || 'Direct',
                     sessionId,
-                    country: geo.country,
-                    region: geo.region,
-                    city: geo.city,
+                    country: undefined,
+                    region: undefined,
+                    city: undefined,
                     deviceType,
                     os,
                     browser,

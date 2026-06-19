@@ -24,6 +24,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Path and Session ID are required' }, { status: 400 });
         }
 
+        // Use Vercel's edge network geolocation headers if available, otherwise fallback to payload
+        const finalCountry = req.headers.get('x-vercel-ip-country') || country || 'Unknown';
+        const finalRegion = req.headers.get('x-vercel-ip-country-region') || region || 'Unknown';
+        const finalCity = req.headers.get('x-vercel-ip-city') ? decodeURIComponent(req.headers.get('x-vercel-ip-city')!) : (city || 'Unknown');
+
         const { error } = await supabaseAdmin
             .from('traffic_events')
             .insert([{
@@ -31,9 +36,9 @@ export async function POST(req: NextRequest) {
                 path,
                 referrer: referrer || null,
                 session_id: sessionId,
-                country: country || null,
-                region: region || null,
-                city: city || null,
+                country: finalCountry,
+                region: finalRegion,
+                city: finalCity,
                 device_type: deviceType || null,
                 os: os || null,
                 browser: browser || null,
