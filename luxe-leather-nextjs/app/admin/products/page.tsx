@@ -18,6 +18,7 @@ interface ExtendedProduct extends Product {
 import ProductFormModal, { pProduct } from '@/components/admin/ProductFormModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
+import { getAuthHeader } from '@/lib/auth/client';
 
 export default function AdminProductsPage() {
     const { showToast } = useToast();
@@ -132,9 +133,10 @@ export default function AdminProductsPage() {
 
     const handleCreateProduct = async (productData: pProduct) => {
         try {
+            const authHeader = await getAuthHeader();
             const res = await fetch('/api/products', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader },
                 body: JSON.stringify(productData),
             });
 
@@ -151,9 +153,10 @@ export default function AdminProductsPage() {
     const handleUpdateProduct = async (productData: pProduct) => {
         if (!editingProduct) return;
         try {
+            const authHeader = await getAuthHeader();
             const res = await fetch(`/api/products/${editingProduct.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader },
                 body: JSON.stringify(productData),
             });
 
@@ -180,7 +183,8 @@ export default function AdminProductsPage() {
             message: `Are you sure you want to delete "${product.name}"? If this product has order history, it will be archived (hidden from storefront) instead of permanently deleted.`,
             onConfirm: async () => {
                 try {
-                    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                    const authHeader = await getAuthHeader();
+                    const res = await fetch(`/api/products/${id}`, { method: 'DELETE', headers: authHeader });
                     const result = await res.json();
 
                     if (!res.ok) throw new Error(result.message || 'Failed to delete product');
@@ -215,7 +219,8 @@ export default function AdminProductsPage() {
     const handleArchiveProduct = async (id: string) => {
         const product = products.find(p => p.id === id);
         try {
-            const res = await fetch(`/api/products/${id}?action=archive`, { method: 'PATCH' });
+            const authHeader = await getAuthHeader();
+            const res = await fetch(`/api/products/${id}?action=archive`, { method: 'PATCH', headers: authHeader });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             showToast(`"${product?.name}" archived and hidden from storefront.`, 'success');
@@ -229,7 +234,8 @@ export default function AdminProductsPage() {
     const handleRestoreProduct = async (id: string) => {
         const product = products.find(p => p.id === id);
         try {
-            const res = await fetch(`/api/products/${id}?action=restore`, { method: 'PATCH' });
+            const authHeader = await getAuthHeader();
+            const res = await fetch(`/api/products/${id}?action=restore`, { method: 'PATCH', headers: authHeader });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
             showToast(`"${product?.name}" restored and is now visible on the storefront.`, 'success');
@@ -256,9 +262,10 @@ export default function AdminProductsPage() {
                 let failCount = 0;
 
                 try {
+                    const authHeader = await getAuthHeader();
                     await Promise.all(idsToDelete.map(async (id) => {
                         try {
-                            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                            const res = await fetch(`/api/products/${id}`, { method: 'DELETE', headers: authHeader });
                             const result = await res.json();
                             
                             if (res.ok) {
