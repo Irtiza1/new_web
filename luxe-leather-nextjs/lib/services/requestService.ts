@@ -224,7 +224,7 @@ export const remove = async (id: string) => {
         }
     }
 
-    await auditLog('custom_requests', id, 'DELETE', { action: 'hard_delete' });
+    await auditLog('custom_requests', id, 'DELETE', { status: { from: 'active', to: 'deleted' } });
     return { success: true };
 };
 
