@@ -18,9 +18,9 @@ export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete
     const location = [customer.city, customer.country].filter(Boolean).join(', ');
 
     return (
-        <div className="fixed inset-0 z-[110] flex justify-end">
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-            <aside className="relative h-full w-full sm:w-[500px] bg-white dark:bg-[#1a2632] shadow-2xl border-l border-slate-200 dark:border-slate-700 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <aside className="relative w-full max-w-lg max-h-[90vh] bg-white dark:bg-[#1a2632] shadow-2xl rounded-2xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                     <div className="flex items-center gap-3">
