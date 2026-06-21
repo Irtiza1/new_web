@@ -201,9 +201,9 @@ export default function ShippingPage() {
 
                             <div className="mt-10 p-6 bg-[#f0efe8]/50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-[#c27a2a]/20 text-center">
                                 <p className="text-xs font-bold text-gray-500 mb-4 italic">Require a custom measurement not listed above?</p>
-                                <a href="/bespoke" className="inline-flex items-center gap-3 bg-[#1c140d] text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#c27a2a] transition-all shadow-xl shadow-black/10">
-                                    Commission Bespoke
-                                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                <a href="/custom-orders" className="inline-flex items-center gap-3 bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-black/10">
+                                    Custom Orders
+                                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                 </a>
                             </div>
                         </div>

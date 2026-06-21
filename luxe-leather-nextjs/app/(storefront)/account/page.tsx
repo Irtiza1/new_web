@@ -235,8 +235,12 @@ export default function AccountPage() {
                                 <Link href="/shop" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold">
                                     Shop collection <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                 </Link>
-                                <Link href="/bespoke" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold">
-                                    Bespoke request <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                <Link href="/custom-orders" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold hover:border-[#1A1A1A] dark:hover:border-white transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-slate-400">design_services</span>
+                                        Custom Orders
+                                    </div>
+                                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                 </Link>
                                 <button onClick={handleLogout} className="w-full flex items-center justify-between rounded-lg border border-red-200 px-4 py-3 font-bold text-red-600">
                                     Sign out <span className="material-symbols-outlined text-sm">logout</span>

@@ -3,7 +3,7 @@ export const STATIC_ASSET_DEFAULTS = {
     login_hero_image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=1600&auto=format&fit=crop',
     signup_hero_image: 'https://images.unsplash.com/photo-1511401139252-f158d3209c17?q=80&w=1200&auto=format&fit=crop',
     shipping_hero_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
-    bespoke_hero_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
+    bespoke_hero_image: '/images/custom_orders_hero.png',
     product_fallback_image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=2000&auto=format&fit=crop',
     featured_product_fallback_image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5',
     story_sourcing_image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAjtiaK7tCTCU__1xs3wJGwKj_sMvqRg5QZYSoAKgVnyyZYQDJUGSucijpU1yyJALdEXJ7LFMZxc2qlRAIVeNwx93vd6hfH3ngg55FVqEOxqIRYDOgmWFmcDroHpKwbMWhvmi_la6X-edUHtAktxcPLP9RJictqlMGiNgbnhVC73l1Kt_SXE_4OOLfRt0BXZ1Jwuf05bGRKxqUd7zaiZ7Q-koaaH0UOdd6ektH4dnSQrs8cPllyn2adV5uqsg9jcKUlyD2I_HG-aoWO',

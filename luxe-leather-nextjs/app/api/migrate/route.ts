@@ -67,7 +67,7 @@ export async function GET() {
         `INSERT INTO nav_items (label, url, display_order, is_visible) 
         SELECT * FROM (VALUES
             ('Shop', '/shop', 1, true),
-            ('Bespoke', '/bespoke', 2, true),
+            ('Custom Orders', '/custom-orders', 2, true),
             ('Shipping & Sizing', '/shipping', 3, true),
             ('Our Story', '/story', 4, true),
             ('Contact', '/contact', 5, true)

@@ -50,6 +50,6 @@ export const STOREFRONT_NAV_ITEMS = [
     { name: 'Shop', path: '/shop' },
     { name: 'Shipping', path: '/shipping' },
     { name: 'Our Story', path: '/our-story' },
-    { name: 'Bespoke', path: '/bespoke' },
+    { name: 'Custom Orders', path: '/custom-orders' },
     { name: 'Contact', path: '/contact' },
 ];

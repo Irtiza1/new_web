@@ -98,8 +98,8 @@ export default async function HomePage() {
               <Link href="/shop" className="bg-[#d41132] hover:bg-[#d41132]/90 text-white px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all transform hover:scale-105 shadow-lg shadow-[#d41132]/30">
                 {cmsContent.home_hero_cta || "Shop Collection"}
               </Link>
-              <Link href="/bespoke" className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
-                Explore Custom
+              <Link href="/custom-orders" className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
+                CUSTOM ORDERS
               </Link>
             </div>
           </div>

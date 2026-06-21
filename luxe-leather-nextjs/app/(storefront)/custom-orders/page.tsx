@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { contentService } from '@/lib/services/contentService';
 import { STATIC_ASSET_DEFAULTS } from '@/lib/staticAssets';
 
-export default function BespokePage() {
+export default function CustomOrdersPage() {
     const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileName, setFileName] = useState<string | null>(null);
@@ -106,20 +106,20 @@ export default function BespokePage() {
 
             {/* Hero Section */}
             <div className="relative w-full h-[60vh] flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-[#1a130e]">
+                <div className="absolute inset-0 bg-white">
                     <img
                         src={heroImage}
-                        className="w-full h-full object-cover opacity-40 grayscale"
+                        className="w-full h-full object-cover"
                         alt="Artisan at work"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#1a130e]/80 via-transparent to-[#FDFDFB] dark:to-[#120d09]"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent"></div>
                 </div>
                 <div className="relative max-w-[1000px] mx-auto text-center px-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                    <span className="text-[#c27a2a] text-xs font-black uppercase tracking-[0.4em] mb-4 block">Tailored Excellence</span>
-                    <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-tight mb-6">
-                        {cmsContent.bespoke_hero_title || "Bespoke Artistry"}
+                    <span className="text-slate-900 text-xs font-black uppercase tracking-[0.4em] mb-4 block">Tailored Excellence</span>
+                    <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-tight mb-6">
+                        {cmsContent.bespoke_hero_title || "Custom Orders"}
                     </h1>
-                    <p className="text-lg md:text-xl text-gray-300 font-medium max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-lg md:text-xl text-slate-700 font-medium max-w-2xl mx-auto leading-relaxed">
                         {cmsContent.bespoke_hero_subtitle || "Beyond the collection lies a world of pure imagination. Collaborate with our master artisans to create a legacy piece uniquely yours."}
                     </p>
                 </div>
@@ -129,10 +129,10 @@ export default function BespokePage() {
                 <div className="w-full max-w-[1200px] px-4 md:px-8 flex flex-col gap-24">
 
                     {/* Process Flow */}
-                    <section className="bg-white dark:bg-[#1a130e] p-8 md:p-16 rounded-[40px] shadow-2xl shadow-black/5 border border-gray-100 dark:border-white/5">
+                    <section className="bg-white dark:bg-[#1A1A1A] p-8 md:p-16 rounded-[40px] shadow-sm border border-slate-200 dark:border-white/10">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold text-[#1c140d] dark:text-white tracking-tight mb-4">The Artisan Journey</h2>
-                            <p className="text-gray-500 max-w-lg mx-auto italic font-medium">Four chapters from your vision to an everlasting reality.</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">The Artisan Journey</h2>
+                            <p className="text-slate-500 max-w-lg mx-auto italic font-medium">Four chapters from your vision to an everlasting reality.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -140,14 +140,14 @@ export default function BespokePage() {
                                 { icon: 'edit_note', step: 'Conceptualize', desc: 'Detail your vision, materials, and desired functional elements.' },
                                 { icon: 'auto_awesome', step: 'Design Consult', desc: 'Receive a personalized quote and technical sketches from our team.' },
                                 { icon: 'handyman', step: 'Master Crafting', desc: 'Over 40 hours of focused hand-stitching and edge-paining by a single artisan.' },
-                                { icon: 'local_shipping', step: 'White Glove', desc: 'Insured worldwide delivery in our signature bespoke packaging.' },
+                                { icon: 'local_shipping', step: 'White Glove', desc: 'Insured worldwide delivery in our signature custom packaging.' },
                             ].map((item, i) => (
                                 <div key={i} className="flex flex-col items-center text-center group cursor-default">
-                                    <div className="w-20 h-20 rounded-full border-2 border-gray-100 dark:border-white/10 flex items-center justify-center text-[#c27a2a] mb-6 transition-all duration-500 group-hover:bg-[#c27a2a] group-hover:text-white group-hover:border-[#c27a2a] group-hover:scale-110 shadow-sm">
+                                    <div className="w-20 h-20 rounded-full border-2 border-slate-200 dark:border-white/20 flex items-center justify-center text-slate-900 dark:text-white mb-6 transition-all duration-500 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 dark:group-hover:bg-white dark:group-hover:text-black dark:group-hover:border-white group-hover:scale-110 shadow-sm">
                                         <span className="material-symbols-outlined text-3xl">{item.icon}</span>
                                     </div>
-                                    <h3 className="text-lg font-bold text-[#1c140d] dark:text-white tracking-tight mb-2">{item.step}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-medium">{item.desc}</p>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-2">{item.step}</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{item.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -156,35 +156,35 @@ export default function BespokePage() {
                     {/* Request Form */}
                     <section className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-start">
                         <div className="lg:col-span-2 sticky top-32">
-                            <h2 className="text-4xl font-bold text-[#1c140d] dark:text-white tracking-tight mb-6">Commence Your Project</h2>
-                            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg mb-8 font-medium italic">
+                            <h2 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-6">Commence Your Project</h2>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg mb-8 font-medium italic">
                                 &quot;Perfection is not a standard, it is a conversation.&quot;
                             </p>
                             <div className="space-y-6">
-                                <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
-                                    <span className="material-symbols-outlined text-[#c27a2a]">timeline</span>
+                                <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+                                    <span className="material-symbols-outlined text-slate-900 dark:text-white">timeline</span>
                                     <span className="text-xs font-semibold uppercase tracking-widest">Average Timeline: 4-6 Weeks</span>
                                 </div>
-                                <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
-                                    <span className="material-symbols-outlined text-[#c27a2a]">payments</span>
+                                <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+                                    <span className="material-symbols-outlined text-slate-900 dark:text-white">payments</span>
                                     <span className="text-xs font-semibold uppercase tracking-widest">Pricing: Starting at $450</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-3 bg-white dark:bg-[#1a130e] p-8 md:p-12 rounded-[40px] shadow-2xl shadow-black/5 border border-gray-100 dark:border-white/5">
+                        <div className="lg:col-span-3 bg-white dark:bg-[#1A1A1A] p-8 md:p-12 rounded-[40px] shadow-sm border border-slate-200 dark:border-white/10">
                             {formStatus === 'success' ? (
                                 <div className="py-20 flex flex-col items-center text-center animate-in fade-in duration-700">
                                     <div className="w-24 h-24 bg-green-50 dark:bg-green-950/20 rounded-full flex items-center justify-center text-green-600 mb-8 border border-green-100 dark:border-green-900">
                                         <span className="material-symbols-outlined text-5xl">verified</span>
                                     </div>
-                                    <h3 className="text-3xl font-bold text-[#1c140d] dark:text-white tracking-tight mb-4">Vision Received</h3>
-                                    <p className="text-gray-500 dark:text-gray-400 max-w-sm mb-10 leading-relaxed">
+                                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">Vision Received</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-10 leading-relaxed">
                                         An artisan has been notified of your project. Expect a detailed design consultation in your inbox within 24 hours.
                                     </p>
                                     <button
                                         onClick={() => setFormStatus('idle')}
-                                        className="text-[#c27a2a] text-xs font-bold uppercase tracking-widest underline underline-offset-8 decoration-2 hover:text-[#d88b3a] transition-all"
+                                        className="text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest underline underline-offset-8 decoration-2 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
                                     >
                                         Submit Another Request
                                     </button>
@@ -193,52 +193,52 @@ export default function BespokePage() {
                                 <form className="flex flex-col gap-10" onSubmit={handleSubmit}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Personal Identity <span className="text-red-500">*</span></p>
-                                            <input name="name" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white" placeholder="Full Name" type="text" />
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Personal Identity <span className="text-red-500">*</span></p>
+                                            <input name="name" required className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white" placeholder="Full Name" type="text" />
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Digital Address <span className="text-red-500">*</span></p>
-                                            <input name="email" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white" placeholder="Email@example.com" type="email" />
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Digital Address <span className="text-red-500">*</span></p>
+                                            <input name="email" required className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white" placeholder="Email@example.com" type="email" />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Object Type <span className="text-red-500">*</span></p>
-                                            <select name="item_type" required defaultValue="" className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white appearance-none cursor-pointer">
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Object Type <span className="text-red-500">*</span></p>
+                                            <select name="item_type" required defaultValue="" className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white cursor-pointer">
                                                 <option value="" disabled>Select Item Category</option>
                                                 <option value="briefcase">Luxury Briefcase</option>
                                                 <option value="duffle">Travel Duffle</option>
-                                                <option value="jacket">Bespoke Jacket</option>
+                                                <option value="jacket">Custom Jacket</option>
                                                 <option value="footwear">Custom Footwear</option>
                                                 <option value="other">Other Special Commission</option>
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Budget Range <span className="text-red-500">*</span></p>
-                                            <input name="budget_range" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white" placeholder="e.g. $500 - $1,500" type="text" />
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Budget Range <span className="text-red-500">*</span></p>
+                                            <input name="budget_range" required className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white" placeholder="e.g. $500 - $1,500" type="text" />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Primary Contact <span className="text-red-500">*</span></p>
-                                            <input name="phone" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white" placeholder="Phone Number" type="tel" />
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Primary Contact <span className="text-red-500">*</span></p>
+                                            <input name="phone" required className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white" placeholder="Phone Number" type="tel" />
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Desired Deadline <span className="text-red-500">*</span></p>
-                                            <input name="deadline" required className="w-full h-14 bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 text-lg font-bold transition-all dark:text-white" placeholder="MM/DD/YYYY" type="text" />
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Desired Deadline <span className="text-red-500">*</span></p>
+                                            <input name="deadline" required className="w-full h-14 bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 rounded-t-lg text-lg font-bold transition-all dark:text-white" placeholder="MM/DD/YYYY" type="text" />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#c27a2a]">Project Description <span className="text-red-500">*</span></p>
-                                        <textarea name="description" required className="w-full bg-gray-50 dark:bg-white/5 border-b-2 border-transparent focus:border-[#c27a2a] outline-none px-0 py-4 text-lg font-medium transition-all dark:text-white resize-none" placeholder="Describe the soul of your piece..." rows={4}></textarea>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-900 dark:text-white">Project Description <span className="text-red-500">*</span></p>
+                                        <textarea name="description" required className="w-full bg-slate-50 dark:bg-white/5 border-b-2 border-transparent focus:border-slate-900 dark:focus:border-white outline-none px-4 py-4 rounded-t-lg text-lg font-medium transition-all dark:text-white resize-none" placeholder="Describe the soul of your piece..." rows={4}></textarea>
                                     </div>
 
                                     <div className="relative group cursor-pointer" onClick={handleFileClick}>
                                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*" required name="project_image" />
-                                        <div className="h-24 border-2 border-dashed border-gray-100 dark:border-white/10 rounded-2xl flex items-center justify-center gap-4 text-gray-400 group-hover:border-[#c27a2a] transition-all">
+                                        <div className="h-24 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-2xl flex items-center justify-center gap-4 text-slate-500 dark:text-slate-400 group-hover:border-slate-900 dark:group-hover:border-white transition-all">
                                             <span className="material-symbols-outlined">{fileName ? 'check_circle' : 'add_photo_alternate'}</span>
                                             <span className="text-xs font-bold uppercase tracking-widest">
                                                 {fileName || 'Attach Sketches or Inspiration'} <span className="text-red-500">*</span>
@@ -247,12 +247,12 @@ export default function BespokePage() {
                                     </div>
 
                                     <button
-                                        className={`w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-20 rounded-2xl flex items-center justify-center gap-4 font-bold uppercase tracking-[0.1em] transition-all shadow-xl shadow-black/10 hover:-translate-y-1 active:translate-y-0 disabled:opacity-50`}
+                                        className={`w-full bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-200 dark:text-black h-20 rounded-2xl flex items-center justify-center gap-4 font-bold uppercase tracking-[0.1em] transition-all shadow-xl shadow-black/10 hover:-translate-y-1 active:translate-y-0 disabled:opacity-50`}
                                         type="submit"
                                         disabled={formStatus === 'submitting'}
                                     >
                                         {formStatus === 'submitting' ? 'Transmitting...' : (cmsContent.bespoke_cta_text || 'Initiate Commission')}
-                                        <span className="material-symbols-outlined">pentagon</span>
+                                        <span className="material-symbols-outlined">arrow_forward</span>
                                     </button>
                                 </form>
                             )}
