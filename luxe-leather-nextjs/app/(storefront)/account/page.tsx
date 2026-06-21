@@ -133,36 +133,36 @@ export default function AccountPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#19130d] dark:text-white flex flex-col">
+        <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1b0e10] dark:text-white flex flex-col font-[family-name:var(--font-manrope)]">
 
             <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-12">
                 <div className="mb-10">
-                    <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c27a2a]">Customer account</p>
-                    <h1 className="text-4xl font-black tracking-tight mt-3">Account</h1>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#cf1736]">Customer account</p>
+                    <h1 className="text-4xl font-medium tracking-tight mt-3">Account</h1>
                 </div>
 
                 {loading ? (
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 text-slate-500">Loading account...</div>
                 ) : !user ? (
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8">
-                        <h2 className="text-2xl font-black">Sign in required</h2>
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1b0e10] p-8">
+                        <h2 className="text-2xl font-medium">Sign in required</h2>
                         <p className="text-slate-500 dark:text-slate-400 mt-2">Log in to view account details and order history.</p>
-                        <Link href="/login" className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#1f1711] dark:bg-white px-5 text-sm font-black uppercase tracking-widest text-white dark:text-[#1f1711]">
+                        <Link href="/login" className="mt-6 inline-flex h-11 items-center rounded-lg bg-[#cf1736] hover:bg-[#a3122a] px-5 text-sm font-bold uppercase tracking-widest text-white transition-colors">
                             Login
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-                        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8">
+                        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1b0e10] p-8">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-black">Profile</h2>
+                                    <h2 className="text-2xl font-medium">Profile</h2>
                                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                         Keep your name and contact preferences current for orders and bespoke requests.
                                     </p>
                                 </div>
                                 <div className="rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 text-sm">
-                                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Email</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Email</p>
                                     <p className="mt-1 font-bold break-all">{user.email}</p>
                                 </div>
                             </div>
@@ -170,41 +170,41 @@ export default function AccountPage() {
                             <form onSubmit={handleSaveProfile} className="mt-8 space-y-5">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <label className="block">
-                                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Full name</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-[#1b0e10]/80 dark:text-slate-400">Full name</span>
                                         <input
                                             value={form.full_name}
                                             onChange={(event) => handleChange('full_name', event.target.value)}
-                                            className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#c27a2a]"
+                                            className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#cf1736]"
                                             placeholder="Your full name"
                                         />
                                     </label>
                                     <label className="block">
-                                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Display name</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest text-[#1b0e10]/80 dark:text-slate-400">Display name</span>
                                         <input
                                             value={form.display_name}
                                             onChange={(event) => handleChange('display_name', event.target.value)}
-                                            className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#c27a2a]"
+                                            className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#cf1736]"
                                             placeholder={profile?.display_name || 'Luxe customer'}
                                         />
                                     </label>
                                 </div>
 
                                 <label className="block">
-                                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">Phone</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-[#1b0e10]/80 dark:text-slate-400">Phone</span>
                                     <input
                                         value={form.phone}
                                         onChange={(event) => handleChange('phone', event.target.value)}
-                                        className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#c27a2a]"
+                                        className="mt-2 h-12 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 font-bold outline-none focus:border-[#cf1736]"
                                         placeholder="+92 300 0000000"
                                     />
                                 </label>
 
                                 <label className="block">
-                                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">Notes</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-[#1b0e10]/80 dark:text-slate-400">Notes</span>
                                     <textarea
                                         value={form.bio}
                                         onChange={(event) => handleChange('bio', event.target.value)}
-                                        className="mt-2 min-h-32 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 py-3 font-medium outline-none focus:border-[#c27a2a]"
+                                        className="mt-2 min-h-32 w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/10 px-4 py-3 font-medium outline-none focus:border-[#cf1736]"
                                         placeholder="Sizing notes, delivery preferences, or style details you want us to remember."
                                     />
                                 </label>
@@ -222,20 +222,20 @@ export default function AccountPage() {
                                     <button
                                         type="submit"
                                         disabled={saving}
-                                        className="inline-flex h-11 items-center justify-center rounded-lg bg-[#1f1711] dark:bg-white px-5 text-sm font-black uppercase tracking-widest text-white dark:text-[#1f1711] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="inline-flex h-11 items-center justify-center rounded-lg bg-[#cf1736] hover:bg-[#a3122a] px-5 text-sm font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
                                     >
                                         {saving ? 'Saving...' : 'Save profile'}
                                     </button>
                                 </div>
                             </form>
                         </section>
-                        <aside className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 h-fit">
-                            <h3 className="font-black">Quick actions</h3>
+                        <aside className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1b0e10] p-6 h-fit">
+                            <h3 className="font-medium">Quick actions</h3>
                             <div className="mt-5 space-y-3">
-                                <Link href="/shop" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold">
+                                <Link href="/shop" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold hover:border-[#cf1736] dark:hover:border-white transition-colors">
                                     Shop collection <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                 </Link>
-                                <Link href="/custom-orders" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold hover:border-[#1A1A1A] dark:hover:border-white transition-colors">
+                                <Link href="/custom-orders" className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 px-4 py-3 font-bold hover:border-[#cf1736] dark:hover:border-white transition-colors">
                                     <div className="flex items-center gap-3">
                                         <span className="material-symbols-outlined text-slate-400">design_services</span>
                                         Custom Orders

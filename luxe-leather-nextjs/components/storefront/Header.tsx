@@ -20,7 +20,7 @@ export default function Header() {
     const { cartCount, cartTotal, openCart } = useCart();
 
     const [navItems, setNavItems] = useState<NavItem[]>([]);
-    const [siteTitle, setSiteTitle] = useState("Luxe Leather Co.");
+    const [siteTitle, setSiteTitle] = useState("Luxe Leather Gear");
 
     useEffect(() => {
         // Fetch site settings
@@ -61,12 +61,8 @@ export default function Header() {
                 <div className="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between relative">
                     {/* Logo (Left) */}
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="size-8 text-[#d41132]">
-                            <span className="material-symbols-outlined text-[32px]">
-                                checkroom
-                            </span>
-                        </div>
-                        <span className="text-xl font-extrabold tracking-tight uppercase font-[family-name:var(--font-playfair)]">
+                        <img src="/luxe-leather-gear-monogram.png" alt="Luxe Leather Gear Logo" className="h-9 w-auto object-contain rounded" />
+                        <span className="text-xl font-medium tracking-tight uppercase font-[family-name:var(--font-playfair)]">
                             {siteTitle}
                         </span>
                     </Link>
@@ -79,7 +75,7 @@ export default function Header() {
                                 href={item.url}
                                 target={item.opens_in_new_tab ? '_blank' : undefined}
                                 rel={item.opens_in_new_tab ? 'noopener noreferrer' : undefined}
-                                className="text-sm font-bold text-[#1A1A1A] dark:text-white hover:text-[#d41132] transition-colors"
+                                className="text-sm font-medium text-[#1b0e10] dark:text-white hover:text-[#cf1736] transition-colors"
                             >
                                 {item.label}
                             </Link>
@@ -114,15 +110,15 @@ export default function Header() {
                             className="flex items-center group/cart p-1.5 pl-3 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-all gap-2"
                         >
                             <div className="flex flex-col items-end mr-1 hidden sm:flex">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Your Bag</span>
-                                <span className="text-sm font-black text-[#1c140d] dark:text-white leading-none">${cartTotal.toFixed(2)}</span>
+                                <span className="text-[10px] font-medium text-[#1b0e10]/80 dark:text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Your Bag</span>
+                                <span className="text-sm font-medium text-[#1b0e10] dark:text-white leading-none">${cartTotal.toFixed(2)}</span>
                             </div>
-                            <div className="relative p-2 bg-[#c27a2a] text-white rounded-full shadow-sm group-hover/cart:scale-110 transition-transform">
+                            <div className="relative p-2 bg-[#cf1736] text-white rounded-full shadow-sm group-hover/cart:scale-110 transition-transform">
                                 <span className="material-symbols-outlined text-[20px]">
                                     shopping_bag
                                 </span>
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#c27a2a] text-[10px] font-black shadow-sm ring-1 ring-[#c27a2a]/10">
+                                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#cf1736] text-[10px] font-bold shadow-sm ring-1 ring-[#cf1736]/10">
                                         {cartCount}
                                     </span>
                                 )}

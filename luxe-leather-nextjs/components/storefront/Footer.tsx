@@ -15,7 +15,7 @@ interface NavItem {
 
 export default function Footer() {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
-    const [siteTitle, setSiteTitle] = useState("Luxe Leather Co.");
+    const [siteTitle, setSiteTitle] = useState("Luxe Leather Gear");
 
     useEffect(() => {
         // Fetch site settings
@@ -49,19 +49,19 @@ export default function Footer() {
     }, []);
 
     return (
-        <footer className="bg-[#0C0E12] text-white pt-12 pb-14 border-t border-white/5 relative">
+        <footer className="bg-[#1b0e10] text-white pt-12 pb-14 border-t border-white/5 relative font-[family-name:var(--font-manrope)]">
             <div className="max-w-[1440px] mx-auto px-6">
                 <div className="flex flex-col md:flex-row justify-between gap-12 md:gap-0 mb-12">
                     {/* Brand Col */}
                     <div className="flex flex-col gap-4 max-w-sm md:w-1/3">
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-3xl text-[#c27a2a]">
-                                checkroom
-                            </span>
-                            <span className="text-base font-bold uppercase tracking-[0.2em] font-serif whitespace-nowrap">
-                                {siteTitle}
-                            </span>
-                        </div>
+                        <Link href="/" className="inline-block mb-6">
+                            <div className="flex items-center gap-2">
+                                <img src="/luxe-leather-gear-monogram.png" alt="Luxe Leather Gear Logo" className="h-8 w-auto object-contain rounded" />
+                                <span className="text-xl font-medium tracking-tight uppercase font-[family-name:var(--font-playfair)] text-white">
+                                    {siteTitle}
+                                </span>
+                            </div>
+                        </Link>
                         <p className="text-gray-400 text-xs leading-relaxed">
                             Premium handcrafted leather goods designed for the modern world.
                             Guaranteed quality, sustainable materials.
@@ -71,7 +71,7 @@ export default function Footer() {
                     {/* Links Col - Navigation */}
                     <div className="flex-1 flex md:justify-center">
                         <div>
-                            <h4 className="font-bold text-[10px] mb-6 uppercase tracking-[0.2em] text-[#c27a2a]">Navigation</h4>
+                            <h4 className="font-bold text-[10px] mb-6 uppercase tracking-[0.2em] text-[#cf1736]">Navigation</h4>
                             <ul className="grid grid-cols-3 gap-y-3 gap-x-8 text-[11px] font-medium text-gray-400">
                                 {navItems.map(item => (
                                     <li key={item.id}>
@@ -87,7 +87,7 @@ export default function Footer() {
                     {/* Links Col - Connect */}
                     <div className="md:w-1/3 flex md:justify-end">
                         <div>
-                            <h4 className="font-bold text-[10px] mb-6 uppercase tracking-[0.2em] text-[#c27a2a]">Connect</h4>
+                            <h4 className="font-bold text-[10px] mb-6 uppercase tracking-[0.2em] text-[#cf1736]">Connect</h4>
                             <ul className="flex gap-6 text-[11px] font-medium text-gray-400">
                                 <li>
                                     <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors tracking-widest uppercase flex items-center gap-2.5">

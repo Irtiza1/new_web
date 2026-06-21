@@ -29,19 +29,22 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
             const { count: requestsCount } = await supabase
                 .from('custom_requests')
                 .select('*', { count: 'exact', head: true })
-                .eq('status', 'NEW');
+                .eq('status', 'NEW')
+                .eq('isArchived', false);
 
             // Pending Orders
             const { count: ordersCount } = await supabase
                 .from('orders')
                 .select('*', { count: 'exact', head: true })
-                .eq('status', 'PENDING');
+                .eq('status', 'PENDING')
+                .eq('isDeleted', false);
 
             // Low Stock Products
             const { count: stockCount } = await supabase
                 .from('products')
                 .select('*', { count: 'exact', head: true })
-                .lt('stock', 5);
+                .lt('stock', 5)
+                .eq('isActive', true);
 
             setCounts({
                 newRequests: requestsCount || 0,

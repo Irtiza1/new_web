@@ -48,20 +48,20 @@ export default function ContactPage() {
     };
 
     return (
-        <div className="relative flex min-h-screen size-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-slate-900 dark:text-white group/design-root overflow-x-hidden font-[family-name:var(--font-manrope)]">
+        <div className="relative flex min-h-screen size-full flex-col bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] text-[#1b0e10] dark:text-white group/design-root overflow-x-hidden font-[family-name:var(--font-manrope)]">
 
 
             <main className="flex flex-1 flex-col items-center">
                 <div className="w-full max-w-[640px] px-4 py-10 md:px-8 md:py-14">
                     <div className="mx-auto mb-7 text-center">
-                        <p className="mb-3 text-[11px] font-black uppercase tracking-[0.28em] text-[#c27a2a]">Customer Support</p>
-                        <h1 className="text-3xl font-black tracking-tight leading-tight md:text-4xl">Get in Touch</h1>
-                        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+                        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.28em] text-[#cf1736]">Customer Support</p>
+                        <h1 className="text-3xl font-medium tracking-tight leading-tight md:text-4xl">Get in Touch</h1>
+                        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#1b0e10]/80 dark:text-slate-400">
                             Send us your question, order concern, or custom request. We&apos;ll route it to the right team and reply as soon as possible.
                         </p>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-5 md:p-7 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
+                    <div className="bg-white dark:bg-[#1b0e10] rounded-xl p-5 md:p-7 shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
                         {formStatus === 'success' ? (
                             <div className="flex flex-col items-center justify-center text-center gap-5 animate-in fade-in duration-500 min-h-[280px]">
                                 <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
@@ -72,14 +72,14 @@ export default function ContactPage() {
                                     </svg>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Message Sent!</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto text-sm">
+                                    <h3 className="text-xl font-medium text-[#1b0e10] dark:text-white">Message Sent!</h3>
+                                    <p className="text-[#1b0e10]/80 dark:text-slate-400 max-w-sm mx-auto text-sm">
                                         Thanks for reaching out. We&apos;ve received your message and will get back to you within 24 hours.
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setFormStatus('idle')}
-                                    className="mt-1 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg font-bold text-sm hover:bg-black dark:hover:bg-gray-200 transition-colors"
+                                    className="mt-1 px-6 py-2.5 bg-[#cf1736] hover:bg-[#a3122a] text-white rounded-lg font-bold text-sm transition-colors uppercase tracking-widest"
                                 >
                                     Send Another Message
                                 </button>
@@ -88,23 +88,23 @@ export default function ContactPage() {
                             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <label className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Full Name</span>
-                                        <input name="name" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#d41132] focus:border-transparent transition-all placeholder:text-slate-400 text-slate-900 dark:text-white text-sm" placeholder="Jane Doe" type="text" />
+                                        <span className="text-xs font-semibold text-[#1b0e10] dark:text-slate-300 uppercase tracking-widest">Full Name</span>
+                                        <input name="name" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#cf1736] focus:border-transparent transition-all placeholder:text-slate-400 text-[#1b0e10] dark:text-white text-sm" placeholder="Jane Doe" type="text" />
                                     </label>
                                     <label className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Email Address</span>
-                                        <input name="email" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#d41132] focus:border-transparent transition-all placeholder:text-slate-400 text-slate-900 dark:text-white text-sm" placeholder="jane@example.com" type="email" />
+                                        <span className="text-xs font-semibold text-[#1b0e10] dark:text-slate-300 uppercase tracking-widest">Email Address</span>
+                                        <input name="email" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#cf1736] focus:border-transparent transition-all placeholder:text-slate-400 text-[#1b0e10] dark:text-white text-sm" placeholder="jane@example.com" type="email" />
                                     </label>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <label className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Phone <span className="text-slate-400 font-normal">(Optional)</span></span>
-                                        <input name="phone" className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#d41132] focus:border-transparent transition-all placeholder:text-slate-400 text-slate-900 dark:text-white text-sm" placeholder="+1 (555) 000-0000" type="tel" />
+                                        <span className="text-xs font-semibold text-[#1b0e10] dark:text-slate-300 uppercase tracking-widest">Phone <span className="text-slate-400 font-normal">(Optional)</span></span>
+                                        <input name="phone" className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#cf1736] focus:border-transparent transition-all placeholder:text-slate-400 text-[#1b0e10] dark:text-white text-sm" placeholder="+1 (555) 000-0000" type="tel" />
                                     </label>
                                     <label className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Inquiry Type</span>
+                                        <span className="text-xs font-semibold text-[#1b0e10] dark:text-slate-300 uppercase tracking-widest">Inquiry Type</span>
                                         <div className="relative">
-                                            <select name="inquiry_type" className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#d41132] focus:border-transparent transition-all text-slate-900 dark:text-white appearance-none cursor-pointer text-sm">
+                                            <select name="inquiry_type" className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#cf1736] focus:border-transparent transition-all text-[#1b0e10] dark:text-white appearance-none cursor-pointer text-sm">
                                                 <option>Order Support</option>
                                                 <option>Wholesale Inquiries</option>
                                                 <option>Custom Requests</option>
@@ -119,11 +119,11 @@ export default function ContactPage() {
                                     </label>
                                 </div>
                                 <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">How can we help?</span>
-                                    <textarea name="message" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#d41132] focus:border-transparent transition-all placeholder:text-slate-400 text-slate-900 dark:text-white resize-none text-sm" placeholder="Tell us more about your inquiry..." rows={3}></textarea>
+                                    <span className="text-xs font-semibold text-[#1b0e10] dark:text-slate-300 uppercase tracking-widest">How can we help?</span>
+                                    <textarea name="message" required className="w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-[#cf1736] focus:border-transparent transition-all placeholder:text-slate-400 text-[#1b0e10] dark:text-white resize-none text-sm" placeholder="Tell us more about your inquiry..." rows={3}></textarea>
                                 </label>
                                 <button
-                                    className={`w-full bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg shadow-[#d41132]/20 flex items-center justify-center gap-2 group text-sm ${formStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    className={`w-full bg-[#cf1736] hover:bg-[#a3122a] text-white font-bold py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg shadow-[#cf1736]/20 flex items-center justify-center gap-2 group text-sm tracking-widest uppercase ${formStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     type="submit"
                                     disabled={formStatus === 'submitting'}
                                 >
@@ -263,7 +263,7 @@ function MessengerWidget() {
                         <div className="flex flex-col gap-3">
                             {/* Agent greeting bubble */}
                             <div className="max-w-[230px] bg-slate-200/80 dark:bg-slate-800 rounded-b-2xl rounded-tr-2xl px-3.5 py-2.5 shadow-sm text-slate-800 dark:text-slate-100 self-start">
-                                <p className="text-sm leading-relaxed">Hi there! Thanks for visiting Luxe Leather Co. 👋</p>
+                                <p className="text-sm leading-relaxed">Hi there! Thanks for visiting Luxe Leather Gear 👋</p>
                                 <p className="text-sm leading-relaxed mt-1">Type your message below to chat with us on Messenger.</p>
                                 <p className="text-right text-[9px] text-slate-400 dark:text-slate-500 mt-1">{now}</p>
                             </div>
@@ -271,7 +271,7 @@ function MessengerWidget() {
                             {/* Sent State User Bubble */}
                             {sent && (
                                 <div className="max-w-[230px] bg-[#0084FF] text-white rounded-b-2xl rounded-tl-2xl px-3.5 py-2.5 shadow-sm self-end animate-in fade-in duration-300">
-                                    <p className="text-sm leading-relaxed">{userMessage || 'Hi Luxe Leather Co., I need help!'}</p>
+                                    <p className="text-sm leading-relaxed">{userMessage || 'Hi Luxe Leather Gear, I need help!'}</p>
                                     <p className="text-right text-[9px] text-white/70 mt-1">{now}</p>
                                 </div>
                             )}

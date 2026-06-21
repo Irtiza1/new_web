@@ -164,7 +164,7 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
 INSERT INTO site_settings (key, value) VALUES
     ('support_email', 'support@luxeleather.co'),
     ('whatsapp_number', ''),
-    ('site_title', 'Luxe Leather'),
+    ('site_title', 'Luxe Leather Gear'),
     ('meta_description', 'Premium handmade leather goods'),
     ('logo_url', '')
 ON CONFLICT (key) DO NOTHING;

@@ -21,10 +21,10 @@ export default function AdminLayout({
                     {/* Mobile Header */}
                     <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="bg-gradient-to-br from-[#d41132] to-[#a60e25] rounded-xl flex-shrink-0 size-8 flex items-center justify-center shadow-sm">
-                                <span className="material-symbols-outlined text-white text-sm">checkroom</span>
+                            <div className="flex-shrink-0 size-8 flex items-center justify-center">
+                                <img src="/luxe-leather-gear-monogram.png" alt="Logo" className="h-full w-full object-contain" />
                             </div>
-                            <span className="font-bold text-slate-900 dark:text-white text-sm">Luxe Leather Co.</span>
+                            <span className="font-bold text-slate-900 dark:text-white text-sm">Luxe Leather Gear</span>
                         </div>
                         <button 
                             onClick={() => setIsSidebarOpen(true)}

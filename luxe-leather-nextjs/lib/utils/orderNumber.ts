@@ -3,7 +3,7 @@ export function createOrderNumber(date = new Date(), id = crypto.randomUUID()): 
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     const shortId = id.replace(/-/g, '').slice(-6).toUpperCase();
 
-    return `LLC-${year}${month}-${shortId}`;
+    return `LLG-${year}${month}-${shortId}`;
 }
 
 export function displayOrderNumber(order: { order_number?: string | null; id: string; createdAt?: string; created_at?: string }): string {
@@ -12,4 +12,12 @@ export function displayOrderNumber(order: { order_number?: string | null; id: st
     const rawDate = order.createdAt ?? order.created_at;
     const date = rawDate ? new Date(rawDate) : new Date();
     return createOrderNumber(date, order.id);
+}
+
+export function displayRequestNumber(req: { id: string; createdAt: string }): string {
+    const date = new Date(req.createdAt || new Date());
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const shortId = req.id.replace(/-/g, '').slice(-6).toUpperCase();
+    return `REQ-${year}${month}-${shortId}`;
 }

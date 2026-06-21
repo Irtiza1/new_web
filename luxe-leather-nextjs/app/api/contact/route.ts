@@ -25,7 +25,7 @@ async function sendEmail(opts: { to: string; subject: string; html: string; from
             method: 'POST',
             headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                from: opts.from || 'Luxe Leather Co. <noreply@luxeleather.co>',
+                from: opts.from || 'Luxe Leather Gear <noreply@luxeleathergear.com>',
                 to: [opts.to],
                 subject: opts.subject,
                 html: opts.html,
@@ -76,7 +76,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
         try {
             const settings = await settingsService.getAll();
             const supportEmail = settings.support_email || 'support@luxeleather.co';
-            const siteTitle   = settings.site_title   || 'Luxe Leather Co.';
+            const siteTitle   = settings.site_title   || 'Luxe Leather Gear';
 
             // 1. Confirmation to the user
             await sendEmail({

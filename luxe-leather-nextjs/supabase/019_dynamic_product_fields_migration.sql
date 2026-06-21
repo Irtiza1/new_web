@@ -34,7 +34,7 @@ BEGIN
   )
   VALUES (
     v_order_id,
-    COALESCE(p_order->>'order_number', 'LLC-' || TO_CHAR(NOW(), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(v_order_id::TEXT, '-', ''), 6))),
+    COALESCE(p_order->>'order_number', 'LLG-' || TO_CHAR(NOW(), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(v_order_id::TEXT, '-', ''), 6))),
     (p_order->>'customer_id')::UUID,
     COALESCE(p_order->>'status', 'PENDING'),
     (p_order->>'total')::NUMERIC,

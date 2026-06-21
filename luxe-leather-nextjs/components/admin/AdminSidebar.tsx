@@ -31,11 +31,11 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
                 <div className="absolute inset-0 flex flex-col overflow-hidden p-3">
                 {/* Brand */}
                 <Link href="/admin" className="flex items-center gap-3 px-3 py-4 group mb-2 shrink-0">
-                    <div className="bg-gradient-to-br from-[#d41132] to-[#a60e25] rounded-xl flex-shrink-0 size-10 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                        <span className="material-symbols-outlined text-white text-xl">checkroom</span>
+                    <div className="size-10 flex items-center justify-center shrink-0">
+                        <img src="/luxe-leather-gear-monogram.png" alt="Logo" className="h-full w-full object-contain" />
                     </div>
                     <div>
-                        <h1 className="text-slate-900 dark:text-white text-sm font-bold leading-tight">Luxe Leather Co.</h1>
+                        <h1 className="text-slate-900 dark:text-white text-sm font-bold leading-tight">Luxe Leather Gear</h1>
                         <p className="text-slate-400 dark:text-slate-500 text-[11px] font-medium uppercase tracking-widest">Admin Panel</p>
                     </div>
                 </Link>

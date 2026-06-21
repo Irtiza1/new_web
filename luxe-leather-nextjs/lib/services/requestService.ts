@@ -1,4 +1,4 @@
-import { supabase, type CustomRequest } from '@/lib/supabase';
+import { supabase, supabaseAdmin, type CustomRequest } from '@/lib/supabase';
 import { AppError } from '@/lib/utils/AppError';
 import { auditLog } from './auditService';
 
@@ -98,12 +98,14 @@ export const getById = async (id: string) => {
 /**
  * Create new request
  */
-export const create = async (request: Omit<CustomRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
-    const id = crypto.randomUUID();
+export const create = async (request: Omit<CustomRequest, 'createdAt' | 'updatedAt' | 'status'>) => {
+    const id = request.id || crypto.randomUUID();
     const now = new Date().toISOString();
+    const insertPayload = { ...request, id, status: 'NEW', isArchived: false, createdAt: now, updatedAt: now };
+    
     const { data, error } = await supabase
         .from('custom_requests')
-        .insert([{ ...request, id, status: 'NEW', isArchived: false, createdAt: now, updatedAt: now }])
+        .insert([insertPayload])
         .select()
         .single();
 
@@ -179,18 +181,50 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
 };
 
 /**
- * Soft-delete (archive) a request — sets isArchived = true.
- * Hard deletion is not allowed; requests are business records.
+ * Hard delete a request and its associated images.
  */
 export const remove = async (id: string) => {
+    // 1. Get the request to find attached images
+    const { data: request } = await supabase
+        .from('custom_requests')
+        .select('inspiration')
+        .eq('id', id)
+        .single();
+
+    // 2. Delete the record permanently
     const { error } = await supabase
         .from('custom_requests')
-        .update({ isArchived: true } as Partial<CustomRequest>)
+        .delete()
         .eq('id', id);
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
-    await auditLog('custom_requests', id, 'ARCHIVE', { isArchived: { from: false, to: true } });
+    // 3. Clean up attached images from storage and media tracking table
+    if (request?.inspiration) {
+        let urls: string[] = [];
+        try {
+            urls = JSON.parse(request.inspiration);
+            if (!Array.isArray(urls)) urls = [request.inspiration];
+        } catch {
+            urls = [request.inspiration];
+        }
+
+        const filenames = urls.map(url => {
+            const parts = url.split('/');
+            return 'custom-orders/' + parts[parts.length - 1];
+        });
+
+        if (filenames.length > 0) {
+            await supabaseAdmin.storage.from('media').remove(filenames);
+            
+            const pureFilenames = urls.map(url => url.split('/').pop() || '');
+            if (pureFilenames.length > 0) {
+                await supabaseAdmin.from('media_files').delete().in('filename', pureFilenames);
+            }
+        }
+    }
+
+    await auditLog('custom_requests', id, 'DELETE', { action: 'hard_delete' });
     return { success: true };
 };
 

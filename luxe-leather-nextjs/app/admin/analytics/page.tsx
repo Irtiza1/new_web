@@ -253,7 +253,7 @@ export default function AdminAnalyticsPage() {
                 count,
             ]);
             const rows: Array<Array<string | number | null | undefined>> = [
-                ['Luxe Leather Co. Analytics Export'],
+                ['Luxe Leather Gear Analytics Export'],
                 ['Date range', formatDate(startDate), formatDate(endDate)],
                 ['Generated at', new Date().toLocaleString()],
                 [],

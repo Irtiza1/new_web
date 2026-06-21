@@ -69,7 +69,7 @@ function LoginContent() {
                 <div className="relative z-10 p-12 flex flex-col justify-between max-w-xl">
                     <Link href="/" className="inline-flex items-center gap-3 text-white font-black tracking-tight">
                         <span className="material-symbols-outlined text-[#c27a2a]">checkroom</span>
-                        Luxe Leather Co.
+                        Luxe Leather Gear
                     </Link>
                     <div>
                         <p className="text-[#c27a2a] text-xs font-black uppercase tracking-[0.24em] mb-4">Secure account access</p>
@@ -88,7 +88,7 @@ function LoginContent() {
                     <div className="mb-8">
                         <Link href="/" className="lg:hidden inline-flex items-center gap-2 text-sm font-black mb-8">
                             <span className="material-symbols-outlined text-[#c27a2a]">checkroom</span>
-                            Luxe Leather Co.
+                            Luxe Leather Gear
                         </Link>
                         <h2 className="text-3xl font-black tracking-tight">Sign in</h2>
                         <p className="text-sm text-[#7c6b5b] mt-2">Use your verified email address to continue.</p>
@@ -154,7 +154,7 @@ function LoginContent() {
                     </form>
 
                     <p className="mt-7 text-center text-sm text-[#7c6b5b]">
-                        New to Luxe Leather?{' '}
+                        New to Luxe Leather Gear?{' '}
                         <Link href="/signup" className="font-black text-[#a35508] hover:underline">
                             Create account
                         </Link>

@@ -121,7 +121,7 @@ async function seed() {
   
   // 8. Site Settings (Key-Value Store)
   const settings = [
-    { key: 'site_title', value: 'Luxe Leather Co.' },
+    { key: 'site_title', value: 'Luxe Leather Gear' },
     { key: 'currency', value: 'USD' },
     { key: 'support_email', value: 'support@luxeleather.co' }
   ];

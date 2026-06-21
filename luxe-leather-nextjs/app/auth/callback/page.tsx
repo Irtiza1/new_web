@@ -47,7 +47,7 @@ function AuthCallbackContent() {
                 </div>
                 <h1 className="text-3xl font-black">{error ? 'Sign in failed' : 'Finishing sign in'}</h1>
                 <p className="mt-3 text-sm font-medium text-[#7c6b5b]">
-                    {error || 'Securely connecting your Google account to Luxe Leather Co.'}
+                    {error || 'Securely connecting your Google account to Luxe Leather Gear'}
                 </p>
                 {error && (
                     <Link href="/login" className="mt-7 inline-flex h-11 items-center rounded-lg bg-[#1f1711] px-6 text-sm font-black uppercase tracking-widest text-white">

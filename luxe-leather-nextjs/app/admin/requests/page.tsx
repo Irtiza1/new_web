@@ -11,6 +11,8 @@ import type { CustomRequest } from '@/lib/services/requestService';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import AdminRequestModal, { pRequest } from '@/components/admin/AdminRequestModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import { displayRequestNumber } from '@/lib/utils/orderNumber';
+import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
 
 export default function AdminRequestsPage() {
     const { showToast } = useToast();
@@ -23,10 +25,10 @@ export default function AdminRequestsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
 
-    // Stats for notifications (could be fetched separately or derived)
-    const [newRequestCount, setNewRequestCount] = useState(0);
+    const { counts } = useAdminNotifications();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [totalRequests, setTotalRequests] = useState(0);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +44,13 @@ export default function AdminRequestsPage() {
         message: '',
         onConfirm: () => { },
     });
+    
+    const [quoteModal, setQuoteModal] = useState<{ isOpen: boolean; request: CustomRequest | null; price: string }>({
+        isOpen: false,
+        request: null,
+        price: ''
+    });
+    const [isQuoting, setIsQuoting] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -98,23 +107,7 @@ export default function AdminRequestsPage() {
 
             if (data.success) {
                 setRequests(data.data);
-                // If we have data and no selection, select first? Or keep selection if exists?
-                // Logic: if selectedRequest is not in new data, maybe deselect?
-                // For now, simple:
-                if (!selectedRequest && data.data.length > 0) {
-                    setSelectedRequest(data.data[0]);
-                } else if (selectedRequest && !data.data.some((r: CustomRequest) => r.id === selectedRequest.id)) {
-                    // If selected request is no longer in the list, deselect it
-                    setSelectedRequest(null);
-                }
-
-                // Update new count
-                if (statusFilter === 'all' && !searchQuery) {
-                    const count = data.data.filter((r: CustomRequest) =>
-                        r.status?.toLowerCase() === 'new'
-                    ).length;
-                    setNewRequestCount(count);
-                }
+                setTotalRequests(data.pagination?.total || data.data.length);
             }
         } catch (error) {
             console.error('Failed to load requests:', error);
@@ -138,9 +131,9 @@ export default function AdminRequestsPage() {
                 if (selectedRequest?.id === id) {
                     setSelectedRequest({ ...selectedRequest, status: newStatus as CustomRequest['status'] });
                 }
-                showToast(`Request #${req?.id.slice(-6).toUpperCase()} for ${req?.name} updated to ${newStatus.replace('_', ' ')}.`, 'success');
+                showToast(`Request ${displayRequestNumber(req as any)} for ${req?.name} updated to ${newStatus.replace('_', ' ')}.`, 'success');
             } else {
-                showToast(`Failed to update Request #${req?.id.slice(-6).toUpperCase()}.`, 'error');
+                showToast(`Failed to update Request ${req ? displayRequestNumber(req as any) : ''}.`, 'error');
             }
         } catch (error) {
             console.error('Failed to update status:', error);
@@ -156,7 +149,7 @@ export default function AdminRequestsPage() {
 
         setConfirmModal({
             isOpen: true,
-            title: `Archive Request #${req.id.slice(-6).toUpperCase()}`,
+            title: `Archive Request ${displayRequestNumber(req as any)}`,
             message: `Are you sure you want to archive this custom request from "${req.name}"? This will remove it from the active pipeline.`,
             onConfirm: async () => {
                 try {
@@ -237,8 +230,8 @@ export default function AdminRequestsPage() {
     };
 
     const toggleSelectAll = () => {
-        const visibleIds = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(r => r.id);
-        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
+        const visibleIds = filteredRequests.map(r => r.id);
+        const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
 
         setSelectedIds(prev => {
             const next = new Set(prev);
@@ -282,6 +275,52 @@ export default function AdminRequestsPage() {
         }
     };
 
+    const handleSendMessage = (request: CustomRequest) => {
+        const subject = encodeURIComponent(`Re: Custom Order Request [${displayRequestNumber(request as any)}]`);
+        const budgetStr = request.budget ? `$${request.budget.replace(/^\$+/, '')}` : 'TBD';
+        const body = encodeURIComponent(`Hello ${request.name},\n\nWe have reviewed your request for a custom ${request.itemType}. We are pleased to quote you a final price of ${budgetStr}.\n\nTo proceed, please transfer the funds to the following bank account and reply to this email with a copy of your receipt:\n\nBank Name: Luxe Bank\nAccount Name: Luxe Leather Gear\nAccount Number: 123456789\n\nLooking forward to bringing your vision to life!\n\nBest,\nLuxe Leather Gear Team`);
+        window.location.href = `mailto:${request.email}?subject=${subject}&body=${body}`;
+    };
+
+    const handleQuoteSubmit = async () => {
+        if (!quoteModal.request || !quoteModal.price) return;
+        setIsQuoting(true);
+        try {
+            const res = await fetch(`/api/requests?id=${quoteModal.request.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'quoted', budget: quoteModal.price }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setRequests(requests.map(r => r.id === quoteModal.request!.id ? { ...r, status: 'quoted', budget: quoteModal.price } : r));
+                if (selectedRequest?.id === quoteModal.request.id) {
+                    setSelectedRequest({ ...selectedRequest, status: 'quoted', budget: quoteModal.price });
+                }
+                showToast(`Quote generated for ${quoteModal.request.name}.`, 'success');
+                setQuoteModal({ isOpen: false, request: null, price: '' });
+            } else {
+                showToast('Failed to update quote.', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            showToast('An error occurred.', 'error');
+        } finally {
+            setIsQuoting(false);
+        }
+    };
+
+    const getImages = (inspiration?: string | null) => {
+        if (!inspiration) return [];
+        try {
+            const parsed = JSON.parse(inspiration);
+            if (Array.isArray(parsed)) return parsed;
+            return [inspiration];
+        } catch {
+            return [inspiration];
+        }
+    };
+
     const StatusBadge = ({ status }: { status: string }) => {
         const styles: Record<string, string> = {
             new: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400',
@@ -312,11 +351,11 @@ export default function AdminRequestsPage() {
                 <>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Requests</p>
-                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{requests.length}</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{totalRequests}</p>
                     </div>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">New</p>
-                        <p className="text-base font-black text-blue-600 leading-none mt-0.5">{newRequestCount}</p>
+                        <p className="text-base font-black text-blue-600 leading-none mt-0.5">{counts.newRequests}</p>
                     </div>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Completed</p>
@@ -363,7 +402,7 @@ export default function AdminRequestsPage() {
             pagination={
                 <AdminPagination
                     currentPage={currentPage}
-                    totalItems={filteredRequests.length}
+                    totalItems={totalRequests}
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                     onItemsPerPageChange={(val) => {
@@ -384,7 +423,7 @@ export default function AdminRequestsPage() {
             <AdminTable
                 headers={['Customer', 'Project', 'Budget', 'Status', 'Date', 'Actions']}
                 onSelectAll={toggleSelectAll}
-                isAllSelected={filteredRequests.length > 0 && filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(r => selectedIds.has(r.id))}
+                isAllSelected={requests.length > 0 && requests.every(r => selectedIds.has(r.id))}
             >
                 {loading ? (
                     <tr>
@@ -402,7 +441,7 @@ export default function AdminRequestsPage() {
                         </td>
                     </tr>
                 ) : (
-                    filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((req) => (
+                    filteredRequests.map((req) => (
                         <tr
                             key={req.id}
                             onClick={() => setSelectedRequest(req)}
@@ -423,7 +462,7 @@ export default function AdminRequestsPage() {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{req.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-mono tracking-tighter">#{req.id.slice(-6).toUpperCase()}</span>
+                                        <span className="text-[10px] text-slate-400 font-mono tracking-tighter">{displayRequestNumber(req as any)}</span>
                                     </div>
                                 </div>
                             </td>
@@ -447,7 +486,7 @@ export default function AdminRequestsPage() {
                                         <button onClick={() => { setSelectedRequest(req); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">visibility</span> View Details
                                         </button>
-                                        <button onClick={() => { handleStatusUpdate(req.id, 'quoted'); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                        <button onClick={() => { setQuoteModal({ isOpen: true, request: req, price: req.budget || '' }); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">request_quote</span> Approve & Quote
                                         </button>
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
@@ -485,7 +524,7 @@ export default function AdminRequestsPage() {
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold dark:text-white text-slate-900">Request Detail</h3>
-                                <p className="text-sm text-slate-500 font-mono">#{selectedRequest.id.slice(-8).toUpperCase()}</p>
+                                <p className="text-sm text-slate-500 font-mono">{displayRequestNumber(selectedRequest as any)}</p>
                             </div>
                         </div>
 
@@ -495,14 +534,19 @@ export default function AdminRequestsPage() {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Customer</label>
                                     <p className="font-semibold dark:text-white text-slate-900">{selectedRequest.name}</p>
                                     <p className="text-sm text-slate-500">{selectedRequest.email}</p>
+                                    {selectedRequest.phone && <p className="text-sm text-slate-500">{selectedRequest.phone}</p>}
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Status</label>
                                     <StatusBadge status={selectedRequest.status} />
                                 </div>
                                 <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Object Type</label>
+                                    <p className="font-semibold text-slate-900 dark:text-white">{selectedRequest.itemType}</p>
+                                </div>
+                                <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Budget</label>
-                                    <p className="font-bold text-slate-900 dark:text-emerald-400">${selectedRequest.budget}</p>
+                                    <p className="font-bold text-slate-900 dark:text-emerald-400">{selectedRequest.budget}</p>
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Deadline</label>
@@ -515,17 +559,57 @@ export default function AdminRequestsPage() {
                                     {selectedRequest.description}
                                 </div>
                             </div>
+                            
+                            {getImages(selectedRequest.inspiration).length > 0 && (
+                                <div className="mt-4">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Attached Inspiration ({getImages(selectedRequest.inspiration).length})</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {getImages(selectedRequest.inspiration).map((img, i) => (
+                                            <div key={i} className="relative group rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                                                <img src={img} alt={`Inspiration ${i + 1}`} className="w-full h-48 object-cover" />
+                                                <button 
+                                                    onClick={async () => {
+                                                        try {
+                                                            const response = await fetch(img);
+                                                            const blob = await response.blob();
+                                                            const url = window.URL.createObjectURL(blob);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = `inspiration-${selectedRequest.id.slice(-6)}-${i+1}.webp`;
+                                                            document.body.appendChild(a);
+                                                            a.click();
+                                                            window.URL.revokeObjectURL(url);
+                                                            document.body.removeChild(a);
+                                                        } catch(e) {
+                                                            console.error('Download failed', e);
+                                                            window.open(img, '_blank');
+                                                        }
+                                                    }}
+                                                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <span className="bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-xl">
+                                                        <span className="material-symbols-outlined text-lg">download</span> Download
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => handleStatusUpdate(selectedRequest.id, 'quoted')}
+                                    onClick={() => setQuoteModal({ isOpen: true, request: selectedRequest, price: selectedRequest.budget || '' })}
                                     className="px-6 py-2.5 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg transition-all shadow-md text-sm"
                                 >
                                     Approve & Quote
                                 </button>
-                                <button className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-white font-bold rounded-lg transition-all text-sm">
+                                <button 
+                                    onClick={() => handleSendMessage(selectedRequest)}
+                                    className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-white font-bold rounded-lg transition-all text-sm"
+                                >
                                     Send Message
                                 </button>
                             </div>
@@ -548,6 +632,41 @@ export default function AdminRequestsPage() {
                 onConfirm={confirmModal.onConfirm}
                 onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
             />
+
+            {/* Quote Modal */}
+            {quoteModal.isOpen && quoteModal.request && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-[#15202b] w-full max-w-sm rounded-2xl shadow-2xl relative animate-in zoom-in-95 duration-200 p-6 flex flex-col">
+                        <h3 className="text-xl font-bold dark:text-white text-slate-900 mb-2">Quote Pricing</h3>
+                        <p className="text-sm text-slate-500 mb-6">Set the final approved price for {quoteModal.request.name}&apos;s {quoteModal.request.itemType}.</p>
+                        
+                        <label className="block mb-6">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Final Price <span className="text-red-500">*</span></span>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                <input 
+                                    type="number" 
+                                    value={quoteModal.price} 
+                                    onChange={(e) => setQuoteModal(prev => ({...prev, price: e.target.value}))}
+                                    className="w-full pl-8 pr-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#d41132]"
+                                    placeholder="e.g. 500"
+                                />
+                            </div>
+                        </label>
+
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setQuoteModal({isOpen: false, request: null, price: ''})} className="px-4 py-2 rounded-lg font-bold text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                            <button 
+                                onClick={handleQuoteSubmit}
+                                disabled={isQuoting || !quoteModal.price}
+                                className="px-6 py-2 rounded-lg font-bold text-sm bg-[#d41132] text-white hover:bg-[#b30f2a] transition-colors disabled:opacity-50"
+                            >
+                                {isQuoting ? 'Saving...' : 'Save Quote'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminPageLayout>
     );
 }

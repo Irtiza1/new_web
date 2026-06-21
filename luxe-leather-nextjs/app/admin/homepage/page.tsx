@@ -38,7 +38,7 @@ const sections = [
     {
         id: 'seo', title: 'SEO & Metadata', icon: 'manage_search',
         fields: [
-            { key: 'home_meta_title', label: 'Page Title (SEO)', type: 'text', placeholder: 'Luxe Leather Co. | Handcrafted Premium Leather Goods' },
+            { key: 'home_meta_title', label: 'Page Title (SEO)', type: 'text', placeholder: 'Luxe Leather Gear | Handcrafted Premium Leather Goods' },
             { key: 'home_meta_description', label: 'Meta Description', type: 'textarea', placeholder: 'Discover handcrafted premium leather...' },
         ]
     }

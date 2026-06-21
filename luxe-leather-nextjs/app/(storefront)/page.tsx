@@ -25,23 +25,11 @@ export default async function HomePage() {
     .eq('is_visible', true)
     .order('display_order', { ascending: true });
 
-  // Map to the aesthetic images since DB doesn't store them yet
-  const categoryImages: Record<string, string> = {
-    "Jackets": staticAsset(settings, 'category_jackets_image'),
-    "Bags": staticAsset(settings, 'category_bags_image'),
-    "Coats": staticAsset(settings, 'category_coats_image'),
-    "Full Coats": staticAsset(settings, 'category_coats_image'),
-    "Bags & Satchels": staticAsset(settings, 'category_bags_image'),
-    "Accessories": staticAsset(settings, 'category_accessories_image'),
-    "Wallets": staticAsset(settings, 'category_wallets_image'),
-    "Default": staticAsset(settings, 'category_bags_image')
-  };
   const homeHeroImage = staticAsset(settings, 'home_hero_image');
-  const featuredProductFallbackImage = staticAsset(settings, 'featured_product_fallback_image');
 
   const categories = dbCategories?.map(c => ({
     name: c.name,
-    image: c.image_url || categoryImages[c.name] || categoryImages["Default"],
+    image: c.image_url || '',
     isCustom: c.name.toLowerCase() === 'custom'
   })) || [];
 
@@ -72,7 +60,7 @@ export default async function HomePage() {
 
 
   return (
-    <div className="flex flex-col text-[#1A1A1A] dark:text-white overflow-x-hidden">
+    <div className="flex flex-col text-[#1b0e10] dark:text-white overflow-x-hidden font-[family-name:var(--font-manrope)]">
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative w-full h-[640px] flex items-center justify-center overflow-hidden">
@@ -88,18 +76,18 @@ export default async function HomePage() {
 
           {/* Content */}
           <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto flex flex-col items-center gap-6">
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] uppercase">
+            <h1 className="text-5xl md:text-7xl font-medium tracking-tight leading-[1.1]">
               {cmsContent.home_hero_title || "Crafted for the World"}
             </h1>
             <p className="text-lg md:text-xl font-medium text-white/90 leading-relaxed">
               {cmsContent.home_hero_subtitle || "Premium leather goods, handmade by masters using centuries-old techniques. Designed to last a lifetime."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              <Link href="/shop" className="bg-[#d41132] hover:bg-[#d41132]/90 text-white px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all transform hover:scale-105 shadow-lg shadow-[#d41132]/30">
+              <Link href="/shop" className="bg-[#cf1736] hover:bg-[#a3122a] text-white px-8 py-4 rounded font-bold text-sm tracking-widest uppercase transition-all shadow-lg">
                 {cmsContent.home_hero_cta || "Shop Collection"}
               </Link>
-              <Link href="/custom-orders" className="bg-white hover:bg-gray-100 text-[#1A1A1A] px-8 py-4 rounded-lg font-bold text-sm tracking-wide uppercase transition-all">
-                CUSTOM ORDERS
+              <Link href="/custom-orders" className="bg-white hover:bg-gray-100 text-[#1b0e10] px-8 py-4 rounded font-bold text-sm tracking-widest uppercase transition-all">
+                Custom Orders
               </Link>
             </div>
           </div>
@@ -108,12 +96,12 @@ export default async function HomePage() {
         {/* Category Rail */}
         <section className="py-20 px-6 max-w-[1440px] mx-auto">
           <div className="flex items-center justify-between mb-10">
-            <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A] dark:text-white">
+            <h2 className="text-3xl font-medium tracking-tight text-[#1b0e10] dark:text-white">
               Shop by Category
             </h2>
             <Link
               href="/shop"
-              className="text-[#d41132] font-bold text-sm flex items-center hover:underline"
+              className="text-[#cf1736] font-bold text-sm flex items-center hover:underline"
             >
               View All{" "}
               <span className="material-symbols-outlined text-sm ml-1">
@@ -130,20 +118,21 @@ export default async function HomePage() {
               >
                 <div className="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white dark:bg-white/5 shadow-sm relative">
                   {category.isCustom && (
-                    <div className="absolute inset-0 bg-[#d41132]/10 flex items-center justify-center z-10 group-hover:bg-[#d41132]/20 transition-colors">
-                      <span className="material-symbols-outlined text-4xl text-[#d41132]">
+                    <div className="absolute inset-0 bg-[#cf1736]/10 flex items-center justify-center z-10 group-hover:bg-[#cf1736]/20 transition-colors">
+                      <span className="material-symbols-outlined text-4xl text-[#cf1736]">
                         design_services
                       </span>
                     </div>
                   )}
                   <div
-                    className={`w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110 ${category.isCustom ? "grayscale opacity-40" : ""
-                      }`}
-                    style={{ backgroundImage: `url('${category.image}')` }}
-                  ></div>
+                    className={`w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110 ${category.isCustom ? "grayscale opacity-40" : ""} ${!category.image ? 'bg-gray-200 dark:bg-gray-800 flex items-center justify-center' : ''}`}
+                    style={category.image ? { backgroundImage: `url('${category.image}')` } : {}}
+                  >
+                    {!category.image && <span className="material-symbols-outlined text-5xl text-gray-400">category</span>}
+                  </div>
                 </div>
                 <div className="text-center">
-                  <h3 className="text-lg font-bold group-hover:text-[#d41132] transition-colors">
+                  <h3 className="text-lg font-medium group-hover:text-[#cf1736] transition-colors">
                     {category.name}
                   </h3>
                 </div>
@@ -156,7 +145,7 @@ export default async function HomePage() {
         <section className="py-16 px-6 bg-white dark:bg-white/5">
           <div className="max-w-[1440px] mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1A1A] dark:text-white mb-4">
+              <h2 className="text-3xl md:text-4xl font-medium text-[#1b0e10] dark:text-white mb-4">
                 {cmsContent.home_featured_title || "Featured Collections"}
               </h2>
               <p className="text-gray-500 dark:text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">
@@ -170,26 +159,28 @@ export default async function HomePage() {
                 <Link key={product.id} href={`/shop`} className="group relative block">
                   <div className="aspect-square w-full overflow-hidden rounded-xl bg-gray-100 relative mb-4">
                     <div
-                      className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                      style={{ backgroundImage: `url('${product.image || featuredProductFallbackImage}')` }}
-                    ></div>
+                      className={`w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 ${!product.image ? 'bg-gray-200 flex items-center justify-center' : ''}`}
+                      style={product.image ? { backgroundImage: `url('${product.image}')` } : {}}
+                    >
+                      {!product.image && <span className="material-symbols-outlined text-4xl text-gray-400">image</span>}
+                    </div>
                     {badgeText && (
-                      <div className="absolute top-4 left-4 bg-[#1a2632] dark:bg-[#d41132] text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                      <div className="absolute top-4 left-4 bg-[#1a2632] dark:bg-[#cf1736] text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-widest shadow-lg">
                         {badgeText}
                       </div>
                     )}
-                    <span className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 group-hover:bg-[#d41132] group-hover:text-white">
+                    <span className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full shadow-lg opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 group-hover:bg-[#cf1736] group-hover:text-white">
                       <span className="material-symbols-outlined text-[20px] block">shopping_bag</span>
                     </span>
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-[#1A1A1A] dark:text-white">
+                    <h3 className="font-bold text-lg text-[#1b0e10] dark:text-white">
                       {product.name}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {product.category}
                     </p>
-                    <p className="font-bold text-[#d41132] mt-2">
+                    <p className="font-bold text-[#cf1736] mt-2">
                       ${Number(product.price).toFixed(2)}
                     </p>
                   </div>
@@ -201,7 +192,7 @@ export default async function HomePage() {
 
         {/* Testimonials */}
         <section className="py-20 px-6 max-w-[1440px] mx-auto">
-          <h2 className="text-3xl font-bold tracking-tight text-[#1A1A1A] dark:text-white text-center mb-12">
+          <h2 className="text-3xl font-medium tracking-tight text-[#1b0e10] dark:text-white text-center mb-12">
             {cmsContent.home_testimonials_title || "Stories from our Customers"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -210,12 +201,12 @@ export default async function HomePage() {
                 key={index}
                 className="bg-white dark:bg-white/5 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 flex flex-col gap-4"
               >
-                <div className="flex text-[#d41132]">
+                <div className="flex text-[#cf1736]">
                   {[...Array(5)].map((_, i) => (
                     <span
                       key={i}
                       className={`material-symbols-outlined text-[20px] ${i < testimonial.rating
-                        ? "text-[#d41132]"
+                        ? "text-[#cf1736]"
                         : "text-gray-300"
                         }`}
                     >
@@ -223,7 +214,7 @@ export default async function HomePage() {
                     </span>
                   ))}
                 </div>
-                <p className="text-lg font-medium text-[#1A1A1A] dark:text-white leading-relaxed">
+                <p className="text-lg font-medium text-[#1b0e10]/80 dark:text-white leading-relaxed">
                   &quot;{testimonial.text}&quot;
                 </p>
                 <div className="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">

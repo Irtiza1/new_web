@@ -38,7 +38,7 @@ export default function AnnouncementBar() {
     }, [announcementList.length]);
 
     return (
-        <div className="w-full bg-[#1A1A1A] text-white px-6 border-b border-white/5 shrink-0">
+        <div className="w-full bg-[#1b0e10] text-white px-6 border-b border-white/5 shrink-0">
             <div className="max-w-[1440px] mx-auto relative h-9 flex items-center justify-center">
                 {announcementList.map((text, index) => (
                     <div

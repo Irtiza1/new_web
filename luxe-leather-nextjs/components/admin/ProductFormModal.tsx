@@ -119,6 +119,12 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!formData.images || formData.images.length === 0) {
+            showToast('You must upload at least one product image.', 'error');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const finalData = {

@@ -56,19 +56,19 @@ export default function CartPage() {
 
     if (cartItems.length === 0) {
         return (
-            <div className="min-h-screen flex flex-col bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-inter)]">
+            <div className="min-h-screen flex flex-col bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-manrope)] text-[#1b0e10]">
 
                 <div className="flex-1 flex flex-col items-center justify-center px-4 py-24">
                     <div className="w-24 h-24 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-8 border border-gray-100 dark:border-white/5">
                         <span className="material-symbols-outlined text-4xl text-gray-300">shopping_cart_off</span>
                     </div>
-                    <h1 className="text-3xl font-black text-[#1c140d] dark:text-white uppercase tracking-tighter mb-4">Your collection is empty</h1>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-md text-center mb-10 leading-relaxed">
+                    <h1 className="text-3xl font-medium text-[#1b0e10] dark:text-white tracking-tighter mb-4">Your collection is empty</h1>
+                    <p className="text-[#1b0e10]/80 dark:text-gray-400 max-w-md text-center mb-10 leading-relaxed">
                         It seems you haven&apos;t added any luxury pieces to your cart yet. Discover our latest arrivals.
                     </p>
                     <Link
                         href="/shop"
-                        className="bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white px-12 py-4 rounded-xl font-bold uppercase tracking-widest transition-all shadow-xl hover:-translate-y-1"
+                        className="bg-[#cf1736] hover:bg-[#a3122a] text-white px-12 py-4 rounded font-bold uppercase tracking-widest transition-all shadow-lg hover:-translate-y-1"
                     >
                         Explore Shop
                     </Link>
@@ -79,10 +79,10 @@ export default function CartPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-inter)]">
+        <div className="min-h-screen bg-[#FDFDFB] dark:bg-[#120d09] font-[family-name:var(--font-manrope)] text-[#1b0e10]">
 
             <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-32 pb-20">
-                <h1 className="text-4xl md:text-5xl font-black text-[#1c140d] dark:text-white uppercase tracking-tighter mb-12">Your Cart</h1>
+                <h1 className="text-4xl md:text-5xl font-medium text-[#1b0e10] dark:text-white tracking-tighter mb-12">Your Cart</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Items List */}
@@ -94,7 +94,7 @@ export default function CartPage() {
                                 </div>
                                 <div className="flex-1 flex flex-col">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-xl font-bold text-[#1c140d] dark:text-white">{item.name}</h3>
+                                        <h3 className="text-xl font-medium text-[#1b0e10] dark:text-white">{item.name}</h3>
                                         <button
                                             onClick={() => removeFromCart(item.id, item.variant)}
                                             className="p-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-gray-400 hover:text-red-500 transition-colors rounded-full"
@@ -102,7 +102,7 @@ export default function CartPage() {
                                             <span className="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
                                     </div>
-                                    <p className="text-xs font-bold tracking-widest uppercase text-[#c27a2a] mb-6">{item.variant}</p>
+                                    <p className="text-xs font-bold tracking-widest uppercase text-[#cf1736] mb-6">{item.variant}</p>
 
                                     <div className="flex justify-between items-center mt-auto">
                                         <div className="flex items-center bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1">
@@ -112,7 +112,7 @@ export default function CartPage() {
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">remove</span>
                                             </button>
-                                            <span className="w-12 text-center font-bold text-[#1c140d] dark:text-white">{item.quantity}</span>
+                                            <span className="w-12 text-center font-bold text-[#1b0e10] dark:text-white">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item.id, 1, item.variant)}
                                                 className="w-10 h-10 flex items-center justify-center hover:bg-white dark:hover:bg-white/10 rounded-lg text-gray-500 dark:text-gray-400 transition-all font-bold"
@@ -120,14 +120,14 @@ export default function CartPage() {
                                                 <span className="material-symbols-outlined text-[18px]">add</span>
                                             </button>
                                         </div>
-                                        <p className="text-xl font-bold text-[#1c140d] dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
+                                        <p className="text-xl font-bold text-[#1b0e10] dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
                                     </div>
                                 </div>
                             </div>
                         ))}
 
                         <div className="pt-4">
-                            <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[#c27a2a] transition-colors group uppercase tracking-widest">
+                            <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[#cf1736] transition-colors group uppercase tracking-widest">
                                 <span className="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
                                 Continue Shopping
                             </Link>
@@ -136,13 +136,13 @@ export default function CartPage() {
 
                     {/* Summary Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white dark:bg-[#1a130e] rounded-3xl p-8 shadow-xl shadow-black/5 border border-gray-100 dark:border-white/5 sticky top-32">
-                            <h2 className="text-2xl font-black text-[#1c140d] dark:text-white uppercase tracking-tight mb-8">Order Summary</h2>
+                        <div className="bg-white dark:bg-[#1b0e10] rounded-xl p-8 shadow-xl shadow-black/5 border border-gray-100 dark:border-white/5 sticky top-32">
+                            <h2 className="text-2xl font-medium text-[#1b0e10] dark:text-white tracking-tight mb-8">Order Summary</h2>
 
                             <div className="space-y-4 mb-8">
-                                <div className="flex justify-between text-gray-500 dark:text-gray-400 font-medium">
+                                <div className="flex justify-between text-[#1b0e10]/80 dark:text-gray-400 font-medium">
                                     <span>Subtotal</span>
-                                    <span className="text-[#1c140d] dark:text-white">${cartTotal.toFixed(2)}</span>
+                                    <span className="text-[#1b0e10] dark:text-white">${cartTotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-gray-500 dark:text-gray-400 font-medium">
                                     <span>Shipping</span>
@@ -162,8 +162,8 @@ export default function CartPage() {
                                 )}
 
                                 <div className="pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between">
-                                    <span className="text-lg font-black text-[#1c140d] dark:text-white uppercase">Total</span>
-                                    <span className="text-2xl font-black text-[#c27a2a]">${totalAfterDiscount.toFixed(2)}</span>
+                                    <span className="text-lg font-medium text-[#1b0e10] dark:text-white uppercase">Total</span>
+                                    <span className="text-2xl font-bold text-[#cf1736]">${totalAfterDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -177,12 +177,12 @@ export default function CartPage() {
                                             placeholder="Code"
                                             value={couponCode}
                                             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                            className="flex-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#c27a2a] outline-none transition-all dark:text-white"
+                                            className="flex-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded px-4 py-3 text-sm focus:border-[#cf1736] outline-none transition-all dark:text-white"
                                         />
                                         <button
                                             onClick={handleApplyCoupon}
                                             disabled={isLoading || !couponCode}
-                                            className="bg-[#1c140d] dark:bg-white/5 hover:bg-[#c27a2a] dark:hover:bg-white/10 text-white dark:text-gray-300 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex items-center gap-2"
+                                            className="bg-[#1b0e10] hover:bg-[#cf1736] text-white px-0 py-3 rounded font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2 min-w-[120px] shrink-0"
                                         >
                                             {isLoading ? (
                                                 <><span className="animate-spin material-symbols-outlined text-[14px]">progress_activity</span> Checking</>
@@ -190,7 +190,7 @@ export default function CartPage() {
                                         </button>
                                     </div>
                                     {message && (
-                                        <p className={`text-[10px] mt-2 font-bold uppercase tracking-tight ${message.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+                                        <p className={`text-[10px] mt-2 font-bold uppercase tracking-tight break-words ${message.type === 'error' ? 'text-red-500' : 'text-green-600'}`}>
                                             {message.text}
                                         </p>
                                     )}
@@ -209,7 +209,7 @@ export default function CartPage() {
                             <button
                                 onClick={handleCheckout}
                                 disabled={isCheckingOut}
-                                className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10 hover:-translate-y-1 mb-8 disabled:opacity-50"
+                                className="w-full bg-[#cf1736] hover:bg-[#a3122a] text-white h-16 rounded flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-lg shadow-black/10 hover:-translate-y-1 mb-8 disabled:opacity-50"
                             >
                                 {isCheckingOut ? (
                                     <span className="animate-spin material-symbols-outlined text-[20px]">progress_activity</span>

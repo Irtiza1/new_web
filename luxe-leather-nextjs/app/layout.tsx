@@ -48,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const logoUrl = settings.logo_url || '/favicon.ico';
 
   return {
-    title: settings.site_title || "Luxe Leather Co. | Handcrafted Premium Leather Goods",
+    title: settings.site_title || "Luxe Leather Gear | Handcrafted Premium Leather Goods",
     description: settings.meta_description || "Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.",
     keywords: ["leather goods", "handcrafted", "premium", "wallets", "bags", "accessories"],
     icons: {

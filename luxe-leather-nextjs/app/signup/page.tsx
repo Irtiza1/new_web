@@ -70,7 +70,7 @@ export default function SignupPage() {
                     <div className="relative z-10 h-full flex flex-col justify-between min-h-[360px]">
                         <Link href="/" className="inline-flex items-center gap-3 font-black">
                             <span className="material-symbols-outlined text-[#c27a2a]">checkroom</span>
-                            Luxe Leather Co.
+                            Luxe Leather Gear
                         </Link>
                         <div>
                             <p className="text-[#c27a2a] text-xs font-black uppercase tracking-[0.24em] mb-4">Verified commerce account</p>

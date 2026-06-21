@@ -33,7 +33,7 @@ export default function OurStoryPage() {
                         </h1>
                         <div className="w-16 h-1 bg-[#cf1736] mx-auto my-2"></div>
                         <p className="text-[#1b0e10]/80 dark:text-gray-300 text-lg md:text-xl font-normal leading-relaxed">
-                            Founded on the principles of slow fashion and enduring quality, {assets.site_title?.toUpperCase() || 'LUXE LEATHER CO.'} began as a small workshop in 2000. We believe that true luxury lies in the details—the hand-stitched seams, the carefully selected full-grain hides, and the patina that develops over years of use.
+                            Founded on the principles of slow fashion and enduring quality, {assets.site_title?.toUpperCase() || 'LUXE LEATHER GEAR'} began as a small workshop in 2000. We believe that true luxury lies in the details—the hand-stitched seams, the carefully selected full-grain hides, and the patina that develops over years of use.
                         </p>
                         <p className="text-[#1b0e10]/60 dark:text-gray-400 text-base md:text-lg font-normal leading-relaxed">
                             Every piece tells a story of patience, skill, and an unwavering commitment to excellence. We don&apos;t just make leather goods; we create heirlooms meant to be passed down.

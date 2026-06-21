@@ -9,7 +9,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_order_number_unique
   WHERE order_number IS NOT NULL;
 
 UPDATE orders
-SET order_number = 'LLC-' || TO_CHAR(COALESCE("createdAt", NOW()), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(id::TEXT, '-', ''), 6))
+SET order_number = 'LLG-' || TO_CHAR(COALESCE("createdAt", NOW()), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(id::TEXT, '-', ''), 6))
 WHERE order_number IS NULL;
 
 -- Keep atomic order creation aware of order_number when the app provides it.
@@ -34,7 +34,7 @@ BEGIN
   )
   VALUES (
     v_order_id,
-    COALESCE(p_order->>'order_number', 'LLC-' || TO_CHAR(NOW(), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(v_order_id::TEXT, '-', ''), 6))),
+    COALESCE(p_order->>'order_number', 'LLG-' || TO_CHAR(NOW(), 'YYYYMM') || '-' || UPPER(RIGHT(REPLACE(v_order_id::TEXT, '-', ''), 6))),
     (p_order->>'customer_id')::UUID,
     COALESCE(p_order->>'status', 'PENDING'),
     (p_order->>'total')::NUMERIC,

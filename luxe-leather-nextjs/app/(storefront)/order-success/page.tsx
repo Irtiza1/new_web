@@ -72,8 +72,8 @@ function OrderSuccessContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white dark:bg-[#0d141b] flex items-center justify-center p-6">
-                <div className="flex items-center gap-3 text-slate-500">
+            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6 text-[#1b0e10] dark:text-white">
+                <div className="flex items-center gap-3 text-[#1b0e10]/80 dark:text-slate-400">
                     <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
                     Verifying your payment...
                 </div>
@@ -83,14 +83,14 @@ function OrderSuccessContent() {
 
     if (error || !order) {
         return (
-            <div className="min-h-screen bg-white dark:bg-[#0d141b] flex items-center justify-center p-6">
+            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6 text-[#1b0e10] dark:text-white">
                 <div className="max-w-md w-full text-center space-y-6">
                     <div className="w-20 h-20 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
                         <span className="material-symbols-outlined text-amber-600 text-4xl">warning</span>
                     </div>
-                    <h1 className="text-2xl font-black text-slate-900 dark:text-white">Something went wrong</h1>
-                    <p className="text-slate-500 text-sm">{error || 'Unable to verify your order. Please contact support.'}</p>
-                    <Link href="/shop" className="block w-full py-3 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg transition-colors text-sm">
+                    <h1 className="text-2xl font-medium text-[#1b0e10] dark:text-white">Something went wrong</h1>
+                    <p className="text-[#1b0e10]/80 dark:text-slate-400 text-sm">{error || 'Unable to verify your order. Please contact support.'}</p>
+                    <Link href="/shop" className="block w-full py-3 bg-[#cf1736] hover:bg-[#a3122a] text-white font-bold uppercase tracking-widest rounded-lg transition-colors text-sm">
                         Return to Shop
                     </Link>
                 </div>
@@ -99,7 +99,7 @@ function OrderSuccessContent() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-[#0d141b] flex items-center justify-center p-6">
+        <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6 text-[#1b0e10] dark:text-white">
             <div className="max-w-md w-full text-center space-y-6">
                 {/* Success Icon */}
                 <div className="w-20 h-20 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
@@ -107,25 +107,25 @@ function OrderSuccessContent() {
                 </div>
 
                 <div className="space-y-2">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white">Payment Successful!</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Thank you for your purchase. Your order has been confirmed and is being processed.</p>
+                    <h1 className="text-3xl font-medium text-[#1b0e10] dark:text-white">Payment Successful!</h1>
+                    <p className="text-[#1b0e10]/80 dark:text-slate-400 text-sm">Thank you for your purchase. Your order has been confirmed and is being processed.</p>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 space-y-3 border border-slate-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-[#1b0e10] rounded-xl p-6 space-y-3 border border-slate-200 dark:border-slate-700">
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Order ID</span>
-                        <span className="font-mono font-bold text-slate-900 dark:text-white">{createOrderNumber(new Date(), order.id)}</span>
+                        <span className="text-[#1b0e10]/80 dark:text-slate-400">Order ID</span>
+                        <span className="font-mono font-bold text-[#1b0e10] dark:text-white">{createOrderNumber(new Date(), order.id)}</span>
                     </div>
                     {order.total > 0 && (
                         <>
                             <div className="h-px bg-slate-200 dark:bg-slate-700"></div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Items</span>
-                                <span className="font-bold text-slate-900 dark:text-white">{order.itemCount} item{order.itemCount !== 1 ? 's' : ''}</span>
+                                <span className="text-[#1b0e10]/80 dark:text-slate-400">Items</span>
+                                <span className="font-bold text-[#1b0e10] dark:text-white">{order.itemCount} item{order.itemCount !== 1 ? 's' : ''}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Total Paid</span>
-                                <span className="font-black text-lg text-[#d41132]">${order.total.toFixed(2)}</span>
+                                <span className="text-[#1b0e10]/80 dark:text-slate-400">Total Paid</span>
+                                <span className="font-bold text-lg text-[#cf1736]">${order.total.toFixed(2)}</span>
                             </div>
                         </>
                     )}
@@ -133,10 +133,10 @@ function OrderSuccessContent() {
 
                 <div className="space-y-3 pt-2">
                     <p className="text-xs text-slate-400">Estimated delivery: 5-7 business days</p>
-                    <Link href="/shop" className="block w-full py-3 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg transition-colors text-sm">
+                    <Link href="/shop" className="block w-full py-3 bg-[#cf1736] hover:bg-[#a3122a] text-white font-bold uppercase tracking-widest rounded-lg transition-colors text-sm">
                         Continue Shopping
                     </Link>
-                    <Link href="/contact" className="block w-full py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">
+                    <Link href="/contact" className="block w-full py-3 border border-slate-200 dark:border-slate-700 text-[#1b0e10] dark:text-white font-bold uppercase tracking-widest rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">
                         Need Help? Contact Us
                     </Link>
                 </div>
@@ -148,7 +148,7 @@ function OrderSuccessContent() {
 export default function OrderSuccessPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-white dark:bg-[#0d141b] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] flex items-center justify-center">
                 <span className="material-symbols-outlined animate-spin text-2xl text-slate-400">progress_activity</span>
             </div>
         }>

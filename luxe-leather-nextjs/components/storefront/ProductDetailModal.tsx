@@ -3,7 +3,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
-import { STATIC_ASSET_DEFAULTS } from "@/lib/staticAssets";
 
 
 
@@ -54,18 +53,6 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isZoomed, setIsZoomed] = useState(false);
     const imgRef = useRef<HTMLDivElement>(null);
-    const [productFallbackImage, setProductFallbackImage] = useState(STATIC_ASSET_DEFAULTS.product_fallback_image);
-
-    useEffect(() => {
-        fetch('/api/settings')
-            .then(r => r.json())
-            .then(data => {
-                if (data.success && data.data?.product_fallback_image) {
-                    setProductFallbackImage(data.data.product_fallback_image);
-                }
-            })
-            .catch(() => { });
-    }, []);
 
     // Reset state when product changes
     useEffect(() => {
@@ -89,7 +76,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     if (!isOpen || !product) return null;
 
     // Get the product image and remove duplicates
-    const allImages = Array.from(new Set([product.image || productFallbackImage, ...(product.images || [])])).filter(Boolean);
+    const allImages = Array.from(new Set([product.image, ...(product.images || [])])).filter(Boolean);
     const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,9 +105,9 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                     <div className="grid grid-cols-2 gap-y-5 gap-x-8">
                         {productSpecs.length > 0 ? (
                             productSpecs.map((spec: any, i: number) => (
-                                <div key={i} className="flex flex-col gap-1 border-l-2 border-[#c27a2a]/20 pl-3">
+                                <div key={i} className="flex flex-col gap-1 border-l-2 border-[#cf1736]/20 pl-3">
                                     <span className="text-gray-400 font-bold uppercase tracking-wider text-[10px]">{spec.label || spec.key}</span>
-                                    <span className="text-[#1c140d] dark:text-white font-medium text-sm">{spec.value}</span>
+                                    <span className="text-[#1b0e10] dark:text-white font-medium text-sm">{spec.value}</span>
                                 </div>
                             ))
                         ) : (
@@ -169,22 +156,22 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
             id: String(product.id),
             name: product.name,
             price: displayPrice,
-            image: productImage,
+            image: productImage as string || '',
             variant: variant
         });
         onClose();
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-[#221910]/40 backdrop-blur-md transition-all duration-300 font-[family-name:var(--font-inter)]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-[#221910]/40 backdrop-blur-md transition-all duration-300 font-[family-name:var(--font-manrope)]">
             <div className="absolute inset-0" onClick={onClose}></div>
-            <div className="bg-white dark:bg-[#1a130e] w-full max-w-[1100px] h-full max-h-[85vh] md:max-h-[750px] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative ring-1 ring-white/10 z-10">
-                <button onClick={onClose} className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black text-[#1c140d] dark:text-white transition-all shadow-sm backdrop-blur-sm group border border-transparent hover:border-[#c27a2a]/20">
+            <div className="bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] w-full max-w-[1100px] h-full max-h-[85vh] md:max-h-[750px] rounded-xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative ring-1 ring-white/10 z-10">
+                <button onClick={onClose} className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black text-[#1b0e10] dark:text-white transition-all shadow-sm backdrop-blur-sm group border border-transparent hover:border-[#cf1736]/20">
                     <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-300">close</span>
                 </button>
 
                 {/* Left: Image Gallery */}
-                <div className="w-full md:w-1/2 h-[45vh] md:h-full bg-[#F0EFE8] dark:bg-[#251d16] flex flex-col p-4 md:p-8 gap-4 relative">
+                <div className="w-full md:w-1/2 h-[45vh] md:h-full bg-[#f0efe8] dark:bg-[#1b0e10]/50 flex flex-col p-4 md:p-8 gap-4 relative">
                     <div
                         ref={imgRef}
                         onMouseMove={handleMouseMove}
@@ -192,12 +179,18 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         onMouseLeave={() => setIsZoomed(false)}
                         className="flex-1 w-full relative rounded-lg overflow-hidden shadow-inner group cursor-zoom-in"
                     >
-                        <img
-                            alt={product.name}
-                            className={`object-cover w-full h-full transition-transform duration-500 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
-                            src={productImage}
-                            style={isZoomed ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` } : {}}
-                        />
+                        {productImage ? (
+                            <img
+                                alt={product.name}
+                                className={`object-cover w-full h-full transition-transform duration-500 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
+                                src={productImage as string}
+                                style={isZoomed ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` } : {}}
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                <span className="material-symbols-outlined text-6xl text-gray-400">image</span>
+                            </div>
+                        )}
                         {/* Color tint overlay */}
                         <div
                             className="absolute inset-0 pointer-events-none transition-opacity duration-500"
@@ -213,7 +206,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             <span className="text-white">{productColors[selectedColor]?.name}</span>
                         </div>
                         {product.badge && (
-                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase text-[#c27a2a] shadow-sm">
+                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/70 backdrop-blur px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase text-[#cf1736] shadow-sm">
                                 {product.badge}
                             </div>
                         )}
@@ -225,7 +218,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                 <button
                                     key={idx}
                                     onClick={() => setSelectedImageIndex(idx)}
-                                    className={`w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-[#c27a2a] scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                    className={`w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-[#cf1736] scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                 >
                                     <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover" />
                                 </button>
@@ -235,17 +228,17 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                 </div>
 
                 {/* Right: Product Details */}
-                <div className="w-full md:w-1/2 h-full bg-white dark:bg-[#1c140d] flex flex-col p-6 md:p-10 overflow-y-auto custom-scrollbar">
+                <div className="w-full md:w-1/2 h-full bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] flex flex-col p-6 md:p-10 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col gap-2 mb-4">
-                        <h2 className="text-[#1c140d] dark:text-white text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">{product.name}</h2>
+                        <h2 className="text-[#1b0e10] dark:text-white text-3xl md:text-4xl font-medium leading-tight tracking-tight">{product.name}</h2>
                         <div className="flex items-baseline justify-between">
                             <div className="flex items-baseline gap-2">
-                                <p className="text-2xl font-medium text-[#c27a2a]">${displayPrice.toFixed(2)}</p>
-                                {isCustomSize && <span className="text-[10px] bg-[#c27a2a]/10 text-[#c27a2a] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">Bespoke Pricing</span>}
+                                <p className="text-2xl font-medium text-[#cf1736]">${displayPrice.toFixed(2)}</p>
+                                {isCustomSize && <span className="text-[10px] bg-[#cf1736]/10 text-[#cf1736] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">Bespoke Pricing</span>}
                             </div>
                             {(product.rating !== undefined && product.rating !== null) && (
                                 <div className="flex items-center gap-1 group cursor-pointer">
-                                    <div className="flex text-[#c27a2a]">
+                                    <div className="flex text-[#cf1736]">
                                         <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                                     </div>
                                     <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{product.rating}</span>
@@ -265,10 +258,10 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`pb-2 text-xs font-bold tracking-widest uppercase transition-all relative ${activeTab === tab ? 'text-[#c27a2a]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                                className={`pb-2 text-xs font-bold tracking-widest uppercase transition-all relative ${activeTab === tab ? 'text-[#cf1736]' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
                             >
                                 {tab}
-                                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c27a2a]"></div>}
+                                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#cf1736]"></div>}
                             </button>
                         ))}
                     </div>
@@ -279,10 +272,10 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
 
                     {/* Custom Sizing Toggle */}
                     {allowCustomSizing && (
-                        <div className="bg-[#f0efe8]/50 dark:bg-white/5 p-4 rounded-xl border border-dashed border-[#c27a2a]/30 mb-8">
+                        <div className="bg-[#f0efe8]/50 dark:bg-white/5 p-4 rounded-xl border border-dashed border-[#cf1736]/30 mb-8">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-[#c27a2a]">architecture</span>
+                                    <span className="material-symbols-outlined text-[#cf1736]">architecture</span>
                                     <div>
                                         <p className="text-xs font-bold uppercase tracking-tight">Need a custom fit?</p>
                                         <p className="text-[10px] text-gray-500">Provide your exact measurements.</p>
@@ -290,7 +283,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                 </div>
                                 <button
                                     onClick={() => setIsCustomSize(!isCustomSize)}
-                                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${isCustomSize ? 'bg-[#c27a2a] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-[#c27a2a]'}`}
+                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${isCustomSize ? 'bg-[#cf1736] text-white' : 'bg-gray-100 dark:bg-white/10 text-gray-400 hover:text-[#cf1736]'}`}
                                 >
                                     {isCustomSize ? 'Use Regular' : 'Enable Bespoke'}
                                 </button>
@@ -301,7 +294,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                     <div className="flex flex-col gap-8 flex-1">
                         {/* Colors */}
                         <div className="space-y-3">
-                            <span className="text-sm font-semibold text-[#1c140d] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#c27a2a] normal-case font-normal ml-1">{productColors[selectedColor]?.name}</span></span>
+                            <span className="text-sm font-bold text-[#1b0e10] dark:text-white uppercase tracking-wider">Select Color: <span className="text-[#cf1736] normal-case font-normal ml-1">{productColors[selectedColor]?.name}</span></span>
                             <div className="flex gap-3">
                                 {productColors.map((c: any, i: number) => (
                                     <label key={i} className="relative cursor-pointer group">
@@ -314,7 +307,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                             onChange={() => setSelectedColor(i)}
                                         />
                                         <div
-                                            className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-[#c27a2a] ring-offset-2 dark:ring-offset-[#1a130e]' : ''}`}
+                                            className={`w-10 h-10 rounded-full border shadow-sm transition-all ${selectedColor === i ? 'ring-2 ring-[#cf1736] ring-offset-2 dark:ring-offset-[#1b0e10]' : ''}`}
                                             style={{ backgroundColor: c.color, borderColor: '#d4d4d4' }}
                                         >
                                             {selectedColor === i && (
@@ -331,13 +324,13 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         {/* Sizes */}
                         {!isCustomSize ? (
                             <div className="flex flex-col gap-3">
-                                <span className="text-sm font-bold text-slate-900 dark:text-white-800 uppercase tracking-wider">Select Size</span>
+                                <span className="text-sm font-bold text-[#1b0e10] dark:text-white uppercase tracking-wider">Select Size</span>
                                 <div className="flex flex-wrap gap-2">
                                     {productSizes.map((size, i) => (
                                         <button
                                             key={`${size}-${i}`}
                                             onClick={() => setSelectedSize(i)}
-                                            className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border font-bold text-sm transition-all ${selectedSize === i ? 'border-[#c27a2a] bg-[#c27a2a]/5 text-[#c27a2a]' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'}`}
+                                            className={`min-w-[56px] h-12 flex items-center justify-center rounded-lg border font-bold text-sm transition-all ${selectedSize === i ? 'border-[#cf1736] bg-[#cf1736]/5 text-[#cf1736]' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-gray-300'}`}
                                         >
                                             {size}
                                         </button>
@@ -346,7 +339,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <span className="text-sm font-bold text-[#c27a2a] uppercase tracking-wider">Bespoke Measurements (Inches)</span>
+                                <span className="text-sm font-bold text-[#cf1736] uppercase tracking-wider">Bespoke Measurements (Inches)</span>
                                 <div className="grid grid-cols-2 gap-3">
                                     {Object.keys(customMeasurements).map((field) => (
                                         <div key={field} className="flex flex-col gap-1">
@@ -356,7 +349,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                                 placeholder="e.g. 42"
                                                 value={customMeasurements[field as keyof typeof customMeasurements]}
                                                 onChange={(e) => setCustomMeasurements(prev => ({ ...prev, [field]: e.target.value }))}
-                                                className="h-10 px-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md text-sm outline-none focus:border-[#c27a2a]"
+                                                className="h-10 px-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md text-sm outline-none focus:border-[#cf1736]"
                                             />
                                         </div>
                                     ))}
@@ -368,7 +361,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         <div className="mt-auto">
                             <button
                                 onClick={handleAddToCart}
-                                className="w-full bg-[#1c140d] dark:bg-[#c27a2a] hover:bg-[#c27a2a] dark:hover:bg-[#d88b3a] text-white h-16 rounded-xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:grayscale"
+                                className="w-full bg-[#cf1736] hover:bg-[#a3122a] text-white h-16 rounded-xl flex items-center justify-center gap-3 font-bold uppercase tracking-widest transition-all shadow-xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:grayscale"
                             >
                                 <span className="material-symbols-outlined">shopping_bag</span>
                                 Add to Collection

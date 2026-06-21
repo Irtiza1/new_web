@@ -15,6 +15,7 @@ const querySchema = z.object({
 
 // Schema for creating a request
 const createSchema = z.object({
+    id: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Invalid email'),
     itemType: z.string().min(1, 'Item type is required'),
@@ -22,7 +23,7 @@ const createSchema = z.object({
     phone: z.string().optional(),
     budget: z.string().optional(),
     deadline: z.string().optional(),
-    images: z.array(z.string()).optional(),
+    inspiration: z.string().optional(),
 });
 
 export const GET = apiHandler(async (req: NextRequest) => {
@@ -47,7 +48,10 @@ export const POST = apiHandler(async (req: NextRequest) => {
     const body = await req.json();
     const validatedData = createSchema.parse(body);
 
-    const newRequest = await requestService.create(validatedData);
+    const newRequest = await requestService.create({
+        ...validatedData,
+        id: validatedData.id || crypto.randomUUID(),
+    });
 
     return NextResponse.json({
         success: true,
