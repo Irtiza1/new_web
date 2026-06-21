@@ -17,6 +17,7 @@ export const getAll = async (query: {
     status?: string;
     limit?: string;
     includeDeleted?: boolean;
+    customer_id?: string;
 }) => {
     let dbQuery = supabase
         .from('orders')
@@ -30,6 +31,10 @@ export const getAll = async (query: {
 
     if (query.status && query.status !== 'all') {
         dbQuery = dbQuery.eq('status', query.status);
+    }
+
+    if (query.customer_id) {
+        dbQuery = dbQuery.eq('customer_id', query.customer_id);
     }
 
     if (query.search) {

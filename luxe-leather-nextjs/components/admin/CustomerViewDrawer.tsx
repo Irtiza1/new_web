@@ -1,6 +1,7 @@
 'use client';
 
-import { Customer } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
+import { Customer, Order } from '@/lib/supabase';
 
 interface CustomerWithStats extends Customer {
     ordersCount: number;
@@ -16,6 +17,27 @@ interface CustomerViewDrawerProps {
 
 export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete }: CustomerViewDrawerProps) {
     const location = [customer.city, customer.country].filter(Boolean).join(', ');
+    const aov = customer.ordersCount > 0 ? (customer.totalSpent / customer.ordersCount) : 0;
+
+    const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(true);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const res = await fetch(`/api/orders?customer_id=${customer.id}&limit=5`);
+                const data = await res.json();
+                if (data.success) {
+                    setRecentOrders(data.data.slice(0, 5));
+                }
+            } catch (err) {
+                console.error("Failed to fetch recent orders", err);
+            } finally {
+                setLoadingOrders(false);
+            }
+        };
+        fetchOrders();
+    }, [customer.id]);
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -28,7 +50,14 @@ export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete
                             {customer.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{customer.name}</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{customer.name}</h3>
+                                {customer.isActive ? (
+                                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Active</span>
+                                ) : (
+                                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Suspended</span>
+                                )}
+                            </div>
                             <p className="text-xs text-slate-500">{customer.email}</p>
                         </div>
                     </div>
@@ -71,7 +100,7 @@ export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete
                     {/* Order Stats */}
                     <div className="space-y-3">
                         <h4 className="text-xs font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Order History</h4>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                             <div className="bg-white dark:bg-[#1a2632] rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                                 <p className="text-xs text-slate-500">Total Orders</p>
                                 <p className="text-lg font-black text-slate-900 dark:text-white">{customer.ordersCount}</p>
@@ -80,8 +109,53 @@ export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete
                                 <p className="text-xs text-slate-500">Total Spent</p>
                                 <p className="text-lg font-black text-slate-900 dark:text-white">${customer.totalSpent.toFixed(2)}</p>
                             </div>
+                            <div className="bg-white dark:bg-[#1a2632] rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                                <p className="text-xs text-slate-500">AOV</p>
+                                <p className="text-lg font-black text-slate-900 dark:text-white">${aov.toFixed(2)}</p>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Recent Orders */}
+                    {customer.ordersCount > 0 && (
+                        <div className="space-y-3">
+                            <h4 className="text-xs font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Recent Orders</h4>
+                            <div className="bg-white dark:bg-[#1a2632] rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                {loadingOrders ? (
+                                    <div className="p-4 flex items-center justify-center">
+                                        <span className="material-symbols-outlined animate-spin text-[#d41132]">progress_activity</span>
+                                    </div>
+                                ) : recentOrders.length > 0 ? (
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {recentOrders.map((order) => (
+                                            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                                        {order.order_number || order.id.slice(0, 8)}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {new Date(order.createdAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">${order.total.toFixed(2)}</p>
+                                                    <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                                                        order.status === 'DELIVERED' ? 'text-green-600' :
+                                                        order.status === 'CANCELLED' ? 'text-red-600' :
+                                                        'text-orange-500'
+                                                    }`}>
+                                                        {order.status}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-4 text-center text-sm text-slate-500">No active orders found.</div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Member Since */}
                     <div className="flex items-center gap-2 text-xs text-slate-500">

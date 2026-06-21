@@ -13,7 +13,8 @@ const querySchema = z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
     search: z.string().optional(),
-    status: z.enum(['all', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).optional()
+    status: z.enum(['all', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']).optional(),
+    customer_id: z.string().optional()
 });
 
 const orderSchema = z.object({
