@@ -228,7 +228,7 @@ function MessengerWidget() {
 
             {/* ── Messenger Popup Card ── */}
             {open && (
-                <div className="w-[320px] rounded-2xl overflow-hidden shadow-2xl shadow-black/25 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 animate-in slide-in-from-bottom-4 fade-in duration-200">
+                <div className="w-full max-w-[320px] rounded-2xl overflow-hidden shadow-2xl shadow-black/25 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 animate-in slide-in-from-bottom-4 fade-in duration-200">
 
                     {/* Header: Messenger Blue/Purple Gradient */}
                     <div className="bg-gradient-to-r from-[#0695FF] via-[#7B3FFB] to-[#A334FA] px-4 py-4 flex items-center justify-between gap-3 shadow-md">

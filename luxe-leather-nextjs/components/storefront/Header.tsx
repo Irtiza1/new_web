@@ -21,6 +21,17 @@ export default function Header() {
 
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [siteTitle, setSiteTitle] = useState("Luxe Leather Gear");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Prevent scrolling when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [isMobileMenuOpen]);
 
     useEffect(() => {
         // Fetch site settings
@@ -93,6 +104,17 @@ export default function Header() {
                                 search
                             </span>
                         </button>
+                        
+                        {/* Mobile Hamburger Button */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            aria-label="Menu"
+                            className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors flex md:hidden items-center justify-center"
+                        >
+                            <span className="material-symbols-outlined text-[24px]">
+                                menu
+                            </span>
+                        </button>
                         <div className="relative">
                             <Link
                                 href="/account"
@@ -127,6 +149,57 @@ export default function Header() {
                     </div>
                 </div>
             </header>
+
+            {/* Mobile Navigation Drawer */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] flex md:hidden">
+                    {/* Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        aria-hidden="true"
+                    />
+                    
+                    {/* Drawer */}
+                    <div className="relative flex flex-col w-[80%] max-w-[320px] h-full bg-white dark:bg-[#101922] shadow-2xl animate-in slide-in-from-left duration-300">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+                            <span className="text-xl font-medium tracking-tight uppercase font-[family-name:var(--font-playfair)] text-[#1b0e10] dark:text-white">
+                                Menu
+                            </span>
+                            <button 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto py-6 px-6 flex flex-col gap-6">
+                            {navItems.map((item) => (
+                                <Link
+                                    key={item.id}
+                                    href={item.url}
+                                    target={item.opens_in_new_tab ? '_blank' : undefined}
+                                    rel={item.opens_in_new_tab ? 'noopener noreferrer' : undefined}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-lg font-medium text-[#1b0e10] dark:text-white hover:text-[#cf1736] transition-colors"
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                            <div className="h-px w-full bg-gray-100 dark:bg-gray-800 my-2" />
+                            <Link 
+                                href="/account" 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="flex items-center gap-3 text-lg font-medium text-[#1b0e10] dark:text-white hover:text-[#cf1736] transition-colors"
+                            >
+                                <span className="material-symbols-outlined">person</span>
+                                My Account
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
