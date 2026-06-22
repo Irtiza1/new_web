@@ -4,187 +4,91 @@ const crypto = require('crypto');
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 async function seed() {
-  console.log('Starting database seeding...');
-  
+  console.log('Starting foundational database seeding for AGNOSTIC database...');
   const now = new Date().toISOString();
-  // 1. Categories
-  const categories = [
-    { name: 'Jackets', slug: 'jackets', is_visible: true, display_order: 1 },
-    { name: 'Bags', slug: 'bags', is_visible: true, display_order: 2 },
-    { name: 'Wallets', slug: 'wallets', is_visible: true, display_order: 3 },
-    { name: 'Accessories', slug: 'accessories', is_visible: true, display_order: 4 }
-  ];
-  const { data: catData, error: catErr } = await supabase.from('categories').insert(categories).select();
-  if (catErr) console.error('Categories error:', catErr.message);
-  else console.log(`Seeded ${catData.length} categories.`);
 
-  // 2. Products
-  const products = [
-    { id: crypto.randomUUID(), name: 'Classic Aviator Jacket', price: 350.00, category: 'Jackets', stock: 15, description: 'A timeless leather aviator jacket tailored for comfort and durability.', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=800', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Vintage Messenger Bag', price: 210.00, category: 'Bags', stock: 8, description: 'Spacious messenger bag designed for modern professionals.', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&q=80&w=800', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Minimalist Bifold Wallet', price: 65.00, category: 'Wallets', stock: 30, description: 'Slim bifold wallet made from premium full-grain leather.', image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=800', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Oxfords Leather Shoes', price: 180.00, category: 'Accessories', stock: 12, description: 'Elegant and durable leather oxfords for formal occasions.', image: 'https://images.unsplash.com/photo-1614252339460-e1763aa53915?auto=format&fit=crop&q=80&w=800', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Executive Briefcase', price: 295.00, category: 'Bags', stock: 5, description: 'A sleek, structured briefcase that means business.', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=800', createdAt: now, updatedAt: now }
-  ];
-  const { data: prodData, error: prodErr } = await supabase.from('products').insert(products).select();
-  if (prodErr) console.error('Products error:', prodErr.message);
-  else console.log(`Seeded ${prodData.length} products.`);
-
-  // 3. Customers
-  const customers = [
-    { id: crypto.randomUUID(), name: 'Alice Smith', email: 'alice.smith@example.com', phone: '+1234567890', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Bob Jones', email: 'bob.jones@example.com', phone: '+1987654321', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Emily Davis', email: 'emily.davis@example.com', phone: '+1122334455', createdAt: now, updatedAt: now }
-  ];
-  const { data: custData, error: custErr } = await supabase.from('customers').insert(customers).select();
-  if (custErr) console.error('Customers error:', custErr.message);
-  else console.log(`Seeded ${custData.length} customers.`);
-
-  // 4. Orders & Order Items
-  if (custData && prodData) {
-    const orderId1 = crypto.randomUUID();
-    const orderId2 = crypto.randomUUID();
-    
-    const orders = [
-      {
-        id: orderId1,
-        customer_id: custData[0].id,
-        status: 'DELIVERED',
-        total: 350.00,
-        subtotal: 350.00,
-        shipping: 0,
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: orderId2,
-        customer_id: custData[1].id,
-        status: 'PENDING',
-        total: 275.00,
-        subtotal: 275.00,
-        shipping: 15.00,
-        createdAt: now,
-        updatedAt: now
-      }
-    ];
-    
-    const { error: ordErr } = await supabase.from('orders').insert(orders);
-    if (ordErr) console.error('Orders error:', ordErr.message);
-    else {
-      const orderItems = [
-        { id: crypto.randomUUID(), order_id: orderId1, product_id: prodData[0].id, quantity: 1, price: 350.00 },
-        { id: crypto.randomUUID(), order_id: orderId2, product_id: prodData[1].id, quantity: 1, price: 210.00 },
-        { id: crypto.randomUUID(), order_id: orderId2, product_id: prodData[2].id, quantity: 1, price: 65.00 }
-      ];
-      const { error: oiErr } = await supabase.from('order_items').insert(orderItems);
-      if (oiErr) console.error('Order Items error:', oiErr.message);
-      else console.log('Seeded 2 orders with 3 order items.');
-    }
-  }
-
-  // 5. Reviews
-  if (prodData) {
-    const reviews = [
-      { product_id: prodData[0].id, customer_name: 'Alice Smith', rating: 5, comment: 'Amazing jacket! Fits perfectly and looks incredibly premium.', status: 'approved', is_featured: true },
-      { product_id: prodData[1].id, customer_name: 'Charlie Doe', rating: 4, comment: 'Great bag, holds my laptop nicely.', status: 'approved', is_featured: false },
-      { product_id: prodData[2].id, customer_name: 'David Chen', rating: 5, comment: 'High quality leather, smells great and feels very durable.', status: 'pending', is_featured: false }
-    ];
-    const { data: revData, error: revErr } = await supabase.from('reviews').insert(reviews).select();
-    if (revErr) console.error('Reviews error:', revErr.message);
-    else console.log(`Seeded ${revData.length} reviews.`);
-  }
-
-  // 6. Nav Items
-  const navs = [
-    { label: 'Shop All', url: '/shop', display_order: 1, is_visible: true },
-    { label: 'Bespoke', url: '/bespoke', display_order: 2, is_visible: true },
-    { label: 'Our Story', url: '/story', display_order: 3, is_visible: true },
-    { label: 'Contact', url: '/contact', display_order: 4, is_visible: true }
-  ];
-  const { error: navErr } = await supabase.from('nav_items').insert(navs);
-  if (navErr) console.error('Nav Items error:', navErr.message);
-  else console.log('Seeded nav items.');
-
-  // 7. Shipping Zones
-  const zones = [
-    { name: 'Domestic US', regions: 'United States', rate: 10.00, handling_days: 2, is_active: true },
-    { name: 'North America', regions: 'Canada, Mexico', rate: 25.00, handling_days: 5, is_active: true },
-    { name: 'International', regions: 'Europe, Asia, Australia', rate: 50.00, handling_days: 7, is_active: true }
-  ];
-  const { error: zoneErr } = await supabase.from('shipping_zones').insert(zones);
-  if (zoneErr) console.error('Shipping Zones error:', zoneErr.message);
-  else console.log('Seeded shipping zones.');
+  // ==========================================
+  // 1. ADMIN USER CREATION (Independent public.users table)
+  // ==========================================
+  const adminId = '00000000-0000-0000-0000-000000000000'; // Mock UUID for admin
+  const adminEmail = 'admin@luxeleathergear.com';
+  // Normally you would bcrypt hash this in your backend
+  const adminPasswordHash = '$2b$10$xyzMockHashedPasswordStringxyz'; 
   
-  // 8. Site Settings (Key-Value Store)
+  const { error: userErr } = await supabase.from('users').upsert({
+    id: adminId,
+    email: adminEmail,
+    encrypted_password: adminPasswordHash,
+    created_at: now,
+    updated_at: now
+  }, { onConflict: 'email' });
+  
+  if (userErr) {
+    console.error('Admin User Error:', userErr.message);
+  } else {
+    console.log('Admin user seeded in public.users.');
+    
+    await supabase.from('user_profiles').upsert({
+      user_id: adminId,
+      full_name: 'Admin User',
+      display_name: 'Admin',
+      updated_at: now
+    }, { onConflict: 'user_id' });
+
+    await supabase.from('user_roles').upsert({
+      user_id: adminId,
+      role: 'admin',
+      updated_at: now
+    }, { onConflict: 'user_id' });
+    console.log(`Admin role & profile seeded for ${adminEmail}`);
+  }
+
+  // ==========================================
+  // 2. SITE CONTENT & SETTINGS (Foundational Config)
+  // ==========================================
   const settings = [
-    { key: 'site_title', value: 'Luxe Leather Gear' },
-    { key: 'currency', value: 'USD' },
-    { key: 'support_email', value: 'support@luxeleather.co' }
+    { id: crypto.randomUUID(), key: 'site_title', value: 'Luxe Leather Gear', updated_at: now },
+    { id: crypto.randomUUID(), key: 'currency', value: 'USD', updated_at: now },
+    { id: crypto.randomUUID(), key: 'support_email', value: 'support@luxeleathergear.com', updated_at: now }
   ];
-  const { error: setErr } = await supabase.from('site_settings').insert(settings);
-  if (setErr) console.error('Site Settings error:', setErr.message);
-  else console.log('Seeded site settings.');
+  await supabase.from('site_settings').upsert(settings, { onConflict: 'key' });
 
-  // 9. Coupons
-  const coupons = [
-    { code: 'WELCOME10', discount_type: 'percentage', value: 10, is_active: true },
-    { code: 'FREESHIP', discount_type: 'fixed', value: 15, is_active: true }
+  const siteContent = [
+    { id: crypto.randomUUID(), slug: 'about-us', content_type: 'page', description: 'About Luxe Leather Gear', content: 'We are artisans of fine leather, dedicated to quality.', updated_at: now },
+    { id: crypto.randomUUID(), slug: 'privacy-policy', content_type: 'legal', description: 'Privacy Policy', content: 'Your data is secure with us.', updated_at: now },
+    { id: crypto.randomUUID(), slug: 'terms-of-service', content_type: 'legal', description: 'Terms of Service', content: 'By using our site, you agree to our terms.', updated_at: now }
   ];
-  const { error: coupErr } = await supabase.from('coupons').insert(coupons);
-  if (coupErr) console.error('Coupons error:', coupErr.message);
-  else console.log('Seeded coupons.');
+  await supabase.from('site_content').upsert(siteContent, { onConflict: 'slug' });
 
-  // 10. Size Guide
-  const sizeGuides = [
-    { id: crypto.randomUUID(), label: 'S', chest: '36-38', waist: '28-30', hips: '34-36', shoulders: '16', length: '25' },
-    { id: crypto.randomUUID(), label: 'M', chest: '38-40', waist: '32-34', hips: '38-40', shoulders: '17', length: '26' },
-    { id: crypto.randomUUID(), label: 'L', chest: '42-44', waist: '36-38', hips: '42-44', shoulders: '18', length: '27' }
+  // ==========================================
+  // 3. SHIPPING & ZONES (System Defaults)
+  // ==========================================
+  const zones = [
+    { id: crypto.randomUUID(), name: 'Domestic US', regions: 'United States', rate: 10.00, handling_days: 2, is_active: true, created_at: now },
+    { id: crypto.randomUUID(), name: 'International', regions: 'Europe, Asia, Australia', rate: 50.00, handling_days: 7, is_active: true, created_at: now }
   ];
-  const { error: sgErr } = await supabase.from('SizeGuide').insert(sizeGuides);
-  if (sgErr) console.error('SizeGuide error:', sgErr.message);
-  else console.log('Seeded SizeGuide.');
+  await supabase.from('shipping_zones').insert(zones);
 
-  // 11. Custom Requests
-  const customRequests = [
-    { id: crypto.randomUUID(), name: 'Diana Prince', email: 'diana@example.com', itemType: 'Jacket', description: 'Need a custom fitted aviator jacket in red leather.', status: 'NEW', createdAt: now, updatedAt: now },
-    { id: crypto.randomUUID(), name: 'Bruce Wayne', email: 'bruce@example.com', itemType: 'Bag', description: 'Looking for a tactical black leather backpack.', status: 'NEW', createdAt: now, updatedAt: now }
+  const rates = [
+    { id: 'dom_standard', region: 'Domestic', standard: 10.00, express: 25.00, freeAbove: 200.00, createdAt: now, updatedAt: now },
+    { id: 'intl_standard', region: 'International', standard: 50.00, express: 100.00, freeAbove: 500.00, createdAt: now, updatedAt: now }
   ];
-  const { error: crErr } = await supabase.from('custom_requests').insert(customRequests);
-  if (crErr) console.error('Custom Requests error:', crErr.message);
-  else console.log('Seeded custom requests.');
+  await supabase.from('shipping_rates').upsert(rates, { onConflict: 'id' });
 
-  // 12. Contact Messages
-  const contactMessages = [
-    { name: 'Peter Parker', email: 'peter@example.com', inquiry_type: 'Order Issue', message: 'I need to change my shipping address for order #1234.', status: 'new' },
-    { name: 'Tony Stark', email: 'tony@example.com', inquiry_type: 'General', message: 'Do you offer bulk discounts for corporate gifting?', status: 'read' }
+  // ==========================================
+  // 4. NAV ITEMS (System Layout)
+  // ==========================================
+  const navs = [
+    { id: crypto.randomUUID(), label: 'Shop All', url: '/shop', display_order: 1, is_visible: true, opens_in_new_tab: false, created_at: now, updated_at: now },
+    { id: crypto.randomUUID(), label: 'Bespoke', url: '/bespoke', display_order: 2, is_visible: true, opens_in_new_tab: false, created_at: now, updated_at: now }
   ];
-  const { error: cmErr } = await supabase.from('contact_messages').insert(contactMessages);
-  if (cmErr) console.error('Contact Messages error:', cmErr.message);
-  else console.log('Seeded contact messages.');
+  await supabase.from('nav_items').insert(navs);
 
-  // 13. Media Files
-  const mediaFiles = [
-    { filename: 'hero-banner.jpg', url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5', size: 102400 },
-    { filename: 'logo.png', url: 'https://example.com/logo.png', size: 51200 }
-  ];
-  const { error: mfErr } = await supabase.from('media_files').insert(mediaFiles);
-  if (mfErr) console.error('Media Files error:', mfErr.message);
-  else console.log('Seeded media files.');
-
-  // 14. Audit Logs
-  const auditLogs = [
-    { table_name: 'products', record_id: prodData?.[0]?.id || 'unknown', action: 'CREATE', performed_by: 'admin' },
-    { table_name: 'orders', record_id: 'unknown', action: 'UPDATE', performed_by: 'admin' }
-  ];
-  const { error: alErr } = await supabase.from('audit_logs').insert(auditLogs);
-  if (alErr) console.log('Audit Logs seed intentionally blocked by Row Level Security (RLS) - This confirms your database is highly secure against anonymous insertions!');
-  else console.log('Seeded audit logs.');
-
-  console.log('Database seeding complete!');
+  console.log('Agnostic foundational seeding complete!');
 }
 
 seed();

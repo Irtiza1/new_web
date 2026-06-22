@@ -1,0 +1,1165 @@
+{
+  "site_content": {
+    "required": [
+      "id",
+      "slug",
+      "content"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "slug": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "content": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "content_type": {
+        "default": "text",
+        "format": "character varying",
+        "maxLength": 20,
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "orders": {
+    "required": [
+      "id",
+      "customer_id",
+      "status",
+      "subtotal",
+      "shipping",
+      "total",
+      "createdAt",
+      "updatedAt",
+      "isDeleted"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "customer_id": {
+        "description": "Note:\nThis is a Foreign Key to `customers.id`.<fk table='customers' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "status": {
+        "default": "PENDING",
+        "enum": [
+          "PENDING",
+          "PROCESSING",
+          "SHIPPED",
+          "DELIVERED",
+          "CANCELLED"
+        ],
+        "format": "public.\"OrderStatus\"",
+        "type": "string"
+      },
+      "subtotal": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "shipping": {
+        "default": 0,
+        "format": "double precision",
+        "type": "number"
+      },
+      "total": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "notes": {
+        "description": "Customer notes from checkout form",
+        "format": "text",
+        "type": "string"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "updatedAt": {
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "stripe_session_id": {
+        "description": "Stripe Checkout Session ID (not used in Elements flow, kept for flexibility)",
+        "format": "text",
+        "type": "string"
+      },
+      "stripe_payment_intent_id": {
+        "description": "Stripe Payment Intent ID (pi_...)",
+        "format": "text",
+        "type": "string"
+      },
+      "payment_status": {
+        "default": "unpaid",
+        "description": "unpaid | paid | failed | refunded",
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "isDeleted": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "order_number": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "contact_messages": {
+    "required": [
+      "id",
+      "name",
+      "email",
+      "inquiry_type",
+      "message",
+      "status"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "inquiry_type": {
+        "default": "Other",
+        "format": "text",
+        "type": "string"
+      },
+      "message": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "default": "new",
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "shipping_zones": {
+    "required": [
+      "id",
+      "name",
+      "regions"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "regions": {
+        "format": "text",
+        "type": "string"
+      },
+      "handling_days": {
+        "default": 7,
+        "format": "integer",
+        "type": "integer"
+      },
+      "rate": {
+        "default": 0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "free_above": {
+        "format": "numeric",
+        "type": "number"
+      },
+      "is_active": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "customers": {
+    "required": [
+      "id",
+      "name",
+      "email",
+      "createdAt",
+      "updatedAt",
+      "isActive"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "address": {
+        "format": "text",
+        "type": "string"
+      },
+      "city": {
+        "format": "text",
+        "type": "string"
+      },
+      "country": {
+        "format": "text",
+        "type": "string"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "updatedAt": {
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "isActive": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "SizeGuide": {
+    "required": [
+      "id",
+      "label",
+      "chest",
+      "waist",
+      "hips"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "text",
+        "type": "string"
+      },
+      "label": {
+        "format": "text",
+        "type": "string"
+      },
+      "chest": {
+        "format": "text",
+        "type": "string"
+      },
+      "waist": {
+        "format": "text",
+        "type": "string"
+      },
+      "hips": {
+        "format": "text",
+        "type": "string"
+      },
+      "shoulders": {
+        "format": "text",
+        "type": "string"
+      },
+      "length": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "nav_items": {
+    "required": [
+      "id",
+      "label",
+      "url"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "label": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "url": {
+        "format": "character varying",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "display_order": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "is_visible": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "opens_in_new_tab": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "traffic_events": {
+    "required": [
+      "id",
+      "event_type",
+      "path",
+      "session_id"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "event_type": {
+        "default": "page_view",
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "path": {
+        "format": "text",
+        "type": "string"
+      },
+      "referrer": {
+        "format": "text",
+        "type": "string"
+      },
+      "session_id": {
+        "format": "text",
+        "type": "string"
+      },
+      "country": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "region": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "city": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "device_type": {
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "os": {
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "browser": {
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "metadata": {
+        "format": "jsonb"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "products": {
+    "required": [
+      "id",
+      "name",
+      "price",
+      "category",
+      "stock",
+      "rating",
+      "reviews",
+      "createdAt",
+      "updatedAt",
+      "isActive"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "price": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "image": {
+        "format": "text",
+        "type": "string"
+      },
+      "category": {
+        "format": "text",
+        "type": "string"
+      },
+      "stock": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "sizes": {
+        "format": "text[]",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "badge": {
+        "format": "text",
+        "type": "string"
+      },
+      "rating": {
+        "default": 0,
+        "format": "double precision",
+        "type": "number"
+      },
+      "reviews": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "updatedAt": {
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "isActive": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "is_featured": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "featured_tag": {
+        "default": "NULL",
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "images": {
+        "format": "text[]",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "specs": {
+        "format": "jsonb"
+      },
+      "colors": {
+        "format": "jsonb"
+      },
+      "allow_custom_sizing": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "custom_sizing_price": {
+        "default": 0,
+        "format": "numeric",
+        "type": "number"
+      },
+      "shipping_info": {
+        "format": "jsonb"
+      }
+    },
+    "type": "object"
+  },
+  "shipping_rates": {
+    "required": [
+      "id",
+      "region",
+      "standard",
+      "express",
+      "createdAt",
+      "updatedAt"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "text",
+        "type": "string"
+      },
+      "region": {
+        "format": "text",
+        "type": "string"
+      },
+      "standard": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "express": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "freeAbove": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "updatedAt": {
+        "format": "timestamp without time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "media_files": {
+    "required": [
+      "id",
+      "filename",
+      "url"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "filename": {
+        "format": "text",
+        "type": "string"
+      },
+      "url": {
+        "format": "text",
+        "type": "string"
+      },
+      "size": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "width": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "height": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "content_type": {
+        "format": "text",
+        "type": "string"
+      },
+      "folder": {
+        "default": "general",
+        "format": "text",
+        "type": "string"
+      },
+      "alt_text": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "order_items": {
+    "required": [
+      "id",
+      "order_id",
+      "product_id",
+      "quantity",
+      "price"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "text",
+        "type": "string"
+      },
+      "order_id": {
+        "description": "Note:\nThis is a Foreign Key to `orders.id`.<fk table='orders' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "quantity": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "size": {
+        "format": "text",
+        "type": "string"
+      },
+      "price": {
+        "format": "double precision",
+        "type": "number"
+      },
+      "variant": {
+        "format": "text",
+        "type": "string"
+      },
+      "color": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "coupons": {
+    "required": [
+      "id",
+      "code",
+      "discount_type",
+      "value"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "code": {
+        "format": "character varying",
+        "maxLength": 50,
+        "type": "string"
+      },
+      "discount_type": {
+        "default": "percentage",
+        "format": "character varying",
+        "maxLength": 20,
+        "type": "string"
+      },
+      "value": {
+        "format": "numeric",
+        "type": "number"
+      },
+      "min_order_amount": {
+        "format": "numeric",
+        "type": "number"
+      },
+      "max_uses": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "uses_count": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "is_active": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "expiry_date": {
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "cart_items": {
+    "required": [
+      "id",
+      "sessionId",
+      "product_id",
+      "quantity",
+      "createdAt"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "text",
+        "type": "string"
+      },
+      "sessionId": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "quantity": {
+        "default": 1,
+        "format": "integer",
+        "type": "integer"
+      },
+      "size": {
+        "format": "text",
+        "type": "string"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "user_profiles": {
+    "required": [
+      "user_id"
+    ],
+    "properties": {
+      "user_id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "full_name": {
+        "format": "text",
+        "type": "string"
+      },
+      "display_name": {
+        "format": "text",
+        "type": "string"
+      },
+      "avatar_url": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "bio": {
+        "format": "text",
+        "type": "string"
+      },
+      "metadata": {
+        "format": "jsonb"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "user_roles": {
+    "required": [
+      "user_id",
+      "role"
+    ],
+    "properties": {
+      "user_id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "role": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "site_settings": {
+    "required": [
+      "id",
+      "key"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "key": {
+        "format": "text",
+        "type": "string"
+      },
+      "value": {
+        "format": "text",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "custom_requests": {
+    "required": [
+      "id",
+      "name",
+      "email",
+      "itemType",
+      "description",
+      "status",
+      "createdAt",
+      "updatedAt",
+      "isArchived"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "text",
+        "type": "string"
+      },
+      "customerId": {
+        "format": "text",
+        "type": "string"
+      },
+      "name": {
+        "format": "text",
+        "type": "string"
+      },
+      "email": {
+        "format": "text",
+        "type": "string"
+      },
+      "phone": {
+        "format": "text",
+        "type": "string"
+      },
+      "itemType": {
+        "format": "text",
+        "type": "string"
+      },
+      "budget": {
+        "format": "text",
+        "type": "string"
+      },
+      "deadline": {
+        "format": "text",
+        "type": "string"
+      },
+      "description": {
+        "format": "text",
+        "type": "string"
+      },
+      "inspiration": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "default": "NEW",
+        "enum": [
+          "NEW",
+          "QUOTE_SENT",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "CANCELLED"
+        ],
+        "format": "public.\"RequestStatus\"",
+        "type": "string"
+      },
+      "createdAt": {
+        "default": "CURRENT_TIMESTAMP",
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "updatedAt": {
+        "format": "timestamp without time zone",
+        "type": "string"
+      },
+      "isArchived": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "categories": {
+    "required": [
+      "id",
+      "name",
+      "slug"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "name": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "slug": {
+        "format": "character varying",
+        "maxLength": 100,
+        "type": "string"
+      },
+      "display_order": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "is_visible": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "image_url": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "reviews": {
+    "required": [
+      "id",
+      "customer_name",
+      "rating"
+    ],
+    "properties": {
+      "id": {
+        "default": "extensions.uuid_generate_v4()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "product_id": {
+        "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "customer_name": {
+        "format": "character varying",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "customer_email": {
+        "format": "character varying",
+        "maxLength": 255,
+        "type": "string"
+      },
+      "rating": {
+        "format": "integer",
+        "type": "integer"
+      },
+      "comment": {
+        "format": "text",
+        "type": "string"
+      },
+      "status": {
+        "default": "pending",
+        "format": "character varying",
+        "maxLength": 20,
+        "type": "string"
+      },
+      "is_featured": {
+        "default": false,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "helpful_count": {
+        "default": 0,
+        "format": "integer",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "updated_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "audit_logs": {
+    "required": [
+      "id",
+      "table_name",
+      "record_id",
+      "action"
+    ],
+    "properties": {
+      "id": {
+        "default": "gen_random_uuid()",
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "uuid",
+        "type": "string"
+      },
+      "table_name": {
+        "format": "text",
+        "type": "string"
+      },
+      "record_id": {
+        "format": "text",
+        "type": "string"
+      },
+      "action": {
+        "format": "text",
+        "type": "string"
+      },
+      "changed_fields": {
+        "format": "jsonb"
+      },
+      "performed_by": {
+        "default": "admin",
+        "format": "text",
+        "type": "string"
+      },
+      "ip_address": {
+        "format": "text",
+        "type": "string"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+}
