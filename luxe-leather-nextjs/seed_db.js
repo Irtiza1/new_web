@@ -1,94 +1,131 @@
 require('dotenv').config({ path: '.env.local' });
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 const crypto = require('crypto');
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Use standard PostgreSQL connection string
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error("FATAL ERROR: DATABASE_URL is not set in .env.local");
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString,
+  // If connecting to a remote DB, you might need ssl: { rejectUnauthorized: false }
+});
 
 async function seed() {
-  console.log('Starting foundational database seeding for AGNOSTIC database...');
+  console.log('Starting 100% agnostic foundational database seeding using pure SQL...');
   const now = new Date().toISOString();
 
-  // ==========================================
-  // 1. ADMIN USER CREATION (Independent public.users table)
-  // ==========================================
-  const adminId = '00000000-0000-0000-0000-000000000000'; // Mock UUID for admin
-  const adminEmail = 'admin@luxeleathergear.com';
-  // Normally you would bcrypt hash this in your backend
-  const adminPasswordHash = '$2b$10$xyzMockHashedPasswordStringxyz'; 
-  
-  const { error: userErr } = await supabase.from('users').upsert({
-    id: adminId,
-    email: adminEmail,
-    encrypted_password: adminPasswordHash,
-    created_at: now,
-    updated_at: now
-  }, { onConflict: 'email' });
-  
-  if (userErr) {
-    console.error('Admin User Error:', userErr.message);
-  } else {
-    console.log('Admin user seeded in public.users.');
+  try {
+    // ==========================================
+    // 1. ADMIN USER CREATION
+    // ==========================================
+    const adminId = '00000000-0000-0000-0000-000000000000';
+    const adminEmail = 'admin@luxeleathergear.com';
+    const adminPasswordHash = '$2b$10$xyzMockHashedPasswordStringxyz'; 
     
-    await supabase.from('user_profiles').upsert({
-      user_id: adminId,
-      full_name: 'Admin User',
-      display_name: 'Admin',
-      updated_at: now
-    }, { onConflict: 'user_id' });
+    await pool.query(`
+      INSERT INTO users (id, email, encrypted_password, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (email) DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password
+    `, [adminId, adminEmail, adminPasswordHash, now, now]);
+    console.log('Admin user seeded in public.users.');
 
-    await supabase.from('user_roles').upsert({
-      user_id: adminId,
-      role: 'admin',
-      updated_at: now
-    }, { onConflict: 'user_id' });
+    await pool.query(`
+      INSERT INTO user_profiles (user_id, full_name, display_name, updated_at)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id) DO UPDATE SET full_name = EXCLUDED.full_name
+    `, [adminId, 'Admin User', 'Admin', now]);
+
+    await pool.query(`
+      INSERT INTO user_roles (user_id, role, updated_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id) DO UPDATE SET role = EXCLUDED.role
+    `, [adminId, 'admin', now]);
     console.log(`Admin role & profile seeded for ${adminEmail}`);
+
+    // ==========================================
+    // 2. SITE CONTENT & SETTINGS
+    // ==========================================
+    const settings = [
+      ['site_title', 'Luxe Leather Gear'],
+      ['currency', 'USD'],
+      ['support_email', 'support@luxeleathergear.com']
+    ];
+    for (const [key, value] of settings) {
+      await pool.query(`
+        INSERT INTO site_settings (id, key, value, updated_at)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+      `, [crypto.randomUUID(), key, value, now]);
+    }
+
+    const siteContent = [
+      ['about-us', 'page', 'About Luxe Leather Gear', 'We are artisans of fine leather, dedicated to quality.'],
+      ['privacy-policy', 'legal', 'Privacy Policy', 'Your data is secure with us.'],
+      ['terms-of-service', 'legal', 'Terms of Service', 'By using our site, you agree to our terms.']
+    ];
+    for (const [slug, type, desc, content] of siteContent) {
+      await pool.query(`
+        INSERT INTO site_content (id, slug, content_type, description, content, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (slug) DO UPDATE SET content = EXCLUDED.content
+      `, [crypto.randomUUID(), slug, type, desc, content, now]);
+    }
+    console.log('Seeded base site settings and CMS pages.');
+
+    // ==========================================
+    // 3. SHIPPING & ZONES
+    // ==========================================
+    const zones = [
+      ['Domestic US', 'United States', 10.00, 2],
+      ['International', 'Europe, Asia, Australia', 50.00, 7]
+    ];
+    for (const [name, regions, rate, handling] of zones) {
+      await pool.query(`
+        INSERT INTO shipping_zones (id, name, regions, rate, handling_days, is_active, created_at)
+        VALUES ($1, $2, $3, $4, $5, true, $6)
+      `, [crypto.randomUUID(), name, regions, rate, handling, now]);
+    }
+
+    const rates = [
+      ['dom_standard', 'Domestic', 10.00, 25.00, 200.00],
+      ['intl_standard', 'International', 50.00, 100.00, 500.00]
+    ];
+    for (const [id, region, standard, express, free] of rates) {
+      await pool.query(`
+        INSERT INTO shipping_rates (id, region, standard, express, "freeAbove", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET standard = EXCLUDED.standard
+      `, [id, region, standard, express, free, now, now]);
+    }
+    console.log('Seeded base shipping zones and rates.');
+
+    // ==========================================
+    // 4. NAV ITEMS
+    // ==========================================
+    const navs = [
+      ['Shop All', '/shop', 1],
+      ['Bespoke', '/bespoke', 2]
+    ];
+    for (const [label, url, order] of navs) {
+      await pool.query(`
+        INSERT INTO nav_items (id, label, url, display_order, is_visible, opens_in_new_tab, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, true, false, $5, $6)
+      `, [crypto.randomUUID(), label, url, order, now, now]);
+    }
+    console.log('Seeded primary navigation links.');
+
+    console.log('Agnostic foundational seeding complete! No transactional CRUD data was mocked.');
+
+  } catch (error) {
+    console.error("Seeding failed:", error);
+  } finally {
+    await pool.end();
   }
-
-  // ==========================================
-  // 2. SITE CONTENT & SETTINGS (Foundational Config)
-  // ==========================================
-  const settings = [
-    { id: crypto.randomUUID(), key: 'site_title', value: 'Luxe Leather Gear', updated_at: now },
-    { id: crypto.randomUUID(), key: 'currency', value: 'USD', updated_at: now },
-    { id: crypto.randomUUID(), key: 'support_email', value: 'support@luxeleathergear.com', updated_at: now }
-  ];
-  await supabase.from('site_settings').upsert(settings, { onConflict: 'key' });
-
-  const siteContent = [
-    { id: crypto.randomUUID(), slug: 'about-us', content_type: 'page', description: 'About Luxe Leather Gear', content: 'We are artisans of fine leather, dedicated to quality.', updated_at: now },
-    { id: crypto.randomUUID(), slug: 'privacy-policy', content_type: 'legal', description: 'Privacy Policy', content: 'Your data is secure with us.', updated_at: now },
-    { id: crypto.randomUUID(), slug: 'terms-of-service', content_type: 'legal', description: 'Terms of Service', content: 'By using our site, you agree to our terms.', updated_at: now }
-  ];
-  await supabase.from('site_content').upsert(siteContent, { onConflict: 'slug' });
-
-  // ==========================================
-  // 3. SHIPPING & ZONES (System Defaults)
-  // ==========================================
-  const zones = [
-    { id: crypto.randomUUID(), name: 'Domestic US', regions: 'United States', rate: 10.00, handling_days: 2, is_active: true, created_at: now },
-    { id: crypto.randomUUID(), name: 'International', regions: 'Europe, Asia, Australia', rate: 50.00, handling_days: 7, is_active: true, created_at: now }
-  ];
-  await supabase.from('shipping_zones').insert(zones);
-
-  const rates = [
-    { id: 'dom_standard', region: 'Domestic', standard: 10.00, express: 25.00, freeAbove: 200.00, createdAt: now, updatedAt: now },
-    { id: 'intl_standard', region: 'International', standard: 50.00, express: 100.00, freeAbove: 500.00, createdAt: now, updatedAt: now }
-  ];
-  await supabase.from('shipping_rates').upsert(rates, { onConflict: 'id' });
-
-  // ==========================================
-  // 4. NAV ITEMS (System Layout)
-  // ==========================================
-  const navs = [
-    { id: crypto.randomUUID(), label: 'Shop All', url: '/shop', display_order: 1, is_visible: true, opens_in_new_tab: false, created_at: now, updated_at: now },
-    { id: crypto.randomUUID(), label: 'Bespoke', url: '/bespoke', display_order: 2, is_visible: true, opens_in_new_tab: false, created_at: now, updated_at: now }
-  ];
-  await supabase.from('nav_items').insert(navs);
-
-  console.log('Agnostic foundational seeding complete!');
 }
 
 seed();
