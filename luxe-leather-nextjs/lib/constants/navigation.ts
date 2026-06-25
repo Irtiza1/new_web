@@ -28,7 +28,6 @@ export const ADMIN_NAV_GROUPS = [
         label: 'Content',
         items: [
             { name: 'Homepage Builder', path: '/admin/homepage', icon: 'home_app_logo' },
-            { name: 'Storefront CMS', path: '/admin/cms', icon: 'auto_stories' },
             { name: 'Navigation', path: '/admin/navigation', icon: 'menu' },
             { name: 'Media Library', path: '/admin/media', icon: 'photo_library' },
         ]
