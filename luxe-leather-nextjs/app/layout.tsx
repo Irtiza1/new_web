@@ -48,9 +48,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const logoUrl = settings.logo_url || '/favicon.ico';
 
   return {
-    title: settings.site_title || "Luxe Leather Gear | Handcrafted Premium Leather Goods",
-    description: settings.meta_description || "Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.",
-    keywords: ["leather goods", "handcrafted", "premium", "wallets", "bags", "accessories"],
+    title: settings.seo_title || settings.site_title || "Luxe Leather Gear | Handcrafted Premium Leather Goods",
+    description: settings.seo_description || "Shop premium handcrafted leather wallets, bags, and accessories. Sustainable materials and lifetime warranty on all Luxe Leather products.",
+    keywords: settings.seo_keywords ? settings.seo_keywords.split(',') : ["leather goods", "handcrafted", "premium", "wallets", "bags", "accessories"],
     icons: {
       icon: logoUrl,
       apple: logoUrl,
