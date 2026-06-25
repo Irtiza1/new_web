@@ -5,11 +5,22 @@ import { getAll as getSettings } from "@/lib/services/settingsService";
 import { staticAsset } from "@/lib/staticAssets";
 
 import { supabase } from "@/lib/supabase";
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const title = await contentService.getBySlug('home_meta_title');
+  const description = await contentService.getBySlug('home_meta_description');
+
+  return {
+    ...(title ? { title } : {}),
+    ...(description ? { description } : {}),
+  };
+}
 
 export default async function HomePage() {
   const cmsContent: Record<string, string> = {};
   const keysToFetch = [
-    'home_hero_title', 'home_hero_subtitle', 'home_hero_cta',
+    'home_hero_title', 'home_hero_subtitle', 'home_hero_cta', 'home_hero_image',
     'home_featured_title', 'home_featured_subtitle',
     'home_testimonials_title'
   ];
@@ -25,7 +36,7 @@ export default async function HomePage() {
     .eq('is_visible', true)
     .order('display_order', { ascending: true });
 
-  const homeHeroImage = staticAsset(settings, 'home_hero_image');
+  const homeHeroImage = cmsContent.home_hero_image || staticAsset(settings, 'home_hero_image');
 
   const categories = dbCategories?.map(c => ({
     name: c.name,

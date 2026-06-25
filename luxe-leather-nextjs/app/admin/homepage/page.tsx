@@ -12,15 +12,14 @@ const sections = [
             { key: 'home_hero_title', label: 'Hero Title', type: 'text', placeholder: 'Crafted for the World' },
             { key: 'home_hero_subtitle', label: 'Hero Subtitle', type: 'textarea', placeholder: 'Premium leather goods...' },
             { key: 'home_hero_cta', label: 'CTA Button Text', type: 'text', placeholder: 'Shop Collection' },
-            { key: 'home_hero_image', label: 'Background Image URL', type: 'url', placeholder: 'https://...' },
         ]
     },
     {
         id: 'announcement', title: 'Announcement Bar', icon: 'campaign',
         fields: [
-            { key: 'announcement_text', label: 'Primary Announcement', type: 'text', placeholder: 'Free Worldwide Shipping on orders over $150' },
-            { key: 'announcement_2', label: 'Second Announcement', type: 'text', placeholder: 'Bespoke Orders Available | 12-15 Days' },
-            { key: 'announcement_3', label: 'Third Announcement', type: 'text', placeholder: 'Quality that Lasts a Lifetime' },
+            { key: 'announcement_bar_text', label: 'Primary Announcement', type: 'text', placeholder: 'Free Worldwide Shipping on orders over $150' },
+            { key: 'announcement_bar_2', label: 'Second Announcement', type: 'text', placeholder: 'Bespoke Orders Available | 12-15 Days' },
+            { key: 'announcement_bar_3', label: 'Third Announcement', type: 'text', placeholder: 'Quality that Lasts a Lifetime' },
         ]
     },
     {

@@ -47,7 +47,10 @@ export const contentService = {
             .update({ content, updated_at: new Date().toISOString() })
             .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase Update Error:', error);
+            throw new Error(error.message || 'Failed to update content');
+        }
     },
 
     async upsertContentBySlug(slug: string, content: string, title?: string, section?: string, type: string = 'text'): Promise<void> {
@@ -64,7 +67,10 @@ export const contentService = {
                 .from('site_content')
                 .update({ content, updated_at: new Date().toISOString() })
                 .eq('id', data.id);
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase Update Error:', error);
+                throw new Error(error.message || 'Failed to update content');
+            }
         } else {
             // Insert
             const { error } = await supabase
@@ -72,11 +78,13 @@ export const contentService = {
                 .insert([{
                     slug,
                     content,
-                    title: title || slug,
                     description: section || 'CMS Content',
                     content_type: type
                 }]);
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase Insert Error:', error);
+                throw new Error(error.message || 'Failed to insert content');
+            }
         }
     }
 };
