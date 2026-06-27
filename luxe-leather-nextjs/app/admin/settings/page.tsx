@@ -353,6 +353,11 @@ export default function AdminSettingsPage() {
                                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
                                                 </label>
                                             </div>
+                                            <div className="md:col-span-2 flex flex-col gap-2 mt-4">
+                                                <label className="text-sm font-bold text-[#0d141b] dark:text-white">Bank Transfer Details</label>
+                                                <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">These details will be displayed to the customer during checkout.</p>
+                                                <textarea rows={5} className="w-full px-4 py-3 rounded-lg bg-[#f6f7f8] dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none transition-all resize-y text-sm" value={settings.bank_transfer_details || ''} onChange={(e) => setSettingsState({ ...settings, bank_transfer_details: e.target.value })} placeholder="e.g. Bank Name: NSave\nAccount Number: 1234567890\nSWIFT: NSAVUS33"></textarea>
+                                            </div>
                                         </div>
                                     </section>
                                 </div>
@@ -401,16 +406,7 @@ export default function AdminSettingsPage() {
                                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
                                                 </label>
                                             </div>
-                                            <div className="flex items-center justify-between p-5 bg-gray-50 dark:bg-[#101922] rounded-xl border border-gray-200 dark:border-gray-700">
-                                                <div>
-                                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white block">Email on Low Stock</label>
-                                                    <p className="text-xs text-[#4c739a] dark:text-[#94a3b8]">Get notified when product stock drops below 5 units.</p>
-                                                </div>
-                                                <label className="relative inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" className="sr-only peer" checked={settings.notify_low_stock === 'true'} onChange={(e) => setSettingsState({ ...settings, notify_low_stock: e.target.checked ? 'true' : 'false' })} />
-                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
-                                                </label>
-                                            </div>
+
                                         </div>
                                     </section>
                                 </div>

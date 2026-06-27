@@ -18,12 +18,13 @@ export interface AnalyticsSummary {
 export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
     const { data: orders, error } = await supabase
         .from('orders')
-        .select('total, status');
+        .select('total, status')
+        .eq('isDeleted', false);
 
     if (error) throw error;
 
-    const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.total), 0) ?? 0;
-    const totalOrders = orders?.length ?? 0;
+    const totalRevenue = orders?.filter(o => o.status !== 'CANCELLED' && o.status !== 'REPLACED').reduce((sum, o) => sum + Number(o.total), 0) ?? 0;
+    const totalOrders = orders?.filter(o => o.status !== 'CANCELLED' && o.status !== 'REPLACED').length ?? 0;
     const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
     const byStatus: Record<string, number> = {};

@@ -7,6 +7,7 @@ import { Order, CustomRequest } from '@/lib/supabase';
 
 type DashboardStats = {
     totalRevenue: number;
+    totalLosses: number;
     totalOrders: number;
     totalCustomers: number;
     pendingRequests: number;
@@ -15,6 +16,7 @@ type DashboardStats = {
 
 const initialStats: DashboardStats = {
     totalRevenue: 0,
+    totalLosses: 0,
     totalOrders: 0,
     totalCustomers: 0,
     pendingRequests: 0,
@@ -269,6 +271,7 @@ export default function AdminDashboard() {
 
                 setStats({
                     totalRevenue: analyticsData.success ? analyticsData.data.totalRevenue : 0,
+                    totalLosses: analyticsData.success ? analyticsData.data.totalLosses : 0,
                     totalOrders: analyticsData.success ? analyticsData.data.totalOrders : 0,
                     totalCustomers: customersData.success ? customersData.pagination.total : 0,
                     pendingRequests: requestsData.success ? requestsData.pagination.total : 0,
@@ -337,11 +340,12 @@ export default function AdminDashboard() {
                     </div>
                 </section>
 
-                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-5">
                     <MetricCard icon="payments" label="Revenue" value={formatCurrency(stats.totalRevenue)} detail={`${stats.totalOrders} total orders recorded`} />
                     <MetricCard icon="shoppingBag" label="Orders" value={String(stats.totalOrders)} detail={`${fulfillmentRate}% delivered fulfillment mix`} tone="blue" />
                     <MetricCard icon="monitoring" label="Average Order" value={formatCurrency(avgOrderValue)} detail="Revenue divided by order count" tone="gold" />
                     <MetricCard icon="inbox" label="Open Requests" value={String(stats.pendingRequests)} detail="Custom requests marked new" tone="green" />
+                    <MetricCard icon="badge" label="Replacement Loss" value={formatCurrency(stats.totalLosses)} detail="Cost of replaced items" tone="red" />
                 </section>
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.65fr]">

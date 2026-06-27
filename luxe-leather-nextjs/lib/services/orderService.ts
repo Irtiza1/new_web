@@ -217,30 +217,26 @@ export const restore = async (id: string) => {
  * Get order statistics (only counts non-deleted orders).
  */
 export const getStats = async () => {
-    const { data: totalRevenue, error: revenueError } = await supabase
+    const { data: orders, error: revenueError } = await supabase
         .from('orders')
-        .select('total')
+        .select('total, status')
         .eq('isDeleted', false);
 
     if (revenueError) throw new AppError(revenueError.message, 500, 'DB_ERROR');
 
-    const { data: statusCounts, error: statusError } = await supabase
-        .from('orders')
-        .select('status')
-        .eq('isDeleted', false);
+    const revenue = orders?.filter(o => o.status !== 'CANCELLED' && o.status !== 'REPLACED').reduce((sum, order) => sum + Number(order.total), 0) || 0;
+    const losses = orders?.filter(o => o.status === 'REPLACED').reduce((sum, order) => sum + Number(order.total), 0) || 0;
+    const totalValidOrders = orders?.filter(o => o.status !== 'CANCELLED' && o.status !== 'REPLACED').length || 0;
 
-    if (statusError) throw new AppError(statusError.message, 500, 'DB_ERROR');
-
-    const revenue = totalRevenue?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-
-    const byStatus = statusCounts?.reduce((acc: Record<string, number>, order) => {
+    const byStatus = orders?.reduce((acc: Record<string, number>, order) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
     }, {} as Record<string, number>) || {};
 
     return {
         totalRevenue: revenue,
-        totalOrders: totalRevenue?.length || 0,
+        totalLosses: losses,
+        totalOrders: totalValidOrders,
         byStatus,
     };
 };

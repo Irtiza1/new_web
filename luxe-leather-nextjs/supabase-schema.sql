@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS orders (
   notes TEXT,
   stripe_session_id TEXT,
   stripe_payment_intent_id TEXT,
+  payment_slip_url TEXT NOT NULL DEFAULT '',
   payment_status VARCHAR(50) DEFAULT 'unpaid',
   "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -184,3 +185,12 @@ INSERT INTO customers (name, email, phone, city, country) VALUES
   ('Sophia Williams', 'sophia.w@example.com', '+1 (555) 123-4567', 'New York', 'USA'),
   ('Liam Brown', 'liam.b@example.com', '+44 20 1234 5678', 'London', 'UK'),
   ('Emma Davis', 'emma.d@example.com', '+61 2 1234 5678', 'Sydney', 'Australia');
+
+-- ============================================
+-- Storage Configuration & Security Policies
+-- ============================================
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('payment-receipts', 'payment-receipts', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Removed Row Level Security for orders to keep things simple

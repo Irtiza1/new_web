@@ -74,14 +74,15 @@ export type Order = {
     order_number?: string | null;
     customerId: string;
     customer_id?: string;
-    status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+    status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REPLACED';
     total: number;
     subtotal?: number;
     shipping?: number;
     notes?: string | null;
     stripe_session_id?: string | null;
     stripe_payment_intent_id?: string | null;
-    payment_status?: 'unpaid' | 'paid' | 'failed' | 'refunded';
+    payment_slip_url: string;
+    payment_status?: 'unpaid' | 'paid' | 'failed' | 'refunded' | 'pending_verification';
     isDeleted: boolean; // soft delete — orders are never hard-deleted
     items?: OrderItem[];
     createdAt: string;

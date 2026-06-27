@@ -22,6 +22,7 @@ interface CheckoutData {
     country?: string;
     notes?: string;
     dummyPayment?: boolean;
+    paymentSlip?: File | null;
 }
 
 interface CartContextType {
@@ -235,15 +236,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const checkout = async (data: CheckoutData): Promise<{ success: boolean; clientSecret?: string; orderId?: string; message?: string; dummyMode?: boolean }> => {
         try {
-            const res = await fetch('/api/checkout/payment-intent', {
+            const formData = new FormData();
+            formData.append('customer', JSON.stringify({
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                address: data.address,
+                city: data.city,
+                country: data.country,
+                notes: data.notes,
+                dummyPayment: data.dummyPayment
+            }));
+            formData.append('items', JSON.stringify(cartItems));
+            formData.append('total', String(totalAfterDiscount));
+            
+            if (data.paymentSlip) {
+                formData.append('paymentSlip', data.paymentSlip);
+            }
+
+            const res = await fetch('/api/checkout/process', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    customer: data,
-                    items: cartItems,
-                    total: totalAfterDiscount,
-                    dummyPayment: data.dummyPayment,
-                }),
+                body: formData,
             });
             const result = await res.json();
 

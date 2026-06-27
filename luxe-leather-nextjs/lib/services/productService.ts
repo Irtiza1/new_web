@@ -1,4 +1,4 @@
-import { supabase, Product } from '../../lib/supabase';
+import { supabase, supabaseAdmin, Product } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
 import { auditLog } from './auditService';
 
@@ -182,6 +182,13 @@ export const update = async (id: string, updates: Partial<Product>) => {
  * @returns {Promise<void>}
  */
 export const remove = async (id: string) => {
+    // 0. Fetch product first to get image URLs
+    const { data: product } = await supabase
+        .from('products')
+        .select('image, images')
+        .eq('id', id)
+        .single();
+
     // 1. Guard: block if product is referenced in any order
     const { data: existingOrderItems, error: checkError } = await supabase
         .from('order_items')
@@ -219,6 +226,27 @@ export const remove = async (id: string) => {
 
     if (error) {
         throw new AppError(error.message, 500, 'DB_ERROR');
+    }
+
+    // 4. Cascade delete images from storage
+    if (product) {
+        const fileNames = new Set<string>();
+        const allImages = [...(product.images || [])];
+        if (product.image) allImages.push(product.image);
+
+        allImages.forEach(url => {
+            if (url && url.includes('public/product-images/')) {
+                const parts = url.split('public/product-images/');
+                if (parts.length > 1) {
+                    fileNames.add(parts[1]);
+                }
+            }
+        });
+
+        if (fileNames.size > 0) {
+            // Use supabaseAdmin to ensure we have permission to delete storage files
+            await supabaseAdmin.storage.from('product-images').remove(Array.from(fileNames));
+        }
     }
 
     await auditLog('products', id, 'DELETE');

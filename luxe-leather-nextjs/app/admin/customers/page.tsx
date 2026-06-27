@@ -130,90 +130,6 @@ export default function AdminCustomersPage() {
         window.URL.revokeObjectURL(url);
     };
 
-    const handleDeleteCustomer = async (id: string) => {
-        if (isBulkDeleting) return;
-
-        const customer = customers.find(c => c.id === id);
-        if (!customer) return;
-
-        setConfirmModal({
-            isOpen: true,
-            title: `Delete ${customer.name}`,
-            message: `Are you sure you want to delete "${customer.name}"? To comply with GDPR and preserve financial history, their personal data will be permanently anonymized. This cannot be undone.`,
-            onConfirm: async () => {
-                try {
-                    const res = await fetch(`/api/customers/${id}`, {
-                        method: 'DELETE',
-                    });
-
-                    if (!res.ok) throw new Error('Failed to delete customer');
-
-                    // Optimistic update
-                    setCustomers(customers.filter(c => c.id !== id));
-                    setSelectedIds(prev => {
-                        const next = new Set(prev);
-                        next.delete(id);
-                        return next;
-                    });
-                    showToast(`"${customer.name}" was successfully deleted (anonymized).`, 'success');
-                } catch (error) {
-                    console.error('Error deleting customer:', error);
-                    showToast(`Failed to delete "${customer.name}". Please try again.`, 'error');
-                    loadCustomers(); // Refresh on error
-                } finally {
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                }
-            }
-        });
-    };
-
-    const handleBulkDelete = async () => {
-        if (isBulkDeleting || selectedIds.size === 0) return;
-
-        const count = selectedIds.size;
-        setConfirmModal({
-            isOpen: true,
-            title: `Delete ${count} Customers`,
-            message: `Are you sure you want to delete ${count} selected customers? To preserve financial history, their personal data will be permanently anonymized. This action cannot be undone.`,
-            onConfirm: async () => {
-                setIsBulkDeleting(true);
-                const idsToDelete = Array.from(selectedIds);
-                let successCount = 0;
-                let failCount = 0;
-
-                try {
-                    await Promise.all(idsToDelete.map(async (id) => {
-                        try {
-                            const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-                            if (res.ok) successCount++;
-                            else failCount++;
-                        } catch {
-                            failCount++;
-                        }
-                    }));
-
-                    if (successCount > 0) {
-                        setCustomers(prev => prev.filter(c => !selectedIds.has(c.id)));
-                        setSelectedIds(new Set());
-                    }
-
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished with errors. Deleted (Anonymized): ${successCount}, Failed: ${failCount}`, 'error');
-                    } else {
-                        showToast(`Successfully deleted and anonymized ${successCount} customers.`, 'success');
-                    }
-                } catch (error) {
-                    console.error('Bulk delete error:', error);
-                    showToast('An error occurred during bulk deletion.', 'error');
-                } finally {
-                    setIsBulkDeleting(false);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                    loadCustomers();
-                }
-            }
-        });
-    };
-
     const toggleSelectAll = () => {
         const visibleIds = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(c => c.id);
         const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
@@ -380,7 +296,7 @@ export default function AdminCustomersPage() {
                 <AdminBulkActionsBar
                     selectedCount={selectedIds.size}
                     onCancel={() => setSelectedIds(new Set())}
-                    onDelete={handleBulkDelete}
+                    onSelectAll={toggleSelectAll}
                     isDeleting={isBulkDeleting}
                 />
             }
@@ -470,9 +386,7 @@ export default function AdminCustomersPage() {
                                             <span className="material-symbols-outlined text-lg">edit</span> Edit Customer
                                         </button>
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
-                                        <button onClick={() => { handleDeleteCustomer(customer.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
-                                        </button>
+
                                     </div>
                                 )}
                             </td>
@@ -498,8 +412,11 @@ export default function AdminCustomersPage() {
                 <CustomerViewDrawer
                     customer={viewingCustomer}
                     onClose={() => setViewingCustomer(null)}
-                    onEdit={() => { openEditModal(viewingCustomer); setViewingCustomer(null); }}
-                    onDelete={() => { handleDeleteCustomer(viewingCustomer.id); setViewingCustomer(null); }}
+                    onEdit={(customer) => {
+                        setViewingCustomer(null);
+                        setEditingCustomer(customer);
+                        setIsModalOpen(true);
+                    }}
                 />
             )}
         </AdminPageLayout>

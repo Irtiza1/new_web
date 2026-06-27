@@ -209,89 +209,7 @@ export default function AdminOrdersPage() {
         }
     };
 
-    const handleDelete = async (orderId: string) => {
-        if (isBulkDeleting) return;
 
-        const order = orders.find(o => o.id === orderId);
-        if (!order) return;
-
-        setConfirmModal({
-            isOpen: true,
-            title: `Archive Order ${order.order_number}`,
-            message: `Are you sure you want to archive this order for ${order.customer_name}? For financial integrity, orders are never permanently deleted.`,
-            onConfirm: async () => {
-                try {
-                    const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
-                    const data = await res.json();
-                    if (data.success) {
-                        // Optimistic update
-                        setOrders(prev => prev.filter(o => o.id !== orderId));
-                        setSelectedIds(prev => {
-                            const next = new Set(prev);
-                            next.delete(orderId);
-                            return next;
-                        });
-                        if (selectedOrderId === orderId) setSelectedOrderId(null);
-                        showToast(`Order ${order.order_number} was archived.`, 'success');
-                    } else {
-                        showToast('Failed to archive order: ' + (data.error || 'Unknown error'), 'error');
-                    }
-                } catch (err) {
-                    showToast('An unexpected error occurred during archiving.', 'error');
-                    console.error('Failed to archive order:', err);
-                } finally {
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                }
-            }
-        });
-    };
-
-    const handleBulkDelete = async () => {
-        if (isBulkDeleting || selectedIds.size === 0) return;
-
-        const count = selectedIds.size;
-        setConfirmModal({
-            isOpen: true,
-            title: `Archive ${count} Orders`,
-            message: `Are you sure you want to archive ${count} selected orders? For financial integrity, orders are never permanently deleted.`,
-            onConfirm: async () => {
-                setIsBulkDeleting(true);
-                const idsToDelete = Array.from(selectedIds);
-                let successCount = 0;
-                let failCount = 0;
-
-                try {
-                    await Promise.all(idsToDelete.map(async (id) => {
-                        try {
-                            const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-                            if (res.ok) successCount++;
-                            else failCount++;
-                        } catch {
-                            failCount++;
-                        }
-                    }));
-
-                    if (successCount > 0) {
-                        setOrders(prev => prev.filter(o => !selectedIds.has(o.id)));
-                        setSelectedIds(new Set());
-                    }
-
-                    if (failCount > 0) {
-                        showToast(`Bulk archive finished with errors. Archived: ${successCount}, Failed: ${failCount}`, 'error');
-                    } else {
-                        showToast(`Successfully archived ${successCount} orders.`, 'success');
-                    }
-                } catch (error) {
-                    console.error('Bulk archive error:', error);
-                    showToast('An error occurred during bulk archiving.', 'error');
-                } finally {
-                    setIsBulkDeleting(false);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                    loadOrders(); // Refresh to ensure sync
-                }
-            }
-        });
-    };
 
     const toggleSelectAll = () => {
         const visibleIds = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(o => o.id);
@@ -322,8 +240,9 @@ export default function AdminOrdersPage() {
             PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
             PROCESSING: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
             SHIPPED: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
-            DELIVERED: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-            CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+            DELIVERED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400',
+            CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
+            REPLACED: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
         };
 
         return (
@@ -370,7 +289,7 @@ export default function AdminOrdersPage() {
                 order.items_count,
                 order.total,
                 order.status,
-                new Date(order.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })
+                new Date(order.created_at + (order.created_at.includes('Z') || order.created_at.includes('+') ? '' : 'Z')).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })
             ].join(','))
         ].join('\n');
 
@@ -396,15 +315,19 @@ export default function AdminOrdersPage() {
                 <>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Total Orders</p>
-                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.length}</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.filter(o => o.status !== 'CANCELLED').length}</p>
                     </div>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Pending</p>
                         <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.filter(o => o.status === 'PENDING').length}</p>
                     </div>
                     <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
+                        <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Cancelled</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">{orders.filter(o => o.status === 'CANCELLED').length}</p>
+                    </div>
+                    <div className="bg-[#f6f7f8] dark:bg-[#101922] p-2.5 rounded-lg border border-[#e5e7eb] dark:border-[#2d3b4a]">
                         <p className="text-[10px] font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider">Revenue</p>
-                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">${orders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</p>
+                        <p className="text-base font-black text-[#0d141b] dark:text-white leading-none mt-0.5">${orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'REPLACED').reduce((sum, o) => sum + o.total, 0).toFixed(2)}</p>
                     </div>
                 </>
             }
@@ -449,6 +372,8 @@ export default function AdminOrdersPage() {
                                 { label: 'Processing', value: 'PROCESSING' },
                                 { label: 'Shipped', value: 'SHIPPED' },
                                 { label: 'Delivered', value: 'DELIVERED' },
+                                { label: 'Replaced', value: 'REPLACED' },
+                                { label: 'Cancelled', value: 'CANCELLED' },
                             ]}
                             activeTab={statusFilter}
                             onTabChange={setStatusFilter}
@@ -472,7 +397,7 @@ export default function AdminOrdersPage() {
                 <AdminBulkActionsBar
                     selectedCount={selectedIds.size}
                     onCancel={() => setSelectedIds(new Set())}
-                    onDelete={handleBulkDelete}
+                    onSelectAll={toggleSelectAll}
                     isDeleting={isBulkDeleting}
                 />
             }
@@ -531,7 +456,7 @@ export default function AdminOrdersPage() {
                             </td>
                             <td className="py-4 px-6">
                                 <span className="text-sm text-slate-500 dark:text-slate-400">
-                                    {isMounted ? new Date(order.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
+                                    {isMounted ? new Date(order.created_at + (order.created_at.includes('Z') || order.created_at.includes('+') ? '' : 'Z')).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) : '...'}
                                 </span>
                             </td>
                             <td className="py-4 px-6 text-right relative">
@@ -546,12 +471,26 @@ export default function AdminOrdersPage() {
                                         <button onClick={() => { setSelectedOrderId(order.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                             <span className="material-symbols-outlined text-lg">visibility</span> View Details
                                         </button>
-                                        <button onClick={() => { const next: Record<string, Order['status']> = { PENDING: 'PROCESSING', PROCESSING: 'SHIPPED', SHIPPED: 'DELIVERED', DELIVERED: 'DELIVERED', CANCELLED: 'CANCELLED' }; handleStatusChange(order.id, next[order.status] || 'PROCESSING'); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-lg">edit</span> Advance Status
+                                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+                                        <div className="px-4 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Change Status</div>
+                                        <button onClick={() => { handleStatusChange(order.id, 'PENDING'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'PENDING' ? 'bg-slate-100 dark:bg-slate-700 text-amber-600 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                            <span className="material-symbols-outlined text-lg">schedule</span> Pending
+                                        </button>
+                                        <button onClick={() => { handleStatusChange(order.id, 'PROCESSING'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'PROCESSING' ? 'bg-slate-100 dark:bg-slate-700 text-blue-600 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                            <span className="material-symbols-outlined text-lg">autorenew</span> Processing
+                                        </button>
+                                        <button onClick={() => { handleStatusChange(order.id, 'SHIPPED'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'SHIPPED' ? 'bg-slate-100 dark:bg-slate-700 text-indigo-600 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                            <span className="material-symbols-outlined text-lg">local_shipping</span> Shipped
+                                        </button>
+                                        <button onClick={() => { handleStatusChange(order.id, 'DELIVERED'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'DELIVERED' ? 'bg-slate-100 dark:bg-slate-700 text-emerald-600 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                            <span className="material-symbols-outlined text-lg">check_circle</span> Delivered
                                         </button>
                                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
-                                        <button onClick={() => { handleDelete(order.id); setActiveMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-lg">delete</span> Delete
+                                        <button onClick={() => { handleStatusChange(order.id, 'CANCELLED'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'CANCELLED' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 font-bold' : 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}>
+                                            <span className="material-symbols-outlined text-lg">cancel</span> Cancelled
+                                        </button>
+                                        <button onClick={() => { handleStatusChange(order.id, 'REPLACED'); setActiveMenu(null); }} className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${order.status === 'REPLACED' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 font-bold' : 'text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}>
+                                            <span className="material-symbols-outlined text-lg">published_with_changes</span> Replaced
                                         </button>
                                     </div>
                                 )}
@@ -590,7 +529,7 @@ export default function AdminOrdersPage() {
                                         <span className="text-sm font-mono font-bold text-[#d41132] bg-[#d41132]/10 px-2.5 py-0.5 rounded-full">{fullOrder.order_number}</span>
                                         {getStatusBadge(fullOrder.status)}
                                         <span className="text-xs text-slate-400">
-                                            {isMounted && fullOrder.created_at ? new Date(fullOrder.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                                            {isMounted && fullOrder.created_at ? new Date(fullOrder.created_at + (fullOrder.created_at.includes('Z') || fullOrder.created_at.includes('+') ? '' : 'Z')).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
                                         </span>
                                     </div>
                                 )}
@@ -720,6 +659,21 @@ export default function AdminOrdersPage() {
                                         </div>
                                     </div>
 
+                                    {/* Payment Slip Verification */}
+                                    {fullOrder.payment_slip_url && (
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                                            <h4 className="text-xs font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider p-4 pb-3 flex items-center gap-1.5">
+                                                <span className="material-symbols-outlined text-[16px]">image</span> Payment Slip
+                                            </h4>
+                                            <div className="px-4 pb-4">
+                                                <a href={fullOrder.payment_slip_url} target="_blank" rel="noreferrer" className="block w-full cursor-zoom-in">
+                                                    <img src={fullOrder.payment_slip_url} alt="Payment Slip" className="w-full h-auto max-h-[300px] object-contain rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:opacity-90 transition-opacity" />
+                                                </a>
+                                                <p className="text-[10px] text-slate-400 mt-2 text-center uppercase tracking-wider font-bold">Click image to open in new tab</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Status Timeline */}
                                     <div className="space-y-3">
                                         <h4 className="text-xs font-bold text-[#4c739a] dark:text-[#94a3b8] uppercase tracking-wider flex items-center gap-1.5">
@@ -758,29 +712,7 @@ export default function AdminOrdersPage() {
                             ) : null}
                         </div>
 
-                        {/* Footer Actions */}
-                        {fullOrder && (
-                            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex gap-3 shrink-0">
-                                <button
-                                    onClick={() => {
-                                        const next: Record<string, Order['status']> = { PENDING: 'PROCESSING', PROCESSING: 'SHIPPED', SHIPPED: 'DELIVERED', DELIVERED: 'DELIVERED', CANCELLED: 'CANCELLED' };
-                                        handleStatusChange(fullOrder.id, next[fullOrder.status] || 'PROCESSING');
-                                    }}
-                                    disabled={fullOrder.status === 'DELIVERED' || fullOrder.status === 'CANCELLED'}
-                                    className="flex-1 flex items-center justify-center gap-2 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <span className="material-symbols-outlined text-[20px]">forward</span>
-                                    Advance Status
-                                </button>
-                                <button
-                                    onClick={() => { handleDelete(fullOrder.id); setSelectedOrderId(null); }}
-                                    className="flex items-center justify-center gap-2 bg-white dark:bg-[#1a2632] border border-red-300 text-red-600 font-bold py-2.5 px-4 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-[20px]">archive</span>
-                                    Archive
-                                </button>
-                            </div>
-                        )}
+                        {/* Footer removed per request */}
                     </div>
                 </div>
             )}

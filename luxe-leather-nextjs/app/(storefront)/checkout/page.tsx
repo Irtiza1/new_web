@@ -1,11 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { getStripe } from '@/lib/stripe-client';
 
-import StripePaymentForm from '@/components/storefront/StripePaymentForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -21,61 +18,58 @@ export default function CheckoutPage() {
         country: '',
         notes: ''
     });
+    const [paymentSlip, setPaymentSlip] = useState<File | null>(null);
+    const [bankDetails, setBankDetails] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [clientSecret, setClientSecret] = useState<string | null>(null);
-    const [orderId, setOrderId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                if (data.success && data.data.bank_transfer_details) {
+                    setBankDetails(data.data.bank_transfer_details);
+                }
+            } catch (err) {
+                console.error('Failed to fetch settings:', err);
+            }
+        }
+        fetchSettings();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError(null);
-
-        const result = await checkout({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address,
-            city: formData.city,
-            country: formData.country,
-            notes: formData.notes,
-        });
-
-        if (result.success && result.clientSecret) {
-            setClientSecret(result.clientSecret);
-            setOrderId(result.orderId || null);
-        } else {
-            setError(result.message || 'Failed to initialize payment. Please try again.');
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setPaymentSlip(e.target.files[0]);
         }
-
-        setIsSubmitting(false);
     };
 
-    const handleDummySubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!paymentSlip) {
+            setError('Please upload your payment slip to complete the order.');
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
 
         const result = await checkout({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            address: formData.address,
-            city: formData.city,
-            country: formData.country,
-            notes: formData.notes,
-            dummyPayment: true,
+            ...formData,
+            paymentSlip
         });
 
-        if (result.success && result.dummyMode && result.orderId) {
+        if (result.success && result.orderId) {
             clearCart();
             router.push(`/order-success?order_id=${result.orderId}&redirect_status=succeeded`);
         } else {
-            setError(result.message || 'Failed to process dummy payment.');
+            setError(result.message || 'Failed to process checkout. Please try again.');
             setIsSubmitting(false);
         }
     };
@@ -109,43 +103,11 @@ export default function CheckoutPage() {
                         <div>
                             <h1 className="text-3xl md:text-4xl font-medium tracking-tight text-[#1b0e10] dark:text-white">Checkout</h1>
                             <p className="text-sm text-[#1b0e10]/60 dark:text-gray-400 font-bold uppercase tracking-widest mt-2">
-                                {clientSecret ? 'Payment Details' : 'Billing & Shipping Details'}
+                                Billing & Shipping Details
                             </p>
                         </div>
 
-                        {/* Show payment form if clientSecret is ready, otherwise show address form */}
-                        {clientSecret && orderId ? (
-                            <div className="space-y-6">
-                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
-                                    <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-lg">check_circle</span>
-                                        Shipping details saved. Enter your payment information below.
-                                    </p>
-                                </div>
-
-                                <Elements
-                                    stripe={getStripe()}
-                                    options={{
-                                        clientSecret,
-                                        appearance: {
-                                            theme: 'stripe',
-                                            variables: {
-                                                colorPrimary: '#cf1736',
-                                                borderRadius: '8px',
-                                            },
-                                        },
-                                    }}
-                                >
-                                    <StripePaymentForm
-                                        orderId={orderId}
-                                        total={totalAfterDiscount}
-
-                                        onError={(msg) => setError(msg)}
-                                    />
-                                </Elements>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold uppercase text-[#1b0e10]/80 dark:text-gray-400 tracking-tighter">Full Name*</label>
@@ -200,6 +162,34 @@ export default function CheckoutPage() {
                                     <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Special measurements or delivery requests..." rows={3} className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-lg outline-none focus:border-[#cf1736] transition-colors resize-none" />
                                 </div>
 
+                                {/* Bank Details & Slip Upload */}
+                                <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-white/10">
+                                    <h2 className="text-xl font-medium text-[#1b0e10] dark:text-white">Payment Details</h2>
+                                    
+                                    <div className="bg-[#f6f7f8] dark:bg-white/5 p-6 rounded-xl border border-gray-200 dark:border-white/10">
+                                        <p className="text-sm text-[#1b0e10] dark:text-gray-300 font-medium mb-4">
+                                            Please transfer <span className="font-bold text-[#cf1736]">${totalAfterDiscount.toFixed(2)}</span> to the following bank account.
+                                        </p>
+                                        <pre className="text-sm font-mono text-[#1b0e10]/80 dark:text-gray-400 whitespace-pre-wrap leading-relaxed bg-white dark:bg-black/20 p-4 rounded-lg border border-gray-100 dark:border-white/5">
+                                            {bankDetails || 'Loading bank details...'}
+                                        </pre>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase text-[#1b0e10]/80 dark:text-gray-400 tracking-tighter">Upload Payment Slip*</label>
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex-1 cursor-pointer bg-white dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/20 hover:border-[#cf1736] dark:hover:border-[#cf1736] rounded-lg p-6 flex flex-col items-center justify-center transition-all group">
+                                                <input required type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                                                <span className="material-symbols-outlined text-3xl text-gray-400 group-hover:text-[#cf1736] transition-colors mb-2">cloud_upload</span>
+                                                <span className="text-sm font-medium text-[#1b0e10] dark:text-white">
+                                                    {paymentSlip ? paymentSlip.name : 'Click to upload your receipt'}
+                                                </span>
+                                                <span className="text-xs text-gray-500 mt-1">JPG, PNG, WEBP (Max 5MB)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {error && (
                                     <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
                                         <span className="material-symbols-outlined text-lg">error</span>
@@ -210,39 +200,23 @@ export default function CheckoutPage() {
                                 <div className="pt-4">
                                     <button
                                         type="submit"
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !paymentSlip}
                                         className="w-full bg-[#cf1736] text-white py-5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-xl shadow-[#cf1736]/20 hover:bg-[#a3122a] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                     >
                                         {isSubmitting ? (
                                             <>
                                                 <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                                Preparing Payment...
+                                                Processing Order...
                                             </>
                                         ) : (
                                             <>
-                                                Continue to Payment
-                                                <span className="material-symbols-outlined">lock</span>
+                                                Submit Order & Upload Slip
+                                                <span className="material-symbols-outlined">receipt_long</span>
                                             </>
                                         )}
                                     </button>
-                                    <p className="text-[10px] text-center text-gray-400 mt-4 uppercase font-bold tracking-tighter">
-                                        You&apos;ll enter card details on the next step · Secured by Stripe
-                                    </p>
-
-                                    {process.env.NODE_ENV === 'development' && (
-                                        <button
-                                            type="button"
-                                            onClick={handleDummySubmit}
-                                            disabled={isSubmitting}
-                                            className="w-full mt-4 bg-slate-800 text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest shadow-md hover:bg-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">bug_report</span>
-                                            Bypass Payment (Test Mode)
-                                        </button>
-                                    )}
                                 </div>
                             </form>
-                        )}
                     </div>
 
                     {/* Right Column: Order Summary */}

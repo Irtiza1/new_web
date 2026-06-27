@@ -3,17 +3,17 @@ const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-async function checkOrder() {
+async function checkProducts() {
   const { data, error } = await supabase
-    .from('orders')
-    .select('order_number, payment_slip_url')
-    .eq('order_number', 'LLG-202606-7ABCEC');
+    .from('products')
+    .select('id, image, images')
+    .limit(1);
 
-  console.log('Result:', data);
+  console.log('Result:', JSON.stringify(data, null, 2));
   if (error) console.error('Error:', error);
 }
 
-checkOrder();
+checkProducts();
