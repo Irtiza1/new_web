@@ -219,7 +219,9 @@ export default function AdminMessagesPage() {
     };
 
     const handleReply = (msg: ContactMessage) => {
-        window.location.href = `mailto:${msg.email}?subject=Re: Luxe Leather Gear - Support Inquiry`;
+        const a = document.createElement('a');
+        a.href = `mailto:${msg.email}?subject=${encodeURIComponent('Re: Luxe Leather Gear - Support Inquiry')}`;
+        a.click();
         if (msg.status === 'new') {
             handleStatusUpdate(msg.id, 'replied');
         }

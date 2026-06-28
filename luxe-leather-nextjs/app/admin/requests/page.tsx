@@ -156,8 +156,8 @@ export default function AdminRequestsPage() {
 
         setConfirmModal({
             isOpen: true,
-            title: `Archive Request ${displayRequestNumber(req as any)}`,
-            message: `Are you sure you want to archive this custom request from "${req.name}"? This will remove it from the active pipeline.`,
+            title: `Permanently Delete Request ${displayRequestNumber(req as any)}`,
+            message: `Are you sure you want to permanently delete this custom request from "${req.name}"? This action cannot be undone.`,
             onConfirm: async () => {
                 try {
                     const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
@@ -172,13 +172,13 @@ export default function AdminRequestsPage() {
                         if (selectedRequest?.id === id) {
                             setSelectedRequest(null);
                         }
-                        showToast(`Request from "${req.name}" was successfully archived.`, 'success');
+                        showToast(`Request from "${req.name}" was successfully deleted.`, 'success');
                     } else {
-                        showToast(`Failed to archive request from "${req.name}".`, 'error');
+                        showToast(`Failed to delete request from "${req.name}".`, 'error');
                     }
                 } catch (err) {
                     console.error('Delete error:', err);
-                    showToast('An unexpected error occurred while archiving.', 'error');
+                    showToast('An unexpected error occurred while deleting.', 'error');
                 } finally {
                     setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 }
@@ -273,7 +273,9 @@ export default function AdminRequestsPage() {
         const subject = encodeURIComponent(`Re: Custom Order Request [${displayRequestNumber(request as any)}]`);
         const budgetStr = request.budget ? `$${request.budget.replace(/^\$+/, '')}` : 'TBD';
         const body = encodeURIComponent(`Hello ${request.name},\n\nWe have reviewed your request for a custom ${request.itemType}. We are pleased to quote you a final price of ${budgetStr}.\n\nTo proceed, please transfer the funds to the following bank account and reply to this email with a copy of your receipt:\n\nBank Name: Luxe Bank\nAccount Name: Luxe Leather Gear\nAccount Number: 123456789\n\nLooking forward to bringing your vision to life!\n\nBest,\nLuxe Leather Gear Team`);
-        window.location.href = `mailto:${request.email}?subject=${subject}&body=${body}`;
+        const a = document.createElement('a');
+        a.href = `mailto:${request.email}?subject=${subject}&body=${body}`;
+        a.click();
     };
 
     const handleQuoteSubmit = async () => {

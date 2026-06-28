@@ -37,7 +37,7 @@ export const PUT = apiHandler(async (req: NextRequest, { params }: { params: Pro
 export const DELETE = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     await requestService.remove(id);
-    return NextResponse.json({ success: true, message: 'Request archived.' });
+    return NextResponse.json({ success: true, message: 'Request permanently deleted.' });
 });
 
 export const PATCH = apiHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
