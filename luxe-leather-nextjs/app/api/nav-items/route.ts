@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,9 +62,7 @@ export async function DELETE(request: Request) {
     const { error } = await supabase.from('nav_items').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
-    for (const dId of idsToDelete) {
-        await auditLog('nav_items', dId, 'DELETE');
-    }
+    await auditLogBulk('nav_items', idsToDelete, 'DELETE');
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

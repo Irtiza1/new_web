@@ -1,4 +1,4 @@
-import { supabase } from '../supabase';
+import { supabase, supabaseAdmin } from '../supabase';
 
 // ============================================================
 // AUDIT SERVICE
@@ -43,7 +43,7 @@ export async function auditLog(
     ipAddress?: string
 ): Promise<void> {
     try {
-        await supabase.from('audit_logs').insert([{
+        const { error } = await supabaseAdmin.from('audit_logs').insert([{
             table_name: tableName,
             record_id: recordId,
             action,
@@ -51,9 +51,47 @@ export async function auditLog(
             performed_by: performedBy,
             ip_address: ipAddress ?? null,
         }]);
+        if (error) {
+            console.warn('[AuditService] Failed to write audit log:', error);
+        }
     } catch (err) {
-        // Never let audit failures surface to the user
         console.warn('[AuditService] Failed to write audit log:', err);
+    }
+}
+
+/**
+ * Write multiple audit log entries in a single bulk insert.
+ *
+ * @param tableName  - DB table affected (e.g. 'products', 'orders')
+ * @param recordIds  - Array of primary keys of the affected rows
+ * @param action     - What happened
+ * @param performedBy - Admin identifier (future: session user)
+ * @param ipAddress  - Request IP (optional)
+ */
+export async function auditLogBulk(
+    tableName: string,
+    recordIds: string[],
+    action: AuditAction,
+    performedBy = 'admin',
+    ipAddress?: string
+): Promise<void> {
+    if (!recordIds || recordIds.length === 0) return;
+
+    const payload = recordIds.map(id => ({
+        table_name: tableName,
+        record_id: id,
+        action,
+        performed_by: performedBy,
+        ip_address: ipAddress ?? null,
+    }));
+
+    try {
+        const { error } = await supabaseAdmin.from('audit_logs').insert(payload);
+        if (error) {
+            console.warn('[AuditService] Failed to write bulk audit log:', error);
+        }
+    } catch (err) {
+        console.warn('[AuditService] Failed to write bulk audit log:', err);
     }
 }
 

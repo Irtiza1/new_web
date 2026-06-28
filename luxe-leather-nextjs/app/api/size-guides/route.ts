@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 import { apiHandler } from '@/lib/middleware/apiHandler';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,8 +77,6 @@ export const DELETE = apiHandler(async (request: NextRequest) => {
     const { error } = await supabase.from('SizeGuide').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
-    for (const dId of idsToDelete) {
-        await auditLog('size_guides', dId, 'DELETE');
-    }
+    await auditLogBulk('size_guides', idsToDelete, 'DELETE');
     return NextResponse.json({ success: true });
 });

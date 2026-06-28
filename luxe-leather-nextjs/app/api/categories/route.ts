@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 const categorySchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -123,9 +123,8 @@ export async function DELETE(request: Request) {
         }
     }
 
-    for (const dId of idsToDelete) {
-        await auditLog('categories', dId, 'DELETE');
-    }
+    await auditLogBulk('categories', idsToDelete, 'DELETE');
+    
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

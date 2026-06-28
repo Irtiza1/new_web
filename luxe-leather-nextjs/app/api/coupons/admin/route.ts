@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 const couponSchema = z.object({
     code: z.string().min(1, 'Code is required'),
@@ -80,8 +80,6 @@ export async function DELETE(request: Request) {
     const { error } = await supabase.from('coupons').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
-    for (const dId of idsToDelete) {
-        await auditLog('coupons', dId, 'DELETE');
-    }
+    await auditLogBulk('coupons', idsToDelete, 'DELETE');
     return NextResponse.json({ success: true });
 }

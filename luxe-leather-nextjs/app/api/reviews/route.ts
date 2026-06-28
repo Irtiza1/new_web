@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 const reviewSchema = z.object({
     product_id: z.string().optional(),
@@ -89,9 +89,7 @@ export async function DELETE(request: Request) {
     const { error } = await supabase.from('reviews').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
-    for (const dId of idsToDelete) {
-        await auditLog('reviews', dId, 'DELETE');
-    }
+    await auditLogBulk('reviews', idsToDelete, 'DELETE');
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

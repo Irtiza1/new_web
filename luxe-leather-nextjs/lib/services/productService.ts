@@ -1,6 +1,6 @@
 import { supabase, supabaseAdmin, Product } from '../../lib/supabase';
 import { AppError } from '../utils/AppError';
-import { auditLog } from './auditService';
+import { auditLog, auditLogBulk } from './auditService';
 
 // ============================================
 // PRODUCT SERVICE

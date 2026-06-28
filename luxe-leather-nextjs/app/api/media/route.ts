@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { auditLog } from '@/lib/services/auditService';
+import { auditLog, auditLogBulk } from '@/lib/services/auditService';
 
 
 export const dynamic = 'force-dynamic';
@@ -117,64 +118,79 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    if (!file) return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
-
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-        return NextResponse.json({ success: false, message: 'Only JPG, PNG, SVG, and WebP images are allowed' }, { status: 400 });
-    }
-
-    if (file.size > MAX_UPLOAD_BYTES) {
-        return NextResponse.json({ success: false, message: 'Image must be smaller than 20MB' }, { status: 400 });
-    }
+    const files = formData.getAll('file') as File[];
+    if (!files || files.length === 0) return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
 
     const folderName = safeFolderName(formData.get('bucket'));
-    const customName = formData.get('customName') as string;
-
-    let baseName = customName || file.name.replace(/\.[^/.]+$/, "");
-    baseName = baseName.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
     
-    const shortId = `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
-    const filename = `${baseName || 'image'}-${shortId}.webp`;
-    const filePath = `${folderName}/${filename}`;
+    let customNames: string[] = [];
+    const customNameStr = formData.get('customName') as string;
+    const customNamesStr = formData.get('customNames') as string;
+    
+    if (customNamesStr) {
+        try { customNames = JSON.parse(customNamesStr); } catch (e) {}
+    } else if (customNameStr) {
+        customNames = [customNameStr];
+    }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
-    const buffer = await sharp(inputBuffer, { animated: false })
-        .rotate()
-        .resize({
-            width: 2200,
-            height: 2200,
-            fit: 'inside',
-            withoutEnlargement: true,
-        })
-        .webp({ quality: 84, effort: 4 })
-        .toBuffer();
+    const results = [];
 
-    const { error } = await supabaseAdmin.storage.from(BUCKET).upload(filePath, buffer, {
-        contentType: 'image/webp',
-        upsert: false
-    });
+    // Process files sequentially to avoid overwhelming memory with Sharp conversions
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) continue;
+        if (file.size > MAX_UPLOAD_BYTES) continue;
 
-    if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        const customName = customNames[i] || '';
+        let baseName = customName || file.name.replace(/\.[^/.]+$/, "");
+        baseName = baseName.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase().replace(/-+/g, '-').replace(/^-|-$/g, '');
+        
+        const shortId = `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+        const filename = `${baseName || 'image'}-${shortId}.webp`;
+        const filePath = `${folderName}/${filename}`;
 
-    const url = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
+        const arrayBuffer = await file.arrayBuffer();
+        const inputBuffer = Buffer.from(arrayBuffer);
+        const buffer = await sharp(inputBuffer, { animated: false })
+            .rotate()
+            .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 84, effort: 4 })
+            .toBuffer();
 
-    // Save to database for syncing
-    await supabaseAdmin.from('media_files').insert({
-        filename,
-        url,
-        size: buffer.length,
-        content_type: 'image/webp',
-        folder: folderName
-    });
+        const { error } = await supabaseAdmin.storage.from(BUCKET).upload(filePath, buffer, {
+            contentType: 'image/webp',
+            upsert: false
+        });
 
-    await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
+        if (error) {
+            console.error('Storage upload error:', error);
+            continue;
+        }
+
+        const url = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
+
+        await supabaseAdmin.from('media_files').insert({
+            filename,
+            url,
+            size: buffer.length,
+            content_type: 'image/webp',
+            folder: folderName
+        });
+
+        await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
+        
+        results.push({ name: filename, url, content_type: 'image/webp', size: buffer.length });
+    }
+
+    if (results.length === 0) {
+        return NextResponse.json({ success: false, message: 'All files failed validation or upload.' }, { status: 400 });
+    }
+
     return NextResponse.json({
         success: true,
-        data: { name: filename, url, content_type: 'image/webp', size: buffer.length },
-        url,
-        content_type: 'image/webp',
+        data: results.length === 1 ? results[0] : results,
+        results: results,
+        url: results.length === 1 ? results[0].url : undefined,
     });
 }
 
@@ -231,8 +247,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ success: false, message: 'Failed to delete files from both storage and database' }, { status: 500 });
     }
     
-    for (const n of validNames) {
-        await auditLog('media', n, 'DELETE');
-    }
-    return NextResponse.json({ success: true });
+    await auditLogBulk('media', validNames, 'DELETE');
+
+    return NextResponse.json({ success: true, count: validNames.length });
 }

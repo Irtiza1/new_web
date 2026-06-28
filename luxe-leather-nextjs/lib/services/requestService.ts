@@ -1,6 +1,6 @@
 import { supabase, supabaseAdmin, type CustomRequest } from '@/lib/supabase';
 import { AppError } from '@/lib/utils/AppError';
-import { auditLog } from './auditService';
+import { auditLog, auditLogBulk } from './auditService';
 
 export type { CustomRequest };
 
@@ -237,9 +237,7 @@ export const removeBulk = async (ids: string[]) => {
         }
     }
 
-    for (const id of ids) {
-        await auditLog('custom_requests', id, 'DELETE', { status: { from: 'active', to: 'deleted' } });
-    }
+    await auditLogBulk('custom_requests', ids, 'DELETE');
     
     return { success: true };
 };
