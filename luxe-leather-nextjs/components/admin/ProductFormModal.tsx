@@ -126,29 +126,46 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         try {
             const finalImages = [...(formData.images || [])];
 
+            // Extract files that still need uploading
+            const filesToUpload: { file: File; imageIndex: number }[] = [];
             for (let i = 0; i < pendingFiles.length; i++) {
                 const { file, objectUrl } = pendingFiles[i];
                 const imageIndex = finalImages.indexOf(objectUrl);
                 if (imageIndex !== -1) {
-                    const formDataUpload = new FormData();
+                    filesToUpload.push({ file, imageIndex });
+                }
+            }
+
+            if (filesToUpload.length > 0) {
+                const formDataUpload = new FormData();
+                formDataUpload.append('bucket', 'product-images');
+                
+                const customNames: string[] = [];
+                filesToUpload.forEach(({ file, imageIndex }) => {
                     formDataUpload.append('file', file);
-                    formDataUpload.append('bucket', 'product-images');
-                    
                     const designation = imageIndex === 0 ? 'primary' : 'secondary';
                     const paddedCount = (imageIndex + 1).toString().padStart(2, '0');
-                    const customName = `${formData.name || 'product'}-${designation}-${paddedCount}`;
-                    formDataUpload.append('customName', customName);
+                    customNames.push(`${formData.name || 'product'}-${designation}-${paddedCount}`);
+                });
+                formDataUpload.append('customNames', JSON.stringify(customNames));
 
-                    const res = await fetch('/api/media', {
-                        method: 'POST',
-                        body: formDataUpload,
-                    });
+                const res = await fetch('/api/media', {
+                    method: 'POST',
+                    body: formDataUpload,
+                });
 
-                    const data = await res.json();
-                    if (!data.success) throw new Error(data.message);
-                    
-                    finalImages[imageIndex] = data.data.url;
-                }
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message);
+                
+                // If it's a single file upload, the API returns a single object in data.data
+                // If multiple, it returns an array of objects
+                const results = Array.isArray(data.data) ? data.data : [data.data];
+                
+                // Map the returned URLs back to their correct positions in finalImages
+                results.forEach((result: { url: string }, idx: number) => {
+                    const originalIndex = filesToUpload[idx].imageIndex;
+                    finalImages[originalIndex] = result.url;
+                });
             }
 
             const finalData = {
