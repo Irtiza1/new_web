@@ -43,6 +43,7 @@ interface FullOrder extends OrderRow {
     notes?: string;
     subtotal?: number;
     shipping?: number;
+    payment_slip_url?: string;
     customers?: {
         name: string;
         email: string;

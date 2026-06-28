@@ -372,10 +372,11 @@ export default function AdminCustomersPage() {
                 <CustomerViewDrawer
                     customer={viewingCustomer}
                     onClose={() => setViewingCustomer(null)}
-                    onEdit={(customer) => {
-                        setViewingCustomer(null);
-                        setEditingCustomer(customer);
-                        setIsModalOpen(true);
+                    onEdit={() => {
+                        if (viewingCustomer) {
+                            openEditModal(viewingCustomer);
+                            setViewingCustomer(null);
+                        }
                     }}
                 />
             )}

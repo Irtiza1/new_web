@@ -12,10 +12,9 @@ interface CustomerViewDrawerProps {
     customer: CustomerWithStats;
     onClose: () => void;
     onEdit: () => void;
-    onDelete: () => void;
 }
 
-export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete }: CustomerViewDrawerProps) {
+export default function CustomerViewDrawer({ customer, onClose, onEdit }: CustomerViewDrawerProps) {
     const location = [customer.city, customer.country].filter(Boolean).join(', ');
     const aov = customer.ordersCount > 0 ? (customer.totalSpent / customer.ordersCount) : 0;
 
@@ -173,13 +172,7 @@ export default function CustomerViewDrawer({ customer, onClose, onEdit, onDelete
                         <span className="material-symbols-outlined text-[20px]">edit</span>
                         Edit Customer
                     </button>
-                    <button
-                        onClick={onDelete}
-                        className="w-full flex items-center justify-center gap-2 bg-white dark:bg-[#1a2632] border border-red-300 text-red-600 font-bold py-2.5 px-4 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                        Delete Customer
-                    </button>
+
                 </div>
             </aside>
         </div>
