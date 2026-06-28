@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // ============================================
 // ANALYTICS SERVICE
@@ -16,7 +16,7 @@ export interface AnalyticsSummary {
  * Get aggregated analytics summary from orders table
  */
 export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await supabaseAdmin
         .from('orders')
         .select('total, status')
         .eq('isDeleted', false);
@@ -56,7 +56,7 @@ export interface TopProduct {
  */
 export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
     // 1. Get all order items directly
-    const { data: orderItems, error } = await supabase
+    const { data: orderItems, error } = await supabaseAdmin
         .from('order_items')
         .select('product_id, quantity');
 
@@ -85,7 +85,7 @@ export async function getTopProducts(limit: number = 5): Promise<TopProduct[]> {
 
     // 4. Fetch product names
     const productIds = sortedProducts.map(([id]) => id);
-    const { data: products } = await supabase
+    const { data: products } = await supabaseAdmin
         .from('products')
         .select('id, name')
         .in('id', productIds);
@@ -125,7 +125,7 @@ const FLAG_MAP: Record<string, string> = {
  * Get customers grouped by country
  */
 export async function getCustomersByCountry(): Promise<CustomerCountry[]> {
-    const { data: customers, error } = await supabase
+    const { data: customers, error } = await supabaseAdmin
         .from('customers')
         .select('country');
 
@@ -172,7 +172,7 @@ export interface TrafficStats {
  * Aggregate website visitor traffic events from traffic_events table
  */
 export async function getTrafficSummary(startDate: string, endDate: string): Promise<TrafficStats> {
-    const { data: events, error } = await supabase
+    const { data: events, error } = await supabaseAdmin
         .from('traffic_events')
         .select('*')
         .gte('created_at', startDate + 'T00:00:00Z')
