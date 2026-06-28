@@ -142,7 +142,28 @@ export default function AccountPage() {
                 </div>
 
                 {loading ? (
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 text-slate-500">Loading account...</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 animate-pulse">
+                        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1b0e10] p-8 space-y-6">
+                            <div className="flex justify-between">
+                                <div className="space-y-3 w-1/2">
+                                    <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+                                    <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-2/3"></div>
+                                </div>
+                                <div className="w-32 h-16 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-5 pt-4">
+                                <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+                                <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+                                <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg col-span-2"></div>
+                                <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg col-span-2"></div>
+                            </div>
+                        </section>
+                        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-[#f9fafb] dark:bg-white/5 p-8 flex flex-col items-center justify-center space-y-4">
+                            <div className="w-24 h-24 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                            <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+                            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-full mt-4"></div>
+                        </section>
+                    </div>
                 ) : !user ? (
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1b0e10] p-8">
                         <h2 className="text-2xl font-medium">Sign in required</h2>

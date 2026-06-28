@@ -72,10 +72,14 @@ function OrderSuccessContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6 text-[#1b0e10] dark:text-white">
-                <div className="flex items-center gap-3 text-[#1b0e10]/80 dark:text-slate-400">
-                    <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
-                    Verifying your payment...
+            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6">
+                <div className="max-w-md w-full animate-pulse space-y-6">
+                    <div className="w-20 h-20 mx-auto bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                    <div className="space-y-3 flex flex-col items-center">
+                        <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+                    </div>
+                    <div className="bg-white dark:bg-[#1b0e10] rounded-xl p-6 border border-slate-200 dark:border-slate-700 h-40"></div>
                 </div>
             </div>
         );
@@ -148,8 +152,15 @@ function OrderSuccessContent() {
 export default function OrderSuccessPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] flex items-center justify-center">
-                <span className="material-symbols-outlined animate-spin text-2xl text-slate-400">progress_activity</span>
+            <div className="min-h-screen bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] font-[family-name:var(--font-manrope)] flex items-center justify-center p-6">
+                <div className="max-w-md w-full animate-pulse space-y-6">
+                    <div className="w-20 h-20 mx-auto bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                    <div className="space-y-3 flex flex-col items-center">
+                        <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+                    </div>
+                    <div className="bg-white dark:bg-[#1b0e10] rounded-xl p-6 border border-slate-200 dark:border-slate-700 h-40"></div>
+                </div>
             </div>
         }>
             <OrderSuccessContent />

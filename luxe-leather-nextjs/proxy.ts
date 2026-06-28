@@ -16,6 +16,7 @@ function isPublicApiRoute(req: NextRequest): boolean {
     if (pathname === '/api/checkout/payment-intent' && method === 'POST') return true;
     if (pathname === '/api/contact' && method === 'POST') return true;
     if (pathname === '/api/requests' && method === 'POST') return true;
+    if (pathname === '/api/media' && method === 'POST') return true;
     if (pathname === '/api/analytics/track' && method === 'POST') return true;
     if (pathname === '/api/coupons' && method === 'GET') return true;
     if (pathname === '/api/products/validate' && method === 'GET') return true;

@@ -9,7 +9,6 @@ import ProductSkeleton from '@/components/shared/ProductSkeleton';
 import { useCart } from '@/contexts/CartContext';
 
 
-const FALLBACK_CATEGORIES = ['All Products', 'Jackets', 'Full Coats', 'Bags & Satchels', 'Accessories', 'Shoes'];
 
 function ShopContent() {
     const searchParams = useSearchParams();
@@ -20,7 +19,7 @@ function ShopContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
     const [products, setProducts] = useState<ShopProduct[]>([]);
-    const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES);
+    const [categories, setCategories] = useState<string[]>(['All Products']);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState('newest');
