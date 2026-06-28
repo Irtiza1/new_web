@@ -36,7 +36,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
     }, []);
 
     const [isLoading, setIsLoading] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
+    const [pendingFiles, setPendingFiles] = useState<{file: File, objectUrl: string}[]>([]);
     const [formData, setFormData] = useState<pProduct>({
         name: '',
         description: '',
@@ -114,6 +114,9 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                 });
                 setSizesInput('');
             }
+            // Clean up any pending files
+            pendingFiles.forEach(p => URL.revokeObjectURL(p.objectUrl));
+            setPendingFiles([]);
         }
     }, [isOpen, initialData, categories]);
 
@@ -127,11 +130,43 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
 
         setIsLoading(true);
         try {
+            const finalImages = [...(formData.images || [])];
+
+            for (let i = 0; i < pendingFiles.length; i++) {
+                const { file, objectUrl } = pendingFiles[i];
+                const imageIndex = finalImages.indexOf(objectUrl);
+                if (imageIndex !== -1) {
+                    const formDataUpload = new FormData();
+                    formDataUpload.append('file', file);
+                    formDataUpload.append('bucket', 'product-images');
+                    
+                    const designation = imageIndex === 0 ? 'primary' : 'secondary';
+                    const paddedCount = (imageIndex + 1).toString().padStart(2, '0');
+                    const customName = `${formData.name || 'product'}-${designation}-${paddedCount}`;
+                    formDataUpload.append('customName', customName);
+
+                    const res = await fetch('/api/media', {
+                        method: 'POST',
+                        body: formDataUpload,
+                    });
+
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.message);
+                    
+                    finalImages[imageIndex] = data.data.url;
+                }
+            }
+
             const finalData = {
                 ...formData,
+                images: finalImages,
+                image: finalImages[0] || '',
                 sizes: sizesInput.split(',').map(s => s.trim()).filter(Boolean)
             };
             await onSubmit(finalData);
+            
+            pendingFiles.forEach(p => URL.revokeObjectURL(p.objectUrl));
+            setPendingFiles([]);
             onClose();
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -141,45 +176,38 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setIsUploading(true);
-        try {
-            const formDataUpload = new FormData();
-            formDataUpload.append('file', file);
-            formDataUpload.append('bucket', 'product-images');
-            
-            const imageCount = (formData.images || []).length + 1;
-            const designation = imageCount === 1 ? 'primary' : 'secondary';
-            const paddedCount = imageCount.toString().padStart(2, '0');
-            const customName = `${formData.name || 'product'}-${designation}-${paddedCount}`;
-            formDataUpload.append('customName', customName);
+        const objectUrl = URL.createObjectURL(file);
+        setPendingFiles(prev => [...prev, { file, objectUrl }]);
+        setFormData(prev => {
+            const newImages = [...(prev.images || []), objectUrl];
+            return {
+                ...prev,
+                images: newImages,
+                image: newImages[0] || ''
+            };
+        });
+        
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
-            const res = await fetch('/api/media', {
-                method: 'POST',
-                body: formDataUpload,
-            });
-
-            const data = await res.json();
-            if (!data.success) throw new Error(data.message);
-
-            setFormData(prev => {
-                const newImages = [...(prev.images || []), data.data.url];
-                return { 
-                    ...prev, 
-                    images: newImages,
-                    // Optionally keep image synced to the first image for safety
-                    image: newImages[0] 
-                };
-            });
-        } catch (error) {
-            console.error('Upload failed:', error);
-            showToast('Failed to upload image', 'error');
-        } finally {
-            setIsUploading(false);
-        }
+    const handleRemoveImage = (idx: number) => {
+        const imageUrl = formData.images![idx];
+        setFormData(prev => {
+            const newImages = [...(prev.images || [])];
+            newImages.splice(idx, 1);
+            return { ...prev, images: newImages, image: newImages[0] || '' };
+        });
+        setPendingFiles(prev => prev.filter(p => {
+             if (p.objectUrl === imageUrl) {
+                 URL.revokeObjectURL(p.objectUrl);
+                 return false;
+             }
+             return true;
+        }));
     };
 
     if (!isOpen || !mounted) return null;
@@ -271,11 +299,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                     <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
                                     <button 
                                         type="button" 
-                                        onClick={() => {
-                                            const newImages = [...(formData.images || [])];
-                                            newImages.splice(idx, 1);
-                                            setFormData({ ...formData, images: newImages, image: newImages[0] || '' });
-                                        }}
+                                        onClick={() => handleRemoveImage(idx)}
                                         className="absolute top-2 right-2 bg-black/50 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm"
                                     >
                                         <span className="material-symbols-outlined text-[16px]">close</span>
@@ -287,19 +311,12 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                     )}
                                 </div>
                             ))}
-                            {/* Upload Button Box */}
                             <div 
-                                onClick={() => !isUploading && fileInputRef.current?.click()}
-                                className={`border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#d41132] hover:bg-red-50 dark:hover:bg-[#d41132]/10 transition-colors aspect-square ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                onClick={() => fileInputRef.current?.click()}
+                                className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#d41132] hover:bg-red-50 dark:hover:bg-[#d41132]/10 transition-colors aspect-square"
                             >
-                                {isUploading ? (
-                                    <span className="material-symbols-outlined animate-spin text-gray-400">refresh</span>
-                                ) : (
-                                    <>
-                                        <span className="material-symbols-outlined text-gray-400 mb-1">add_photo_alternate</span>
-                                        <span className="text-xs text-gray-500 font-medium text-center px-2">Upload Image</span>
-                                    </>
-                                )}
+                                <span className="material-symbols-outlined text-gray-400 mb-1">add_photo_alternate</span>
+                                <span className="text-xs text-gray-500 font-medium text-center px-2">Upload Image</span>
                             </div>
                         </div>
                         <input
@@ -484,7 +501,7 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                         </button>
                         <button
                             type="submit"
-                            disabled={isLoading || isUploading}
+                            disabled={isLoading}
                             className="px-6 py-2 bg-[#d41132] hover:bg-[#b30f2a] text-white font-bold rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {isLoading && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}

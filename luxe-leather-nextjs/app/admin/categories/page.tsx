@@ -23,7 +23,7 @@ const emptyForm = { name: '', slug: '', image_url: '', display_order: '0', is_vi
 export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isUploading, setIsUploading] = useState(false);
+    const [pendingFile, setPendingFile] = useState<{file: File, objectUrl: string} | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -77,42 +77,61 @@ export default function AdminCategoriesPage() {
 
     const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
 
-    const openCreate = () => { setEditingCategory(null); setForm(emptyForm); setShowModal(true); };
+    const openCreate = () => { setEditingCategory(null); setForm(emptyForm); setShowModal(true); setPendingFile(null); };
     const openEdit = (c: Category) => {
         setEditingCategory(c);
         setForm({ name: c.name, slug: c.slug, image_url: c.image_url || '', display_order: String(c.display_order), is_visible: c.is_visible });
         setShowModal(true);
+        setPendingFile(null);
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setIsUploading(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            const res = await fetch('/api/media', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (!data.success) throw new Error(data.message);
-            setForm(f => ({ ...f, image_url: data.data.url }));
-        } catch (error) {
-            console.error('Upload failed:', error);
-            showToast('Failed to upload image', 'error');
-        } finally {
-            setIsUploading(false);
-        }
+        const objectUrl = URL.createObjectURL(file);
+        if (pendingFile) URL.revokeObjectURL(pendingFile.objectUrl);
+        setPendingFile({ file, objectUrl });
+        setForm(f => ({ ...f, image_url: objectUrl }));
     };
 
     const handleSave = async () => {
         setSaving(true);
-        const payload = { name: form.name, slug: form.slug || generateSlug(form.name), image_url: form.image_url || null, display_order: parseInt(form.display_order), is_visible: form.is_visible };
+        let finalImageUrl = form.image_url;
+
+        if (pendingFile && finalImageUrl === pendingFile.objectUrl) {
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', pendingFile.file);
+            try {
+                const res = await fetch('/api/media', { method: 'POST', body: formDataUpload });
+                const data = await res.json();
+                if (data.success) {
+                    finalImageUrl = data.data.url;
+                } else {
+                    showToast(data.message || 'Failed to upload category image', 'error');
+                    setSaving(false);
+                    return;
+                }
+            } catch (err) {
+                showToast('Failed to upload category image', 'error');
+                setSaving(false);
+                return;
+            }
+        }
+
+        const payload = { name: form.name, slug: form.slug || generateSlug(form.name), image_url: finalImageUrl || null, display_order: parseInt(form.display_order), is_visible: form.is_visible };
         const method = editingCategory ? 'PUT' : 'POST';
         const url = editingCategory ? `/api/categories?id=${editingCategory.id}` : '/api/categories';
         const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
-        if (data.success) { showToast(editingCategory ? `Category "${form.name}" updated successfully.` : `Category "${form.name}" created successfully.`, 'success'); setShowModal(false); loadCategories(); }
-        else showToast(data.message || 'Failed to save category.', 'error');
+        if (data.success) { 
+            showToast(editingCategory ? `Category "${form.name}" updated successfully.` : `Category "${form.name}" created successfully.`, 'success'); 
+            setShowModal(false); 
+            setPendingFile(null);
+            loadCategories(); 
+        } else {
+            showToast(data.message || 'Failed to save category.', 'error');
+        }
         setSaving(false);
     };
 
@@ -355,14 +374,9 @@ export default function AdminCategoriesPage() {
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        disabled={isUploading}
                                         className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center justify-center text-slate-600 dark:text-slate-300"
                                     >
-                                        {isUploading ? (
-                                            <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                                        ) : (
-                                            <span className="material-symbols-outlined text-sm">cloud_upload</span>
-                                        )}
+                                        <span className="material-symbols-outlined text-sm">cloud_upload</span>
                                     </button>
                                 </div>
                                 {form.image_url && (
