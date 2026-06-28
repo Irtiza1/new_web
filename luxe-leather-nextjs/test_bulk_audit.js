@@ -62,10 +62,10 @@ async function runTests() {
 
     // 3. Verify Audit Logs
     console.log('\n[3] Verifying bulk audit logs in DB...');
-    // Give Supabase a split second to finish the insert
-    await new Promise(r => setTimeout(r, 1000));
+    // We create a fresh admin client to bypass RLS when verifying logs
+    const adminSupabase = createClient(supabaseUrl, supabaseKey);
     
-    const { data: auditLogs, error: auditErr } = await supabase
+    const { data: auditLogs, error: auditErr } = await adminSupabase
         .from('audit_logs')
         .select('*')
         .in('record_id', catIds)
