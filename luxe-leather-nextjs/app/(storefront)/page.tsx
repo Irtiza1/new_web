@@ -63,7 +63,7 @@ export default async function HomePage() {
     .limit(3);
 
   const testimonials = dbReviews?.map(r => ({
-    name: r.customer_name || "Verified Buyer",
+    name: r.customer_name,
     role: "Verified Buyer",
     rating: r.rating,
     text: r.comment
@@ -88,14 +88,14 @@ export default async function HomePage() {
           {/* Content */}
           <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto flex flex-col items-center gap-6">
             <h1 className="text-5xl md:text-7xl font-medium tracking-tight leading-[1.1]">
-              {cmsContent.home_hero_title || "Crafted for the World"}
+              {cmsContent.home_hero_title}
             </h1>
             <p className="text-lg md:text-xl font-medium text-white/90 leading-relaxed">
-              {cmsContent.home_hero_subtitle || "Premium leather goods, handmade by masters using centuries-old techniques. Designed to last a lifetime."}
+              {cmsContent.home_hero_subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Link href="/shop" className="bg-[#cf1736] hover:bg-[#a3122a] text-white px-8 py-4 rounded font-bold text-sm tracking-widest uppercase transition-all shadow-lg">
-                {cmsContent.home_hero_cta || "Shop Collection"}
+                {cmsContent.home_hero_cta}
               </Link>
               <Link href="/custom-orders" className="bg-white hover:bg-gray-100 text-[#1b0e10] px-8 py-4 rounded font-bold text-sm tracking-widest uppercase transition-all">
                 Custom Orders
@@ -157,10 +157,10 @@ export default async function HomePage() {
           <div className="max-w-[1440px] mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-medium text-[#1b0e10] dark:text-white mb-4">
-                {cmsContent.home_featured_title || "Featured Collections"}
+                {cmsContent.home_featured_title}
               </h2>
               <p className="text-gray-500 dark:text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">
-                {cmsContent.home_featured_subtitle || "Timeless pieces crafted with precision and care. Discover our most sought-after leather goods."}
+                {cmsContent.home_featured_subtitle}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
@@ -204,7 +204,7 @@ export default async function HomePage() {
         {/* Testimonials */}
         <section className="py-20 px-6 max-w-[1440px] mx-auto">
           <h2 className="text-3xl font-medium tracking-tight text-[#1b0e10] dark:text-white text-center mb-12">
-            {cmsContent.home_testimonials_title || "Stories from our Customers"}
+            {cmsContent.home_testimonials_title}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.length > 0 ? testimonials.map((testimonial, index) => (
