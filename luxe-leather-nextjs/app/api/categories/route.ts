@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { auditLog } from '@/lib/services/auditService';
 
 const categorySchema = z.object({
@@ -76,8 +76,52 @@ export async function DELETE(request: Request) {
 
     if (idsToDelete.length === 0) return NextResponse.json({ success: false, message: 'ID(s) required' }, { status: 400 });
 
+    // 1. Fetch the categories to get their image URLs before deleting
+    const { data: categoriesToDel } = await supabase.from('categories').select('image_url').in('id', idsToDelete);
+
+    // 2. Delete the categories from the DB
     const { error } = await supabase.from('categories').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+
+    // 3. Cascade delete category images
+    if (categoriesToDel) {
+        const legacyFileNames = new Set<string>();
+        const mediaFileNames = new Set<string>();
+
+        categoriesToDel.forEach(cat => {
+            const url = cat.image_url;
+            if (url && url.includes('public/media/platform-images/')) {
+                const parts = url.split('public/media/platform-images/');
+                if (parts.length > 1) {
+                    mediaFileNames.add(parts[1]);
+                }
+            } else if (url && url.includes('public/media/categories/')) {
+                const parts = url.split('public/media/categories/');
+                if (parts.length > 1) {
+                    mediaFileNames.add(`categories/${parts[1]}`);
+                }
+            } else if (url && url.includes('public/category-images/')) {
+                const parts = url.split('public/category-images/');
+                if (parts.length > 1) {
+                    legacyFileNames.add(parts[1]);
+                }
+            }
+        });
+
+        // The images are typically uploaded using the media API under platform-images or similar
+        // We will do our best to clean them up.
+        if (mediaFileNames.size > 0) {
+            const pureFilenames = Array.from(mediaFileNames).map(name => name.split('/').pop() || name);
+            const filePaths = Array.from(mediaFileNames).map(name => name.includes('/') ? name : `platform-images/${name}`);
+            
+            await supabaseAdmin.storage.from('media').remove(filePaths);
+            await supabaseAdmin.from('media_files').delete().in('filename', pureFilenames.filter(Boolean));
+        }
+
+        if (legacyFileNames.size > 0) {
+            await supabaseAdmin.storage.from('category-images').remove(Array.from(legacyFileNames));
+        }
+    }
 
     for (const dId of idsToDelete) {
         await auditLog('categories', dId, 'DELETE');
