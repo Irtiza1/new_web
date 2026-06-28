@@ -26,9 +26,7 @@ export async function GET() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        if (error.message.includes('schema cache') || error.message.includes('does not exist') || error.message.includes('relation')) {
-            return NextResponse.json({ success: true, data: [] });
-        }
+
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
     return NextResponse.json({ success: true, data });

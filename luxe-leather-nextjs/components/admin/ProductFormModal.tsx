@@ -48,8 +48,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
         sizes: [],
         specs: [],
         colors: [],
-        allow_custom_sizing: false,
-        custom_sizing_price: 0,
         shipping_info: {
             policy: 'Free Worldwide Shipping',
             delivery_regular: '3-5 Working Days',
@@ -77,8 +75,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     sizes: initialData.sizes || [],
                     specs: initialData.specs || [],
                     colors: initialData.colors || [],
-                    allow_custom_sizing: initialData.allow_custom_sizing || false,
-                    custom_sizing_price: initialData.custom_sizing_price || 0,
                     shipping_info: initialData.shipping_info || {
                         policy: 'Free Worldwide Shipping',
                         delivery_regular: '3-5 Working Days',
@@ -101,8 +97,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     sizes: [],
                     specs: [],
                     colors: [],
-                    allow_custom_sizing: false,
-                    custom_sizing_price: 0,
                     shipping_info: {
                         policy: 'Free Worldwide Shipping',
                         delivery_regular: '3-5 Working Days',
@@ -407,28 +401,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                                     </div>
                                 ))}
                             </div>
-                        </div>
-
-                        <div className="h-px w-full bg-slate-200 dark:bg-slate-700 my-2"></div>
-                        
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Enable Bespoke / Custom Fit</h4>
-                                    <p className="text-xs text-slate-500">Allow customers to submit custom measurements.</p>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.allow_custom_sizing || false} onChange={(e) => setFormData({ ...formData, allow_custom_sizing: e.target.checked })} />
-                                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#d41132]"></div>
-                                </label>
-                            </div>
-                            
-                            {formData.allow_custom_sizing && (
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-sm font-bold text-[#0d141b] dark:text-white">Bespoke Price ($)</label>
-                                    <input type="number" min="0" step="0.01" value={formData.custom_sizing_price || 0} onChange={(e) => setFormData({ ...formData, custom_sizing_price: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#101922] border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-[#d41132] outline-none" />
-                                </div>
-                            )}
                         </div>
 
                         <div className="h-px w-full bg-slate-200 dark:bg-slate-700 my-2"></div>

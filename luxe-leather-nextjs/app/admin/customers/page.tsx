@@ -19,11 +19,14 @@ interface CustomerWithStats extends Customer {
 import AdminCustomerModal, { pCustomer } from '@/components/admin/AdminCustomerModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import CustomerViewDrawer from '@/components/admin/CustomerViewDrawer';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 export default function AdminCustomersPage() {
     const { showToast } = useToast();
     const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSegment, setSelectedSegment] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -56,6 +59,8 @@ export default function AdminCustomersPage() {
     }, []);
 
     const loadCustomers = async () => {
+        setLoading(true);
+        setError(false);
         try {
             // Fetching a large limit to support client-side filtering for now (Pilot Phase)
             const res = await fetch('/api/customers?limit=1000');
@@ -65,9 +70,11 @@ export default function AdminCustomersPage() {
                 setCustomers(data.data);
             } else {
                 console.error('Failed to load customers:', data.error);
+                setError(true);
             }
         } catch (error) {
             console.error('Failed to load customers data:', error);
+            setError(true);
         } finally {
             setLoading(false);
         }
@@ -276,11 +283,14 @@ export default function AdminCustomersPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
-                                Loading customers...
-                            </div>
+                        <td colSpan={8} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={8} className="p-0">
+                            <ErrorState onRetry={loadCustomers} title="Database Error" message="Failed to load customers from the server." />
                         </td>
                     </tr>
                 ) : filteredCustomers.length === 0 ? (

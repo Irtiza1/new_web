@@ -1,0 +1,212 @@
+{
+	"info": {
+		"_postman_id": "a9c8b7f2-1234-4a65-af01-97fb15314806",
+		"name": "Luxe Leather Gear - Contact Messages API",
+		"description": "Automated test flow to judge the logical flow of the Contact Messages API endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Create Message (Public)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Response has success flag\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Postman Test User\",\n    \"email\": \"postman@example.com\",\n    \"phone\": \"1234567890\",\n    \"inquiry_type\": \"General\",\n    \"message\": \"Testing from Postman!\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/contact",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"contact"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. Fetch Messages (Admin)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Extract Test Message ID\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    var testMsg = jsonData.data.find(m => m.email === 'postman@example.com');",
+							"    if (testMsg) {",
+							"        pm.collectionVariables.set('test_message_id', testMsg.id);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Cookie",
+						"value": "{{admin_cookie}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/contact/admin",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"contact",
+						"admin"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. Update Message Status (Admin)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Status is replied\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.data.status).to.eql('replied');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "{{admin_cookie}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"replied\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/contact/admin?id={{test_message_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"contact",
+						"admin"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "{{test_message_id}}"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Bulk Delete Messages (Admin)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Delete success\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "{{admin_cookie}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ids\": [\"{{test_message_id}}\"]\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/contact/admin",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"contact",
+						"admin"
+					]
+				}
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "admin_cookie",
+			"value": "sb-access-token=PUT_YOUR_BASE64_TOKEN_HERE"
+		},
+		{
+			"key": "test_message_id",
+			"value": ""
+		}
+	]
+}

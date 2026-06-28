@@ -14,9 +14,7 @@ export async function GET() {
     // If the table doesn't exist yet (migration pending), return empty array
     // so the storefront Header gracefully falls back to static nav links
     if (error) {
-        if (error.message.includes('schema cache') || error.message.includes('does not exist')) {
-            return NextResponse.json({ success: true, data: [] });
-        }
+
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
     return NextResponse.json({ success: true, data });

@@ -12,6 +12,8 @@ import AdminOrderModal from '@/components/admin/AdminOrderModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import { displayOrderNumber } from '@/lib/utils/orderNumber';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface OrderRow {
     id: string;
@@ -58,6 +60,7 @@ export default function AdminOrdersPage() {
     const { showToast } = useToast();
     const [orders, setOrders] = useState<OrderRow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -89,6 +92,7 @@ export default function AdminOrdersPage() {
     const loadOrders = useCallback(async () => {
         try {
             setLoading(true);
+            setError(false);
             const query = new URLSearchParams();
             if (statusFilter !== 'all') query.append('status', statusFilter);
 
@@ -111,9 +115,11 @@ export default function AdminOrdersPage() {
                 setOrders(mapped);
             } else {
                 console.error('Failed to load orders:', data.error);
+                setError(true);
             }
         } catch (error) {
             console.error('Failed to load orders:', error);
+            setError(true);
         } finally {
             setLoading(false);
         }
@@ -378,11 +384,14 @@ export default function AdminOrdersPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={8} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                Loading orders...
-                            </div>
+                        <td colSpan={8} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={8} className="p-0">
+                            <ErrorState onRetry={loadOrders} title="Database Error" message="Failed to load orders from the server." />
                         </td>
                     </tr>
                 ) : filteredOrders.length === 0 ? (

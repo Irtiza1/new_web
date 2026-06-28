@@ -9,6 +9,8 @@ import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { SizeGuide } from '@/lib/services/sizeService';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface ShippingZone {
     id: string;
@@ -29,6 +31,7 @@ export default function AdminShippingAndSizingPage() {
     // Shipping Zones State
     const [zones, setZones] = useState<ShippingZone[]>([]);
     const [zoneLoading, setZoneLoading] = useState(true);
+    const [zoneError, setZoneError] = useState(false);
     const [showZoneModal, setShowZoneModal] = useState(false);
     const [editingZone, setEditingZone] = useState<ShippingZone | null>(null);
     const [zoneForm, setZoneForm] = useState(emptyZoneForm);
@@ -38,6 +41,7 @@ export default function AdminShippingAndSizingPage() {
     // Size Guides State
     const [sizes, setSizes] = useState<SizeGuide[]>([]);
     const [sizeLoading, setSizeLoading] = useState(true);
+    const [sizeError, setSizeError] = useState(false);
     const [showSizeModal, setShowSizeModal] = useState(false);
     const [editingSize, setEditingSize] = useState<SizeGuide | null>(null);
     const [sizeForm, setSizeForm] = useState(emptySizeForm);
@@ -46,6 +50,7 @@ export default function AdminShippingAndSizingPage() {
     // Content State
     const [content, setContent] = useState({ shipping_hero_title: '', shipping_hero_subtitle: '' });
     const [contentLoading, setContentLoading] = useState(true);
+    const [contentError, setContentError] = useState(false);
     const [savingContent, setSavingContent] = useState(false);
 
     // Shared State
@@ -79,26 +84,41 @@ export default function AdminShippingAndSizingPage() {
     // Loaders
     const loadZones = useCallback(async () => {
         setZoneLoading(true);
+        setZoneError(false);
         try {
             const res = await fetch('/api/shipping-zones');
             const data = await res.json();
-            if (data.success) setZones(data.data || []);
-        } catch { }
+            if (data.success) {
+                setZones(data.data || []);
+            } else {
+                setZoneError(true);
+            }
+        } catch {
+            setZoneError(true);
+        }
         setZoneLoading(false);
     }, []);
 
     const loadSizes = useCallback(async () => {
         setSizeLoading(true);
+        setSizeError(false);
         try {
             const res = await fetch('/api/size-guides');
             const data = await res.json();
-            if (data.success) setSizes(data.data || []);
-        } catch { }
+            if (data.success) {
+                setSizes(data.data || []);
+            } else {
+                setSizeError(true);
+            }
+        } catch {
+            setSizeError(true);
+        }
         setSizeLoading(false);
     }, []);
 
     const loadContent = useCallback(async () => {
         setContentLoading(true);
+        setContentError(false);
         try {
             const keys = ['shipping_hero_title', 'shipping_hero_subtitle'];
             const res = await fetch('/api/cms');
@@ -111,8 +131,12 @@ export default function AdminShippingAndSizingPage() {
                     }
                 });
                 setContent(newContent);
+            } else {
+                setContentError(true);
             }
-        } catch { }
+        } catch {
+            setContentError(true);
+        }
         setContentLoading(false);
     }, []);
 
@@ -387,7 +411,9 @@ export default function AdminShippingAndSizingPage() {
                     isAllSelected={visibleZones.length > 0 && visibleZones.every(z => zoneSelectedIds.has(z.id))}
                 >
                     {zoneLoading ? (
-                        <tr><td colSpan={7} className="py-12 text-center text-slate-500 font-bold">Loading zones...</td></tr>
+                        <tr><td colSpan={7} className="p-0"><TableSkeleton rows={5} columns={6} /></td></tr>
+                    ) : zoneError ? (
+                        <tr><td colSpan={7} className="p-0"><ErrorState onRetry={loadZones} title="Database Error" message="Failed to load shipping zones." /></td></tr>
                     ) : visibleZones.length === 0 ? (
                         <tr><td colSpan={7} className="py-12 text-center text-slate-500">No shipping zones found.</td></tr>
                     ) : (
@@ -430,7 +456,9 @@ export default function AdminShippingAndSizingPage() {
                     isAllSelected={visibleSizes.length > 0 && visibleSizes.every(s => sizeSelectedIds.has(s.id))}
                 >
                     {sizeLoading ? (
-                        <tr><td colSpan={8} className="py-12 text-center text-slate-500 font-bold">Loading sizes...</td></tr>
+                        <tr><td colSpan={8} className="p-0"><TableSkeleton rows={5} columns={7} /></td></tr>
+                    ) : sizeError ? (
+                        <tr><td colSpan={8} className="p-0"><ErrorState onRetry={loadSizes} title="Database Error" message="Failed to load size guides." /></td></tr>
                     ) : visibleSizes.length === 0 ? (
                         <tr><td colSpan={8} className="py-12 text-center text-slate-500">No size guides found.</td></tr>
                     ) : (
@@ -466,7 +494,9 @@ export default function AdminShippingAndSizingPage() {
             {activeMainTab === 'content' && (
                 <div className="bg-white dark:bg-[#1a2632] border border-slate-200 dark:border-slate-700 rounded-2xl p-6 md:p-8">
                     {contentLoading ? (
-                        <div className="py-12 text-center text-slate-500 font-bold">Loading content...</div>
+                        <div className="py-12"><TableSkeleton rows={3} columns={1} /></div>
+                    ) : contentError ? (
+                        <div className="py-12"><ErrorState onRetry={loadContent} title="Database Error" message="Failed to load content." /></div>
                     ) : (
                         <div className="space-y-6 max-w-3xl">
                             <div>

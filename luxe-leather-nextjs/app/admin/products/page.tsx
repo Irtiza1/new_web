@@ -18,12 +18,15 @@ interface ExtendedProduct extends Product {
 import ProductFormModal, { pProduct } from '@/components/admin/ProductFormModal';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 export default function AdminProductsPage() {
     const { showToast } = useToast();
     const [products, setProducts] = useState<ExtendedProduct[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<ExtendedProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('Active');
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -115,6 +118,7 @@ export default function AdminProductsPage() {
 
     const fetchProducts = async () => {
         setIsLoading(true);
+        setError(false);
         try {
             // includeInactive=true so admin sees ALL products, including archived
             const res = await fetch('/api/products?includeInactive=true');
@@ -122,9 +126,12 @@ export default function AdminProductsPage() {
             if (result.success) {
                 setProducts(result.data);
                 setFilteredProducts(result.data);
+            } else {
+                setError(true);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
+            setError(true);
         } finally {
             setIsLoading(false);
         }
@@ -402,11 +409,14 @@ export default function AdminProductsPage() {
             >
                 {isLoading ? (
                     <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                Loading products...
-                            </div>
+                        <td colSpan={6} className="p-0">
+                            <TableSkeleton rows={5} columns={4} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={6} className="p-0">
+                            <ErrorState onRetry={fetchProducts} title="Database Error" message="Failed to load products from the server." />
                         </td>
                     </tr>
                 ) : filteredProducts.length === 0 ? (

@@ -22,6 +22,7 @@ export const ADMIN_NAV_GROUPS = [
             { name: 'Customers', path: '/admin/customers', icon: 'group' },
             { name: 'Requests', path: '/admin/requests', icon: 'inbox' },
             { name: 'Reviews', path: '/admin/reviews', icon: 'star_rate' },
+            { name: 'Messages', path: '/admin/messages', icon: 'forum' },
         ]
     },
     {

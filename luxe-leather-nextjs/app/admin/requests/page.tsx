@@ -13,11 +13,14 @@ import AdminRequestModal, { pRequest } from '@/components/admin/AdminRequestModa
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { displayRequestNumber } from '@/lib/utils/orderNumber';
 import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 export default function AdminRequestsPage() {
     const { showToast } = useToast();
     const [requests, setRequests] = useState<CustomRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<CustomRequest | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -98,6 +101,7 @@ export default function AdminRequestsPage() {
     const fetchRequests = async () => {
         try {
             setLoading(true);
+            setError(false);
             const query = new URLSearchParams();
             if (statusFilter !== 'all') query.append('status', statusFilter);
             if (searchQuery) query.append('search', searchQuery);
@@ -108,9 +112,12 @@ export default function AdminRequestsPage() {
             if (data.success) {
                 setRequests(data.data);
                 setTotalRequests(data.pagination?.total || data.data.length);
+            } else {
+                setError(true);
             }
         } catch (error) {
             console.error('Failed to load requests:', error);
+            setError(true);
         } finally {
             setLoading(false);
         }
@@ -414,11 +421,14 @@ export default function AdminRequestsPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
-                                Loading requests...
-                            </div>
+                        <td colSpan={7} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={7} className="p-0">
+                            <ErrorState onRetry={fetchRequests} title="Database Error" message="Failed to load requests from the server." />
                         </td>
                     </tr>
                 ) : filteredRequests.length === 0 ? (

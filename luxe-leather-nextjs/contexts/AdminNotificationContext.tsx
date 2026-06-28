@@ -7,6 +7,7 @@ interface NotificationCounts {
     newRequests: number;
     pendingOrders: number;
     lowStock: number;
+    newMessages: number;
 }
 
 interface AdminNotificationContextType {
@@ -21,6 +22,7 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
         newRequests: 0,
         pendingOrders: 0,
         lowStock: 0,
+        newMessages: 0,
     });
 
     const refreshCounts = useCallback(async () => {
@@ -46,10 +48,17 @@ export function AdminNotificationProvider({ children }: { children: React.ReactN
                 .lt('stock', 5)
                 .eq('isActive', true);
 
+            // New Messages
+            const { count: messagesCount } = await supabase
+                .from('contact_messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'new');
+
             setCounts({
                 newRequests: requestsCount || 0,
                 pendingOrders: ordersCount || 0,
                 lowStock: stockCount || 0,
+                newMessages: messagesCount || 0,
             });
         } catch (error) {
             console.error('Failed to fetch notification counts', error);

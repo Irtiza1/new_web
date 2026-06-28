@@ -7,6 +7,8 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface Category {
     id: string;
@@ -23,6 +25,7 @@ const emptyForm = { name: '', slug: '', image_url: '', display_order: '0', is_vi
 export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [pendingFile, setPendingFile] = useState<{file: File, objectUrl: string} | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [showModal, setShowModal] = useState(false);
@@ -66,11 +69,22 @@ export default function AdminCategoriesPage() {
     };
 
     const loadCategories = useCallback(async () => {
-        setLoading(true);
-        const res = await fetch('/api/categories');
-        const data = await res.json();
-        if (data.success) setCategories(data.data);
-        setLoading(false);
+        try {
+            setLoading(true);
+            setError(false);
+            const res = await fetch('/api/categories');
+            const data = await res.json();
+            if (data.success) {
+                setCategories(data.data);
+            } else {
+                setError(true);
+            }
+        } catch (err) {
+            console.error(err);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => { loadCategories(); }, [loadCategories]);
@@ -274,11 +288,14 @@ export default function AdminCategoriesPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                Loading categories...
-                            </div>
+                        <td colSpan={7} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={7} className="p-0">
+                            <ErrorState onRetry={loadCategories} title="Database Error" message="Failed to load categories from the server." />
                         </td>
                     </tr>
                 ) : filteredCategories.length === 0 ? (

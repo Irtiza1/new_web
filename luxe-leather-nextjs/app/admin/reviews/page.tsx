@@ -8,6 +8,8 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface Review {
     id: string;
@@ -26,6 +28,7 @@ interface Review {
 export default function AdminReviewsPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
     const { showToast } = useToast();
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -81,10 +84,20 @@ export default function AdminReviewsPage() {
 
     const load = useCallback(async () => {
         setLoading(true);
-        const res = await fetch('/api/reviews');
-        const data = await res.json();
-        if (data.success) setReviews(data.data);
-        setLoading(false);
+        setError(false);
+        try {
+            const res = await fetch('/api/reviews');
+            const data = await res.json();
+            if (data.success) {
+                setReviews(data.data);
+            } else {
+                setError(true);
+            }
+        } catch (err) {
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => { load(); }, [load]);
@@ -288,11 +301,14 @@ export default function AdminReviewsPage() {
                 >
                     {loading ? (
                         <tr>
-                            <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
-                                    Loading reviews...
-                                </div>
+                            <td colSpan={7} className="p-0">
+                                <TableSkeleton rows={5} columns={6} />
+                            </td>
+                        </tr>
+                    ) : error ? (
+                        <tr>
+                            <td colSpan={7} className="p-0">
+                                <ErrorState onRetry={load} title="Database Error" message="Failed to load reviews from the server." />
                             </td>
                         </tr>
                     ) : filtered.length === 0 ? (

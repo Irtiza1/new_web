@@ -15,6 +15,7 @@ export default function AdminSidebar({ isOpen = false, onClose }: { isOpen?: boo
     const getBadge = (name: string) => {
         if (name === 'Orders') return counts.pendingOrders;
         if (name === 'Requests') return counts.newRequests;
+        if (name === 'Messages') return counts.newMessages;
         return 0;
     };
 

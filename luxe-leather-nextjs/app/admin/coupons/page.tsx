@@ -8,6 +8,8 @@ import AdminTable from '@/components/admin/shared/AdminTable';
 import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface Coupon {
     id: string;
@@ -29,6 +31,7 @@ const emptyForm: { code: string; discount_type: 'percentage' | 'flat'; value: st
 export default function AdminCouponsPage() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
     const [form, setForm] = useState(emptyForm);
@@ -71,10 +74,20 @@ export default function AdminCouponsPage() {
 
     const loadCoupons = useCallback(async () => {
         setLoading(true);
-        const res = await fetch('/api/coupons/admin');
-        const data = await res.json();
-        if (data.success) setCoupons(data.data);
-        setLoading(false);
+        setError(false);
+        try {
+            const res = await fetch('/api/coupons/admin');
+            const data = await res.json();
+            if (data.success) {
+                setCoupons(data.data);
+            } else {
+                setError(true);
+            }
+        } catch (err) {
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => { loadCoupons(); }, [loadCoupons]);
@@ -273,11 +286,14 @@ export default function AdminCouponsPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={9} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                Loading coupons...
-                            </div>
+                        <td colSpan={9} className="p-0">
+                            <TableSkeleton rows={5} columns={8} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={9} className="p-0">
+                            <ErrorState onRetry={loadCoupons} title="Database Error" message="Failed to load coupons from the server." />
                         </td>
                     </tr>
                 ) : filteredCoupons.length === 0 ? (

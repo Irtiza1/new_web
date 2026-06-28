@@ -8,6 +8,8 @@ import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 
 import { useToast } from '@/contexts/ToastContext';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import ErrorState from '@/components/shared/ErrorState';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 
 interface NavItem {
     id: string;
@@ -24,6 +26,7 @@ export default function AdminNavigationPage() {
     const { showToast } = useToast();
     const [items, setItems] = useState<NavItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState<NavItem | null>(null);
     const [form, setForm] = useState(emptyForm);
@@ -68,10 +71,20 @@ export default function AdminNavigationPage() {
 
     const load = useCallback(async () => {
         setLoading(true);
-        const res = await fetch('/api/nav-items');
-        const data = await res.json();
-        if (data.success) setItems(data.data.sort((a: NavItem, b: NavItem) => a.display_order - b.display_order));
-        setLoading(false);
+        setError(false);
+        try {
+            const res = await fetch('/api/nav-items');
+            const data = await res.json();
+            if (data.success) {
+                setItems(data.data.sort((a: NavItem, b: NavItem) => a.display_order - b.display_order));
+            } else {
+                setError(true);
+            }
+        } catch (err) {
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => { load(); }, [load]);
@@ -269,11 +282,14 @@ export default function AdminNavigationPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                                Loading navigation items...
-                            </div>
+                        <td colSpan={6} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
+                        </td>
+                    </tr>
+                ) : error ? (
+                    <tr>
+                        <td colSpan={6} className="p-0">
+                            <ErrorState onRetry={load} title="Database Error" message="Failed to load navigation items from the server." />
                         </td>
                     </tr>
                 ) : filteredItems.length === 0 ? (
