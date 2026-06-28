@@ -230,22 +230,33 @@ export const remove = async (id: string) => {
 
     // 4. Cascade delete images from storage
     if (product) {
-        const fileNames = new Set<string>();
+        const legacyFileNames = new Set<string>();
+        const mediaFileNames = new Set<string>();
         const allImages = [...(product.images || [])];
         if (product.image) allImages.push(product.image);
 
         allImages.forEach(url => {
-            if (url && url.includes('public/product-images/')) {
+            if (url && url.includes('public/media/product-images/')) {
+                const parts = url.split('public/media/product-images/');
+                if (parts.length > 1) {
+                    mediaFileNames.add(parts[1]);
+                }
+            } else if (url && url.includes('public/product-images/')) {
                 const parts = url.split('public/product-images/');
                 if (parts.length > 1) {
-                    fileNames.add(parts[1]);
+                    legacyFileNames.add(parts[1]);
                 }
             }
         });
 
-        if (fileNames.size > 0) {
-            // Use supabaseAdmin to ensure we have permission to delete storage files
-            await supabaseAdmin.storage.from('product-images').remove(Array.from(fileNames));
+        if (mediaFileNames.size > 0) {
+            const filePaths = Array.from(mediaFileNames).map(f => `product-images/${f}`);
+            await supabaseAdmin.storage.from('media').remove(filePaths);
+            await supabaseAdmin.from('media_files').delete().in('filename', Array.from(mediaFileNames));
+        }
+
+        if (legacyFileNames.size > 0) {
+            await supabaseAdmin.storage.from('product-images').remove(Array.from(legacyFileNames));
         }
     }
 
@@ -281,7 +292,8 @@ export const removeBulk = async (ids: string[]) => {
         const { error } = await supabase.from('products').delete().in('id', safeToDeleteIds);
         if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
-        const fileNames = new Set<string>();
+        const legacyFileNames = new Set<string>();
+        const mediaFileNames = new Set<string>();
         safeToDeleteIds.forEach(id => {
             const product = products?.find(p => p.id === id);
             if (product) {
@@ -289,18 +301,29 @@ export const removeBulk = async (ids: string[]) => {
                 if (product.image) allImages.push(product.image);
 
                 allImages.forEach(url => {
-                    if (url && url.includes('public/product-images/')) {
+                    if (url && url.includes('public/media/product-images/')) {
+                        const parts = url.split('public/media/product-images/');
+                        if (parts.length > 1) {
+                            mediaFileNames.add(parts[1]);
+                        }
+                    } else if (url && url.includes('public/product-images/')) {
                         const parts = url.split('public/product-images/');
                         if (parts.length > 1) {
-                            fileNames.add(parts[1]);
+                            legacyFileNames.add(parts[1]);
                         }
                     }
                 });
             }
         });
 
-        if (fileNames.size > 0) {
-            await supabaseAdmin.storage.from('product-images').remove(Array.from(fileNames));
+        if (mediaFileNames.size > 0) {
+            const filePaths = Array.from(mediaFileNames).map(f => `product-images/${f}`);
+            await supabaseAdmin.storage.from('media').remove(filePaths);
+            await supabaseAdmin.from('media_files').delete().in('filename', Array.from(mediaFileNames));
+        }
+
+        if (legacyFileNames.size > 0) {
+            await supabaseAdmin.storage.from('product-images').remove(Array.from(legacyFileNames));
         }
 
         for (const id of safeToDeleteIds) {
