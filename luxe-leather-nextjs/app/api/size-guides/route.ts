@@ -59,11 +59,26 @@ export const PUT = apiHandler(async (request: NextRequest) => {
 export const DELETE = apiHandler(async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
+    let idsToDelete: string[] = [];
+
+    if (id) {
+        idsToDelete = [id];
+    } else {
+        try {
+            const body = await request.json();
+            if (body.ids && Array.isArray(body.ids)) {
+                idsToDelete = body.ids;
+            }
+        } catch {}
+    }
+
+    if (idsToDelete.length === 0) return NextResponse.json({ success: false, message: 'ID(s) required' }, { status: 400 });
     
-    const { error } = await supabase.from('SizeGuide').delete().eq('id', id);
+    const { error } = await supabase.from('SizeGuide').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
-    await auditLog('size_guides', id, 'DELETE');
+    for (const dId of idsToDelete) {
+        await auditLog('size_guides', dId, 'DELETE');
+    }
     return NextResponse.json({ success: true });
 });

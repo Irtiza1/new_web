@@ -157,20 +157,21 @@ export default function AdminCouponsPage() {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 try {
-                    const results = await Promise.all(
-                        Array.from(selectedIds).map(id =>
-                            fetch(`/api/coupons/admin?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                        )
-                    );
-                    const successCount = results.filter(r => r.success).length;
-                    const failCount = selectedIds.size - successCount;
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    const idsToDelete = Array.from(selectedIds);
+                    const res = await fetch('/api/coupons/admin', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        showToast(`${idsToDelete.length} coupons were deleted successfully.`, 'success');
+                        setSelectedIds(new Set());
+                        loadCoupons();
                     } else {
-                        showToast(`${successCount} coupons were deleted successfully.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete coupons.', 'error');
                     }
-                    loadCoupons();
-                    setSelectedIds(new Set());
                 } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {

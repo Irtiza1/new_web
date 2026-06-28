@@ -181,49 +181,36 @@ export default function AdminRequestsPage() {
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-
-        const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
-            title: `Archive ${count} Requests`,
-            message: `Are you sure you want to archive the ${count} selected requests? They will be removed from the active pipeline.`,
+            title: 'Delete Requests',
+            message: `Are you sure you want to delete ${selectedIds.size} requests? This action cannot be undone.`,
             onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
-                let successCount = 0;
-                let failCount = 0;
 
                 try {
-                    await Promise.all(idsToDelete.map(async (id) => {
-                        try {
-                            const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' });
-                            if (res.ok) successCount++;
-                            else failCount++;
-                        } catch {
-                            failCount++;
-                        }
-                    }));
+                    const res = await fetch('/api/requests', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
 
-                    if (successCount > 0) {
+                    if (data.success) {
                         setRequests(prev => prev.filter(r => !selectedIds.has(r.id)));
                         setSelectedIds(new Set());
-                        if (selectedRequest && selectedIds.has(selectedRequest.id)) {
-                            setSelectedRequest(null);
-                        }
-                    }
-
-                    if (failCount > 0) {
-                        showToast(`Bulk archive finished with errors. Archived: ${successCount}, Failed: ${failCount}`, 'error');
+                        showToast(`${idsToDelete.length} requests were deleted successfully.`, 'success');
                     } else {
-                        showToast(`Successfully archived ${successCount} requests.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete requests.', 'error');
                     }
                 } catch (error) {
-                    console.error('Bulk archive error:', error);
-                    showToast('An error occurred during bulk archiving.', 'error');
+                    console.error('Bulk delete error:', error);
+                    showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                    fetchRequests();
+                    fetchRequests(); // refresh to keep UI consistent
                 }
             }
         });

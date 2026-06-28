@@ -162,6 +162,7 @@ export default function AdminShippingAndSizingPage() {
         });
     };
 
+
     // Size Guide Handlers
     const openCreateSize = () => { setEditingSize(null); setSizeForm(emptySizeForm); setShowSizeModal(true); };
     const openEditSize = (size: SizeGuide) => {
@@ -195,6 +196,7 @@ export default function AdminShippingAndSizingPage() {
             }
         });
     };
+
 
     // Content Handlers
     const handleSaveContent = async () => {
@@ -231,19 +233,22 @@ export default function AdminShippingAndSizingPage() {
                 setIsBulkDeleting(true);
                 try {
                     const endpoint = activeMainTab === 'rates' ? '/api/shipping-zones' : '/api/size-guides';
-                    const results = await Promise.all(
-                        Array.from(selectedIds).map(id => fetch(`${endpoint}?id=${id}`, { method: 'DELETE' }).then(res => res.json()))
-                    );
-                    const successCount = results.filter(r => r.success).length;
-                    const failCount = selectedIds.size - successCount;
-                    if (failCount > 0) {
-                        const errorMessages = results.filter(r => !r.success).map(r => r.message || 'Unknown error').join(', ');
-                        showToast(`Bulk delete partial failure: ${successCount} deleted, ${failCount} failed. (${errorMessages})`, 'error');
+                    const idsToDelete = Array.from(selectedIds);
+
+                    const res = await fetch(endpoint, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        if (activeMainTab === 'rates') { loadZones(); setZoneSelectedIds(new Set()); }
+                        else { loadSizes(); setSizeSelectedIds(new Set()); }
+                        showToast(`${idsToDelete.length} items were deleted successfully.`, 'success');
+                    } else {
+                        showToast(data.message || 'Failed to bulk delete items.', 'error');
                     }
-                    else showToast(`${successCount} items were deleted successfully.`, 'success');
-                    
-                    if (activeMainTab === 'rates') { loadZones(); setZoneSelectedIds(new Set()); }
-                    else { loadSizes(); setSizeSelectedIds(new Set()); }
                 } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {

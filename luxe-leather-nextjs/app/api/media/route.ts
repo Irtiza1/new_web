@@ -181,26 +181,58 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name');
-    if (!name) return NextResponse.json({ success: false, message: 'File name required' }, { status: 400 });
+    let namesToDelete: string[] = [];
 
-    let folderName = searchParams.get('bucket');
-
-    // If bucket isn't explicitly passed, look it up in the database so we delete from the correct storage folder
-    if (!folderName) {
-        const { data: fileRecord } = await supabaseAdmin.from('media_files').select('folder').eq('filename', name).maybeSingle();
-        folderName = fileRecord?.folder || 'platform-images'; // fallback
+    if (name) {
+        namesToDelete = [name];
+    } else {
+        try {
+            const body = await request.json();
+            if (body.names && Array.isArray(body.names)) {
+                namesToDelete = body.names;
+            }
+        } catch {}
     }
 
-    const filePath = `${folderName}/${name}`;
-    const { error: storageError } = await supabaseAdmin.storage.from(BUCKET).remove([filePath]);
+    if (namesToDelete.length === 0) return NextResponse.json({ success: false, message: 'File name(s) required' }, { status: 400 });
+
+    let defaultFolderName = searchParams.get('bucket');
+
+    const { data: fileRecords } = await supabaseAdmin.from('media_files')
+        .select('filename, folder')
+        .in('filename', namesToDelete);
+
+    const filePathsToDelete: string[] = [];
+    const validNames: string[] = [];
+
+    if (fileRecords) {
+        fileRecords.forEach(record => {
+            const folder = record.folder || defaultFolderName || 'platform-images';
+            filePathsToDelete.push(`${folder}/${record.filename}`);
+            validNames.push(record.filename);
+        });
+    }
+
+    namesToDelete.forEach(n => {
+        if (!validNames.includes(n)) {
+            const folder = defaultFolderName || 'platform-images';
+            filePathsToDelete.push(`${folder}/${n}`);
+            validNames.push(n);
+        }
+    });
+
+    const { error: storageError } = await supabaseAdmin.storage.from(BUCKET).remove(filePathsToDelete);
     if (storageError) console.error('Storage delete error:', storageError);
 
-    const { error: dbError } = await supabaseAdmin.from('media_files').delete().eq('filename', name);
+    const { error: dbError } = await supabaseAdmin.from('media_files').delete().in('filename', validNames);
     if (dbError) console.error('DB delete error:', dbError);
 
     if (storageError && dbError) {
-        return NextResponse.json({ success: false, message: 'Failed to delete file from both storage and database' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Failed to delete files from both storage and database' }, { status: 500 });
     }
-    await auditLog('media', name, 'DELETE');
+    
+    for (const n of validNames) {
+        await auditLog('media', n, 'DELETE');
+    }
     return NextResponse.json({ success: true });
 }

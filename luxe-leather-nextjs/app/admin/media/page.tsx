@@ -130,29 +130,21 @@ export default function AdminMediaPage() {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const namesToDelete = Array.from(selectedIds);
-                let successCount = 0;
-                let failCount = 0;
 
                 try {
-                    await Promise.all(namesToDelete.map(async (name) => {
-                        try {
-                            const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
-                            if ((await res.json()).success) successCount++;
-                            else failCount++;
-                        } catch {
-                            failCount++;
-                        }
-                    }));
+                    const res = await fetch('/api/media', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ names: namesToDelete })
+                    });
+                    const data = await res.json();
 
-                    if (successCount > 0) {
+                    if (data.success) {
                         setFiles(prev => prev.filter(f => !selectedIds.has(f.name)));
                         setSelectedIds(new Set());
-                    }
-
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                        showToast(`${namesToDelete.length} images were deleted successfully.`, 'success');
                     } else {
-                        showToast(`${successCount} images were deleted successfully.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete images.', 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);

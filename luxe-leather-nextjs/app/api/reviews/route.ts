@@ -73,10 +73,27 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ success: false, message: 'ID required' }, { status: 400 });
-    const { error } = await supabase.from('reviews').delete().eq('id', id);
+    let idsToDelete: string[] = [];
+
+    if (id) {
+        idsToDelete = [id];
+    } else {
+        try {
+            const body = await request.json();
+            if (body.ids && Array.isArray(body.ids)) {
+                idsToDelete = body.ids;
+            }
+        } catch {}
+    }
+
+    if (idsToDelete.length === 0) return NextResponse.json({ success: false, message: 'ID(s) required' }, { status: 400 });
+
+    const { error } = await supabase.from('reviews').delete().in('id', idsToDelete);
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-    await auditLog('reviews', id, 'DELETE');
+    
+    for (const dId of idsToDelete) {
+        await auditLog('reviews', dId, 'DELETE');
+    }
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
 }

@@ -184,47 +184,63 @@ export const update = async (id: string, updates: Partial<CustomRequest>) => {
  * Hard delete a request and its associated images.
  */
 export const remove = async (id: string) => {
-    // 1. Get the request to find attached images
-    const { data: request } = await supabase
+    return removeBulk([id]);
+};
+
+/**
+ * Hard delete multiple requests and their associated images.
+ */
+export const removeBulk = async (ids: string[]) => {
+    if (!ids || ids.length === 0) return { success: true };
+
+    // 1. Get the requests to find attached images
+    const { data: requests } = await supabase
         .from('custom_requests')
         .select('inspiration')
-        .eq('id', id)
-        .single();
+        .in('id', ids);
 
-    // 2. Delete the record permanently
+    // 2. Delete the records permanently
     const { error } = await supabase
         .from('custom_requests')
         .delete()
-        .eq('id', id);
+        .in('id', ids);
 
     if (error) throw new AppError(error.message, 500, 'DB_ERROR');
 
-    // 3. Clean up attached images from storage and media tracking table
-    if (request?.inspiration) {
-        let urls: string[] = [];
-        try {
-            urls = JSON.parse(request.inspiration);
-            if (!Array.isArray(urls)) urls = [request.inspiration];
-        } catch {
-            urls = [request.inspiration];
-        }
+    // 3. Clean up attached images
+    const filenames: string[] = [];
+    const pureFilenames: string[] = [];
 
-        const filenames = urls.map(url => {
-            const parts = url.split('/');
-            return 'custom-orders/' + parts[parts.length - 1];
-        });
-
-        if (filenames.length > 0) {
-            await supabaseAdmin.storage.from('media').remove(filenames);
-            
-            const pureFilenames = urls.map(url => url.split('/').pop() || '');
-            if (pureFilenames.length > 0) {
-                await supabaseAdmin.from('media_files').delete().in('filename', pureFilenames);
+    requests?.forEach(req => {
+        if (req.inspiration) {
+            let urls: string[] = [];
+            try {
+                urls = JSON.parse(req.inspiration);
+                if (!Array.isArray(urls)) urls = [req.inspiration];
+            } catch {
+                urls = [req.inspiration];
             }
+
+            urls.forEach(url => {
+                const parts = url.split('/');
+                filenames.push('custom-orders/' + parts[parts.length - 1]);
+                pureFilenames.push(parts[parts.length - 1] || '');
+            });
+        }
+    });
+
+    if (filenames.length > 0) {
+        await supabaseAdmin.storage.from('media').remove(filenames);
+        const validPure = pureFilenames.filter(Boolean);
+        if (validPure.length > 0) {
+            await supabaseAdmin.from('media_files').delete().in('filename', validPure);
         }
     }
 
-    await auditLog('custom_requests', id, 'DELETE', { status: { from: 'active', to: 'deleted' } });
+    for (const id of ids) {
+        await auditLog('custom_requests', id, 'DELETE', { status: { from: 'active', to: 'deleted' } });
+    }
+    
     return { success: true };
 };
 

@@ -127,20 +127,21 @@ export default function AdminReviewsPage() {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkUpdating(true);
                 try {
-                    const results = await Promise.all(
-                        Array.from(selectedIds).map(id =>
-                            fetch(`/api/reviews?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                        )
-                    );
-                    const successCount = results.filter(r => r.success).length;
-                    const failCount = selectedIds.size - successCount;
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    const idsToDelete = Array.from(selectedIds);
+                    const res = await fetch('/api/reviews', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        showToast(`${idsToDelete.length} reviews were deleted successfully.`, 'success');
+                        setSelectedIds(new Set());
+                        load();
                     } else {
-                        showToast(`${successCount} reviews were deleted successfully.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete reviews.', 'error');
                     }
-                    load();
-                    setSelectedIds(new Set());
                 } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {

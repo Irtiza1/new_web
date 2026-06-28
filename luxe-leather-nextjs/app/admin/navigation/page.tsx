@@ -130,39 +130,29 @@ export default function AdminNavigationPage() {
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-
-        const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
-            title: `Delete ${count} Nav Items`,
-            message: `Are you sure you want to delete ${count} nav items? This action cannot be undone.`,
+            title: 'Delete Items',
+            message: `Are you sure you want to delete ${selectedIds.size} navigation items?`,
             onConfirm: async () => {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
-                let successCount = 0;
-                let failCount = 0;
 
                 try {
-                    await Promise.all(idsToDelete.map(async (id) => {
-                        try {
-                            const res = await fetch(`/api/nav-items?id=${id}`, { method: 'DELETE' });
-                            if (res.ok) successCount++;
-                            else failCount++;
-                        } catch {
-                            failCount++;
-                        }
-                    }));
+                    const res = await fetch('/api/nav-items', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
 
-                    if (successCount > 0) {
+                    if (data.success) {
                         setItems(prev => prev.filter(i => !selectedIds.has(i.id)));
                         setSelectedIds(new Set());
-                    }
-
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished. ${successCount} removed, ${failCount} failed.`, 'error');
+                        showToast(`${idsToDelete.length} items were deleted successfully.`, 'success');
                     } else {
-                        showToast(`${successCount} navigation links were removed successfully.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete items.', 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);

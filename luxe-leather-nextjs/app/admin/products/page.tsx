@@ -242,57 +242,36 @@ export default function AdminProductsPage() {
 
     const handleBulkDelete = async () => {
         if (isBulkDeleting || selectedIds.size === 0) return;
-
-        const count = selectedIds.size;
         setConfirmModal({
             isOpen: true,
-            title: `Delete ${count} Products`,
-            message: `Are you sure you want to delete ${count} products? This action cannot be undone. Products with order history will be archived instead of permanently deleted.`,
+            title: 'Delete Products',
+            message: `Are you sure you want to delete ${selectedIds.size} products? This action cannot be undone. Products with order history will be skipped.`,
             onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 const idsToDelete = Array.from(selectedIds);
-                let hardDeletedCount = 0;
-                let archivedCount = 0;
-                let failCount = 0;
 
                 try {
-                    await Promise.all(idsToDelete.map(async (id) => {
-                        try {
-                            const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-                            const result = await res.json();
-                            
-                            if (res.ok) {
-                                if (result.archived) {
-                                    archivedCount++;
-                                } else {
-                                    hardDeletedCount++;
-                                }
-                            } else {
-                                failCount++;
-                            }
-                        } catch {
-                            failCount++;
-                        }
-                    }));
+                    const res = await fetch('/api/products', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
 
-                    setSelectedIds(new Set());
-                    await fetchProducts(); // Refresh to ensure sync with DB
-
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished with errors. Deleted: ${hardDeletedCount}, Archived: ${archivedCount}, Failed: ${failCount}`, 'error');
-                    } else if (archivedCount > 0 && hardDeletedCount === 0) {
-                        showToast(`⚠️ All ${archivedCount} selected products were archived instead of deleted because they exist in order history.`, 'warning');
-                    } else if (archivedCount > 0 && hardDeletedCount > 0) {
-                        showToast(`⚠️ ${hardDeletedCount} products deleted. ${archivedCount} products were archived instead because they have order history.`, 'warning');
+                    if (data.success) {
+                        setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+                        setSelectedIds(new Set());
+                        showToast(`${data.deleted} products were deleted successfully.`, 'success');
                     } else {
-                        showToast(`Successfully deleted ${hardDeletedCount} products.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete products.', 'error');
                     }
                 } catch (error) {
                     console.error('Bulk delete error:', error);
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {
                     setIsBulkDeleting(false);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    fetchProducts(); // Refresh to ensure sync
                 }
             }
         });

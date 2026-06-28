@@ -80,8 +80,21 @@ export const PUT = apiHandler(async (req: NextRequest) => {
 export const DELETE = apiHandler(async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ success: false, message: 'Request ID required' }, { status: 400 });
+    let idsToDelete: string[] = [];
 
-    await requestService.remove(id);
-    return NextResponse.json({ success: true, message: 'Request deleted successfully' });
+    if (id) {
+        idsToDelete = [id];
+    } else {
+        try {
+            const body = await req.json();
+            if (body.ids && Array.isArray(body.ids)) {
+                idsToDelete = body.ids;
+            }
+        } catch {}
+    }
+
+    if (idsToDelete.length === 0) return NextResponse.json({ success: false, message: 'Request ID(s) required' }, { status: 400 });
+
+    await requestService.removeBulk(idsToDelete);
+    return NextResponse.json({ success: true, message: 'Requests deleted successfully' });
 });

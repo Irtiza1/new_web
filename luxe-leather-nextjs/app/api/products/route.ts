@@ -105,9 +105,22 @@ export const PUT = apiHandler(async (req: NextRequest) => {
 export const DELETE = apiHandler(async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ success: false, message: 'Product ID required' }, { status: 400 });
+    let idsToDelete: string[] = [];
 
-    await productService.remove(id);
+    if (id) {
+        idsToDelete = [id];
+    } else {
+        try {
+            const body = await req.json();
+            if (body.ids && Array.isArray(body.ids)) {
+                idsToDelete = body.ids;
+            }
+        } catch {}
+    }
+
+    if (idsToDelete.length === 0) return NextResponse.json({ success: false, message: 'Product ID(s) required' }, { status: 400 });
+
+    const result = await productService.removeBulk(idsToDelete);
     revalidatePath('/', 'layout');
-    return NextResponse.json({ success: true, message: 'Product deleted successfully' });
+    return NextResponse.json({ success: true, message: 'Products deleted successfully', deleted: result.deleted });
 });

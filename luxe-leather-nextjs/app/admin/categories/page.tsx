@@ -161,20 +161,21 @@ export default function AdminCategoriesPage() {
                 setConfirmModal(prev => ({ ...prev, isOpen: false }));
                 setIsBulkDeleting(true);
                 try {
-                    const results = await Promise.all(
-                        Array.from(selectedIds).map(id =>
-                            fetch(`/api/categories?id=${id}`, { method: 'DELETE' }).then(res => res.json())
-                        )
-                    );
-                    const successCount = results.filter(r => r.success).length;
-                    const failCount = selectedIds.size - successCount;
-                    if (failCount > 0) {
-                        showToast(`Bulk delete finished. ${successCount} deleted, ${failCount} failed.`, 'error');
+                    const idsToDelete = Array.from(selectedIds);
+                    const res = await fetch('/api/categories', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: idsToDelete })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        showToast(`${idsToDelete.length} categories were deleted successfully.`, 'success');
+                        setSelectedIds(new Set());
+                        loadCategories();
                     } else {
-                        showToast(`${successCount} categories were deleted successfully.`, 'success');
+                        showToast(data.message || 'Failed to bulk delete categories.', 'error');
                     }
-                    loadCategories();
-                    setSelectedIds(new Set());
                 } catch {
                     showToast('An error occurred during bulk deletion.', 'error');
                 } finally {

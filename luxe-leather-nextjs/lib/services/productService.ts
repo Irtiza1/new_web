@@ -253,6 +253,73 @@ export const remove = async (id: string) => {
 };
 
 /**
+ * Hard delete multiple products and their associated images.
+ * Safe delete: throws an error if any product has order history.
+ */
+export const removeBulk = async (ids: string[]) => {
+    if (!ids || ids.length === 0) return { success: true };
+
+    const { data: products } = await supabase
+        .from('products')
+        .select('id, image, images')
+        .in('id', ids);
+
+    const { data: existingOrderItems, error: checkError } = await supabase
+        .from('order_items')
+        .select('product_id')
+        .in('product_id', ids);
+
+    if (checkError) throw new AppError(checkError.message, 500, 'DB_ERROR');
+
+    const productsWithOrders = new Set(existingOrderItems?.map(oi => oi.product_id) || []);
+    const safeToDeleteIds = ids.filter(id => !productsWithOrders.has(id));
+    const failedCount = productsWithOrders.size;
+
+    if (safeToDeleteIds.length > 0) {
+        await supabase.from('cart_items').delete().in('product_id', safeToDeleteIds);
+
+        const { error } = await supabase.from('products').delete().in('id', safeToDeleteIds);
+        if (error) throw new AppError(error.message, 500, 'DB_ERROR');
+
+        const fileNames = new Set<string>();
+        safeToDeleteIds.forEach(id => {
+            const product = products?.find(p => p.id === id);
+            if (product) {
+                const allImages = [...(product.images || [])];
+                if (product.image) allImages.push(product.image);
+
+                allImages.forEach(url => {
+                    if (url && url.includes('public/product-images/')) {
+                        const parts = url.split('public/product-images/');
+                        if (parts.length > 1) {
+                            fileNames.add(parts[1]);
+                        }
+                    }
+                });
+            }
+        });
+
+        if (fileNames.size > 0) {
+            await supabaseAdmin.storage.from('product-images').remove(Array.from(fileNames));
+        }
+
+        for (const id of safeToDeleteIds) {
+            await auditLog('products', id, 'DELETE');
+        }
+    }
+
+    if (failedCount > 0) {
+        throw new AppError(
+            `${failedCount} product(s) have order history and cannot be permanently deleted. They must be archived instead.`,
+            409,
+            'CONFLICT'
+        );
+    }
+
+    return { success: true, deleted: safeToDeleteIds.length };
+};
+
+/**
  * Soft-delete (archive) a product by setting isActive = false.
  * Use this when the product has order history and cannot be hard-deleted.
  *

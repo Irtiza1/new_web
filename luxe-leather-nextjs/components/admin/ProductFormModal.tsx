@@ -481,7 +481,6 @@ export default function ProductFormModal({ isOpen, onClose, onSubmit, initialDat
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#0d141b] dark:text-white">Description</label>
                         <textarea
-                            required
                             rows={4}
                             value={formData.description || ''}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
