@@ -34,7 +34,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
     const body = await request.json();
     const parsed = sizeGuideSchema.parse(body);
 
-    const { data, error } = await supabase.from('SizeGuide').insert([parsed]).select().single();
+    const { data, error } = await supabase.from('SizeGuide').insert([{ id: crypto.randomUUID(), ...parsed }]).select().single();
     if (error) return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     
     await auditLog('size_guides', data.id, 'CREATE', { label: { from: null, to: data.label } });

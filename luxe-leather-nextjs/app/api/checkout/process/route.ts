@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import * as orderService from "@/lib/services/orderService";
 import sharp from "sharp";
-import { sendOrderNotificationEmail } from "@/lib/utils/email";
+import { sendAdminOrderNotificationEmail, sendCustomerOrderConfirmation } from "@/lib/utils/email";
 
 export const dynamic = 'force-dynamic';
 
@@ -189,14 +189,19 @@ export async function POST(req: NextRequest){
             })
             .eq('id', order.id);
 
-        // Step 5: Send email notification
-        await sendOrderNotificationEmail({
+        // Step 5: Send email notifications
+        const emailDetails = {
             orderId: order.id,
             customerName: customer.name,
             customerEmail: customer.email,
             total: total,
             paymentSlipUrl: paymentSlipUrl,
-        });
+        };
+        
+        await Promise.all([
+            sendAdminOrderNotificationEmail(emailDetails),
+            sendCustomerOrderConfirmation(emailDetails)
+        ]);
 
         return NextResponse.json({
             success: true,

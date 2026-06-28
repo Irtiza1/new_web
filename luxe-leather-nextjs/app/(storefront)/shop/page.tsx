@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import ProductDetailModal, { type ShopProduct } from '@/components/storefront/ProductDetailModal';
+import ProductSkeleton from '@/components/shared/ProductSkeleton';
 import { useCart } from '@/contexts/CartContext';
 
 
@@ -194,11 +195,10 @@ function ShopContent() {
 
                 {/* Loading State */}
                 {loading && (
-                    <div className="col-span-full text-center py-20">
-                        <div className="inline-flex items-center gap-3 text-gray-500">
-                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                            Loading products...
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+                        {[...Array(8)].map((_, i) => (
+                            <ProductSkeleton key={i} />
+                        ))}
                     </div>
                 )}
 

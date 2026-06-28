@@ -1,0 +1,259 @@
+{
+  "info": {
+    "name": "Luxe Leather – All 81 Endpoints (v2 Fixed)",
+    "_postman_id": "luxe-leather-full-suite-v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0 – AUTH",
+      "item": [
+        {
+          "name": "Login (get access token)",
+          "event": [{"listen":"test","script":{"exec":["pm.test('Login 200', () => pm.response.to.have.status(200));","const j = pm.response.json();","pm.environment.set('accessToken', j.access_token);","pm.test('Has access_token', () => pm.expect(j.access_token).to.be.a('string'));"],"type":"text/javascript"}}],
+          "request": {
+            "method": "POST",
+            "header": [{"key":"apikey","value":"{{supabaseAnon}}"},{"key":"Content-Type","value":"application/json"}],
+            "body": {"mode":"raw","raw":"{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}"},
+            "url": {"raw":"{{supabaseUrl}}/auth/v1/token?grant_type=password","host":["{{supabaseUrl}}"],"path":["auth","v1","token"],"query":[{"key":"grant_type","value":"password"}]}
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "1 – PRODUCTS",
+      "item": [
+        {"name":"1.1 GET /api/products (list)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/products","host":["{{baseUrl}}"],"path":["api","products"]}}},
+        {"name":"1.2 GET /api/products?search=leather","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/products?search=leather&page=1&limit=5","host":["{{baseUrl}}"],"path":["api","products"],"query":[{"key":"search","value":"leather"},{"key":"page","value":"1"},{"key":"limit","value":"5"}]}}},
+        {"name":"1.3 GET /api/products/:id (single)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/products/{{productId}}","host":["{{baseUrl}}"],"path":["api","products","{{productId}}"]}}},
+        {"name":"1.4 GET /api/products/:id (404)","event":[{"listen":"test","script":{"exec":["pm.test('404', () => pm.response.to.have.status(404));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/products/00000000-0000-0000-0000-000000000000","host":["{{baseUrl}}"],"path":["api","products","00000000-0000-0000-0000-000000000000"]}}},
+        {"name":"1.5 GET /api/products/validate?ids=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/products/validate?ids={{productId}}","host":["{{baseUrl}}"],"path":["api","products","validate"],"query":[{"key":"ids","value":"{{productId}}"}]}}},
+        {"name":"1.6 GET /api/products/validate (empty)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/products/validate","host":["{{baseUrl}}"],"path":["api","products","validate"]}}},
+        {"name":"1.7 POST /api/products/validate-stock","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"items\":[{\"id\":\"{{productId}}\",\"name\":\"Test\",\"quantity\":1}]}"},"url":{"raw":"{{baseUrl}}/api/products/validate-stock","host":["{{baseUrl}}"],"path":["api","products","validate-stock"]}}},
+        {
+          "name":"1.8 PATCH /api/products/:id?action=archive",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"PATCH","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/products/{{productId}}?action=archive","host":["{{baseUrl}}"],"path":["api","products","{{productId}}"],"query":[{"key":"action","value":"archive"}]}}
+        },
+        {
+          "name":"1.9 PATCH /api/products/:id?action=restore",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"PATCH","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/products/{{productId}}?action=restore","host":["{{baseUrl}}"],"path":["api","products","{{productId}}"],"query":[{"key":"action","value":"restore"}]}}
+        },
+        {"name":"1.10 POST /api/products (no body → 400)","event":[{"listen":"test","script":{"exec":["pm.test('400', () => pm.response.to.have.status(400));"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/products","host":["{{baseUrl}}"],"path":["api","products"]}}}
+      ]
+    },
+
+    {
+      "name": "2 – CATEGORIES",
+      "item": [
+        {"name":"2.1 GET /api/categories","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/categories","host":["{{baseUrl}}"],"path":["api","categories"]}}},
+        {
+          "name":"2.2 POST /api/categories (create)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newCategoryId', pm.response.json().data.id); });"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Test Cat\",\"slug\":\"newman-test-cat-{{$timestamp}}\"}"},"url":{"raw":"{{baseUrl}}/api/categories","host":["{{baseUrl}}"],"path":["api","categories"]}}
+        },
+        {"name":"2.3 PUT /api/categories?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Updated Cat\"}"},"url":{"raw":"{{baseUrl}}/api/categories?id={{newCategoryId}}","host":["{{baseUrl}}"],"path":["api","categories"],"query":[{"key":"id","value":"{{newCategoryId}}"}]}}},
+        {"name":"2.4 DELETE /api/categories (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newCategoryId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/categories","host":["{{baseUrl}}"],"path":["api","categories"]}}}
+      ]
+    },
+
+    {
+      "name": "3 – ORDERS",
+      "item": [
+        {"name":"3.1 GET /api/orders","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders","host":["{{baseUrl}}"],"path":["api","orders"]}}},
+        {"name":"3.2 GET /api/orders?status=PENDING","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders?status=PENDING","host":["{{baseUrl}}"],"path":["api","orders"],"query":[{"key":"status","value":"PENDING"}]}}},
+        {"name":"3.3 GET /api/orders/stats","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders/stats","host":["{{baseUrl}}"],"path":["api","orders","stats"]}}},
+        {"name":"3.4 POST /api/orders (create)","event":[{"listen":"test","script":{"exec":["pm.test('201 + id', () => { pm.response.to.have.status(201); pm.environment.set('newOrderId', pm.response.json().data.id); });"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"customer_id\":\"{{customerId}}\",\"total\":99.99,\"status\":\"PENDING\",\"items\":[{\"product_id\":\"{{productId}}\",\"quantity\":1,\"price\":99.99}]}"},"url":{"raw":"{{baseUrl}}/api/orders","host":["{{baseUrl}}"],"path":["api","orders"]}}},
+        {"name":"3.5 GET /api/orders/:id","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders/{{newOrderId}}","host":["{{baseUrl}}"],"path":["api","orders","{{newOrderId}}"]}}},
+        {"name":"3.6 PUT /api/orders?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"PROCESSING\"}"},"url":{"raw":"{{baseUrl}}/api/orders?id={{newOrderId}}","host":["{{baseUrl}}"],"path":["api","orders"],"query":[{"key":"id","value":"{{newOrderId}}"}]}}},
+        {"name":"3.7 PUT /api/orders/:id (path)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"SHIPPED\"}"},"url":{"raw":"{{baseUrl}}/api/orders/{{newOrderId}}","host":["{{baseUrl}}"],"path":["api","orders","{{newOrderId}}"]}}},
+        {"name":"3.8 DELETE /api/orders/:id (archive)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders/{{newOrderId}}","host":["{{baseUrl}}"],"path":["api","orders","{{newOrderId}}"]}}},
+        {"name":"3.9 PATCH /api/orders/:id?action=restore","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PATCH","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/orders/{{newOrderId}}?action=restore","host":["{{baseUrl}}"],"path":["api","orders","{{newOrderId}}"],"query":[{"key":"action","value":"restore"}]}}},
+        {"name":"3.10 DELETE /api/orders?id= (query)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/orders?id={{newOrderId}}","host":["{{baseUrl}}"],"path":["api","orders"],"query":[{"key":"id","value":"{{newOrderId}}"}]}}}
+      ]
+    },
+
+    {
+      "name": "4 – CUSTOMERS",
+      "item": [
+        {"name":"4.1 GET /api/customers","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers","host":["{{baseUrl}}"],"path":["api","customers"]}}},
+        {"name":"4.2 GET /api/customers?search=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers?search=test&page=1&limit=5","host":["{{baseUrl}}"],"path":["api","customers"],"query":[{"key":"search","value":"test"},{"key":"page","value":"1"},{"key":"limit","value":"5"}]}}},
+        {"name":"4.3 GET /api/customers?email=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers?email=nope@nope.com","host":["{{baseUrl}}"],"path":["api","customers"],"query":[{"key":"email","value":"nope@nope.com"}]}}},
+        {"name":"4.4 GET /api/customers/:id","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers/{{customerId}}","host":["{{baseUrl}}"],"path":["api","customers","{{customerId}}"]}}},
+        {"name":"4.5 POST /api/customers (create)","event":[{"listen":"test","script":{"exec":["pm.test('201 + id', () => { pm.response.to.have.status(201); pm.environment.set('newCustomerId', pm.response.json().data.id); });"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Test Customer\",\"email\":\"newman_{{$timestamp}}@test.com\",\"phone\":\"+12345678\"}"},"url":{"raw":"{{baseUrl}}/api/customers","host":["{{baseUrl}}"],"path":["api","customers"]}}},
+        {"name":"4.6 PUT /api/customers/:id (path)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"city\":\"Lahore\"}"},"url":{"raw":"{{baseUrl}}/api/customers/{{newCustomerId}}","host":["{{baseUrl}}"],"path":["api","customers","{{newCustomerId}}"]}}},
+        {"name":"4.7 PUT /api/customers?id= (query)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"country\":\"Pakistan\"}"},"url":{"raw":"{{baseUrl}}/api/customers?id={{newCustomerId}}","host":["{{baseUrl}}"],"path":["api","customers"],"query":[{"key":"id","value":"{{newCustomerId}}"}]}}},
+        {"name":"4.8 DELETE /api/customers/:id","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers/{{newCustomerId}}","host":["{{baseUrl}}"],"path":["api","customers","{{newCustomerId}}"]}}},
+        {"name":"4.9 DELETE /api/customers?id= (query)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/customers?id={{newCustomerId}}","host":["{{baseUrl}}"],"path":["api","customers"],"query":[{"key":"id","value":"{{newCustomerId}}"}]}}}
+      ]
+    },
+
+    {
+      "name": "5 – COUPONS",
+      "item": [
+        {"name":"5.1 GET /api/coupons?code= (valid)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/coupons?code={{couponCode}}","host":["{{baseUrl}}"],"path":["api","coupons"],"query":[{"key":"code","value":"{{couponCode}}"}]}}},
+        {"name":"5.2 GET /api/coupons?code=INVALID (→ 404)","event":[{"listen":"test","script":{"exec":["pm.test('404', () => pm.response.to.have.status(404));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/coupons?code=INVALIDCODE999","host":["{{baseUrl}}"],"path":["api","coupons"],"query":[{"key":"code","value":"INVALIDCODE999"}]}}},
+        {"name":"5.3 GET /api/coupons/admin","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/coupons/admin","host":["{{baseUrl}}"],"path":["api","coupons","admin"]}}},
+        {"name":"5.4 POST /api/coupons/admin (create)","event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newCouponId', pm.response.json().data.id); });"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"code\":\"NEWMAN{{$timestamp}}\",\"discount_type\":\"percentage\",\"value\":10,\"is_active\":true}"},"url":{"raw":"{{baseUrl}}/api/coupons/admin","host":["{{baseUrl}}"],"path":["api","coupons","admin"]}}},
+        {"name":"5.5 PUT /api/coupons/admin?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"value\":20}"},"url":{"raw":"{{baseUrl}}/api/coupons/admin?id={{newCouponId}}","host":["{{baseUrl}}"],"path":["api","coupons","admin"],"query":[{"key":"id","value":"{{newCouponId}}"}]}}},
+        {"name":"5.6 DELETE /api/coupons/admin (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newCouponId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/coupons/admin","host":["{{baseUrl}}"],"path":["api","coupons","admin"]}}}
+      ]
+    },
+
+    {
+      "name": "6 – ANALYTICS",
+      "item": [
+        {"name":"6.1 GET analytics?type=summary","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/analytics?type=summary","host":["{{baseUrl}}"],"path":["api","analytics"],"query":[{"key":"type","value":"summary"}]}}},
+        {"name":"6.2 GET analytics?type=top-products","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/analytics?type=top-products&limit=5","host":["{{baseUrl}}"],"path":["api","analytics"],"query":[{"key":"type","value":"top-products"},{"key":"limit","value":"5"}]}}},
+        {"name":"6.3 GET analytics?type=customers-by-country","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/analytics?type=customers-by-country","host":["{{baseUrl}}"],"path":["api","analytics"],"query":[{"key":"type","value":"customers-by-country"}]}}},
+        {"name":"6.4 GET analytics?type=traffic","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/analytics?type=traffic","host":["{{baseUrl}}"],"path":["api","analytics"],"query":[{"key":"type","value":"traffic"}]}}},
+        {"name":"6.5 GET analytics?type=traffic (custom dates)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/analytics?type=traffic&startDate=2026-01-01&endDate=2026-12-31","host":["{{baseUrl}}"],"path":["api","analytics"],"query":[{"key":"type","value":"traffic"},{"key":"startDate","value":"2026-01-01"},{"key":"endDate","value":"2026-12-31"}]}}},
+        {"name":"6.6 POST /api/analytics/track (page_view)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"eventType\":\"page_view\",\"path\":\"/newman-test\",\"referrer\":\"\",\"sessionId\":\"newman-session-1\",\"deviceType\":\"Desktop\",\"os\":\"Mac\",\"browser\":\"Chrome\"}"},"url":{"raw":"{{baseUrl}}/api/analytics/track","host":["{{baseUrl}}"],"path":["api","analytics","track"]}}},
+        {"name":"6.7 POST /api/analytics/track (search)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"eventType\":\"search\",\"path\":\"/shop\",\"referrer\":\"\",\"sessionId\":\"newman-session-1\",\"deviceType\":\"Mobile\",\"os\":\"iOS\",\"browser\":\"Safari\",\"metadata\":{\"query\":\"leather wallet\"}}"},"url":{"raw":"{{baseUrl}}/api/analytics/track","host":["{{baseUrl}}"],"path":["api","analytics","track"]}}}
+      ]
+    },
+
+    {
+      "name": "7 – AUDIT LOGS",
+      "item": [
+        {"name":"7.1 GET /api/audit-logs","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/audit-logs","host":["{{baseUrl}}"],"path":["api","audit-logs"]}}},
+        {"name":"7.2 GET /api/audit-logs?tableName=products","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/audit-logs?tableName=products","host":["{{baseUrl}}"],"path":["api","audit-logs"],"query":[{"key":"tableName","value":"products"}]}}},
+        {"name":"7.3 GET /api/audit-logs?tableName=categories","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/audit-logs?tableName=categories","host":["{{baseUrl}}"],"path":["api","audit-logs"],"query":[{"key":"tableName","value":"categories"}]}}},
+        {"name":"7.4 GET /api/audit-logs?page=1&limit=10","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/audit-logs?page=1&limit=10","host":["{{baseUrl}}"],"path":["api","audit-logs"],"query":[{"key":"page","value":"1"},{"key":"limit","value":"10"}]}}}
+      ]
+    },
+
+    {
+      "name": "8 – CONTACT / MESSAGES",
+      "item": [
+        {
+          "name":"8.1 POST /api/contact (submit form → 200)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Bot\",\"email\":\"newman@test.com\",\"phone\":\"+923001234567\",\"inquiry_type\":\"General\",\"message\":\"Automated test message from Newman suite\"}"},"url":{"raw":"{{baseUrl}}/api/contact","host":["{{baseUrl}}"],"path":["api","contact"]}}
+        },
+        {"name":"8.2 GET /api/contact (public list)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/contact","host":["{{baseUrl}}"],"path":["api","contact"]}}},
+        {"name":"8.3 GET /api/contact/admin","event":[{"listen":"test","script":{"exec":["pm.test('200', () => { pm.response.to.have.status(200); const j=pm.response.json(); if(j.data && j.data.length>0){ pm.environment.set('newMsgId', j.data[0].id); } });"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/contact/admin","host":["{{baseUrl}}"],"path":["api","contact","admin"]}}},
+        {"name":"8.4 GET /api/contact/admin?status=new","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/contact/admin?status=new","host":["{{baseUrl}}"],"path":["api","contact","admin"],"query":[{"key":"status","value":"new"}]}}},
+        {"name":"8.5 PUT /api/contact/admin?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"read\"}"},"url":{"raw":"{{baseUrl}}/api/contact/admin?id={{newMsgId}}","host":["{{baseUrl}}"],"path":["api","contact","admin"],"query":[{"key":"id","value":"{{newMsgId}}"}]}}},
+        {"name":"8.6 DELETE /api/contact/admin (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newMsgId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/contact/admin","host":["{{baseUrl}}"],"path":["api","contact","admin"]}}}
+      ]
+    },
+
+    {
+      "name": "9 – CUSTOM REQUESTS",
+      "item": [
+        {"name":"9.1 GET /api/requests","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/requests","host":["{{baseUrl}}"],"path":["api","requests"]}}},
+        {"name":"9.2 GET /api/requests?page=1","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/requests?page=1&limit=5","host":["{{baseUrl}}"],"path":["api","requests"],"query":[{"key":"page","value":"1"},{"key":"limit","value":"5"}]}}},
+        {"name":"9.3 GET /api/requests/:id","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/requests/{{requestId}}","host":["{{baseUrl}}"],"path":["api","requests","{{requestId}}"]}}},
+        {"name":"9.4 POST /api/requests (create)","event":[{"listen":"test","script":{"exec":["pm.test('201 + id', () => { pm.response.to.have.status(201); pm.environment.set('newRequestId', pm.response.json().data.id); });"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Tester\",\"email\":\"newman_req@test.com\",\"itemType\":\"Wallet\",\"description\":\"Custom bespoke leather wallet\",\"phone\":\"+923001234567\",\"budget\":\"200\"}"},"url":{"raw":"{{baseUrl}}/api/requests","host":["{{baseUrl}}"],"path":["api","requests"]}}},
+        {
+          "name":"9.5 PUT /api/requests/:id (path — auth required)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"IN_PROGRESS\"}"},"url":{"raw":"{{baseUrl}}/api/requests/{{newRequestId}}","host":["{{baseUrl}}"],"path":["api","requests","{{newRequestId}}"]}}
+        },
+        {
+          "name":"9.6 DELETE /api/requests/:id (archive via path)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/requests/{{newRequestId}}","host":["{{baseUrl}}"],"path":["api","requests","{{newRequestId}}"]}}
+        },
+        {
+          "name":"9.7 DELETE /api/requests?id= (query)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],
+          "request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/requests?id={{newRequestId}}","host":["{{baseUrl}}"],"path":["api","requests"],"query":[{"key":"id","value":"{{newRequestId}}"}]}}
+        }
+      ]
+    },
+
+    {
+      "name": "10 – REVIEWS",
+      "item": [
+        {"name":"10.1 GET /api/reviews","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/reviews","host":["{{baseUrl}}"],"path":["api","reviews"]}}},
+        {
+          "name":"10.2 POST /api/reviews (create — auth required)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newReviewId', pm.response.json().data.id); });"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"customer_name\":\"Newman Reviewer\",\"product_id\":\"{{productId}}\",\"rating\":5,\"comment\":\"Excellent automated test review\",\"status\":\"pending\"}"},"url":{"raw":"{{baseUrl}}/api/reviews","host":["{{baseUrl}}"],"path":["api","reviews"]}}
+        },
+        {"name":"10.3 PUT /api/reviews?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"rating\":4,\"comment\":\"Updated review\",\"customer_name\":\"Newman Reviewer\",\"status\":\"approved\"}"},"url":{"raw":"{{baseUrl}}/api/reviews?id={{newReviewId}}","host":["{{baseUrl}}"],"path":["api","reviews"],"query":[{"key":"id","value":"{{newReviewId}}"}]}}},
+        {"name":"10.4 DELETE /api/reviews (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newReviewId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/reviews","host":["{{baseUrl}}"],"path":["api","reviews"]}}}
+      ]
+    },
+
+    {
+      "name": "11 – SETTINGS",
+      "item": [
+        {"name":"11.1 GET /api/settings","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/settings","host":["{{baseUrl}}"],"path":["api","settings"]}}},
+        {"name":"11.2 PUT /api/settings","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"site_title\":\"Luxe Leather Gear\",\"support_email\":\"support@luxeleather.co\"}"},"url":{"raw":"{{baseUrl}}/api/settings","host":["{{baseUrl}}"],"path":["api","settings"]}}}
+      ]
+    },
+
+    {
+      "name": "12 – SHIPPING ZONES",
+      "item": [
+        {"name":"12.1 GET /api/shipping-zones","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/shipping-zones","host":["{{baseUrl}}"],"path":["api","shipping-zones"]}}},
+        {
+          "name":"12.2 POST /api/shipping-zones (create — correct fields)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newShippingId', pm.response.json().data.id); });"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"name\":\"Newman Test Zone\",\"regions\":[\"PK\",\"US\"],\"rate\":12.50,\"free_above\":150,\"handling_days\":5,\"is_active\":true}"},"url":{"raw":"{{baseUrl}}/api/shipping-zones","host":["{{baseUrl}}"],"path":["api","shipping-zones"]}}
+        },
+        {"name":"12.3 PUT /api/shipping-zones?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"rate\":9.99}"},"url":{"raw":"{{baseUrl}}/api/shipping-zones?id={{newShippingId}}","host":["{{baseUrl}}"],"path":["api","shipping-zones"],"query":[{"key":"id","value":"{{newShippingId}}"}]}}},
+        {"name":"12.4 DELETE /api/shipping-zones (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newShippingId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/shipping-zones","host":["{{baseUrl}}"],"path":["api","shipping-zones"]}}}
+      ]
+    },
+
+    {
+      "name": "13 – SIZE GUIDES",
+      "item": [
+        {"name":"13.1 GET /api/size-guides","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/size-guides","host":["{{baseUrl}}"],"path":["api","size-guides"]}}},
+        {"name":"13.2 POST /api/size-guides (create — auto UUID fix)","event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newSizeGuideId', pm.response.json().data.id); });"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"label\":\"Newman Size Guide\",\"chest\":\"38\",\"waist\":\"32\",\"hips\":\"40\",\"shoulders\":\"17\",\"length\":\"28\"}"},"url":{"raw":"{{baseUrl}}/api/size-guides","host":["{{baseUrl}}"],"path":["api","size-guides"]}}},
+        {"name":"13.3 PUT /api/size-guides?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"label\":\"Updated Newman Guide\",\"chest\":\"40\",\"waist\":\"34\",\"hips\":\"42\",\"shoulders\":\"18\",\"length\":\"29\"}"},"url":{"raw":"{{baseUrl}}/api/size-guides?id={{newSizeGuideId}}","host":["{{baseUrl}}"],"path":["api","size-guides"],"query":[{"key":"id","value":"{{newSizeGuideId}}"}]}}},
+        {"name":"13.4 DELETE /api/size-guides?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/size-guides?id={{newSizeGuideId}}","host":["{{baseUrl}}"],"path":["api","size-guides"],"query":[{"key":"id","value":"{{newSizeGuideId}}"}]}}}
+      ]
+    },
+
+    {
+      "name": "14 – NAV ITEMS",
+      "item": [
+        {"name":"14.1 GET /api/nav-items","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[],"url":{"raw":"{{baseUrl}}/api/nav-items","host":["{{baseUrl}}"],"path":["api","nav-items"]}}},
+        {
+          "name":"14.2 POST /api/nav-items (create — correct field: url)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('200 + id', () => { pm.response.to.have.status(200); pm.environment.set('newNavId', pm.response.json().data.id); });"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"label\":\"Newman Test Link\",\"url\":\"/newman-test\",\"display_order\":99,\"is_visible\":true}"},"url":{"raw":"{{baseUrl}}/api/nav-items","host":["{{baseUrl}}"],"path":["api","nav-items"]}}
+        },
+        {"name":"14.3 PUT /api/nav-items?id=","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"label\":\"Newman Updated Link\",\"url\":\"/updated\"}"},"url":{"raw":"{{baseUrl}}/api/nav-items?id={{newNavId}}","host":["{{baseUrl}}"],"path":["api","nav-items"],"query":[{"key":"id","value":"{{newNavId}}"}]}}},
+        {"name":"14.4 DELETE /api/nav-items (body ids)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"ids\":[\"{{newNavId}}\"]}"},"url":{"raw":"{{baseUrl}}/api/nav-items","host":["{{baseUrl}}"],"path":["api","nav-items"]}}}
+      ]
+    },
+
+    {
+      "name": "15 – CMS",
+      "item": [
+        {"name":"15.1 GET /api/cms","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/cms","host":["{{baseUrl}}"],"path":["api","cms"]}}},
+        {"name":"15.2 POST /api/cms (upsert)","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"slug\":\"newman-test-block\",\"title\":\"Newman Test\",\"content\":\"<p>Auto test</p>\",\"section\":\"home\",\"type\":\"html\"}"},"url":{"raw":"{{baseUrl}}/api/cms","host":["{{baseUrl}}"],"path":["api","cms"]}}}
+      ]
+    },
+
+    {
+      "name": "16 – MEDIA",
+      "item": [
+        {"name":"16.1 GET /api/media","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/media","host":["{{baseUrl}}"],"path":["api","media"]}}},
+        {"name":"16.2 GET /api/media?folder=platform-images","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/media?folder=platform-images","host":["{{baseUrl}}"],"path":["api","media"],"query":[{"key":"folder","value":"platform-images"}]}}},
+        {
+          "name":"16.3 POST /api/media (no multipart file → not 200)",
+          "event":[{"listen":"test","script":{"exec":["pm.test('Not 200 (expects error when no file)', () => pm.expect(pm.response.code).to.not.equal(200));"],"type":"text/javascript"}}],
+          "request":{"method":"POST","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/media","host":["{{baseUrl}}"],"path":["api","media"]}}
+        },
+        {"name":"16.4 DELETE /api/media (no names → 400)","event":[{"listen":"test","script":{"exec":["pm.test('400', () => pm.response.to.have.status(400));"],"type":"text/javascript"}}],"request":{"method":"DELETE","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{}"},"url":{"raw":"{{baseUrl}}/api/media","host":["{{baseUrl}}"],"path":["api","media"]}}}
+      ]
+    },
+
+    {
+      "name": "17 – ACCOUNT / PROFILE",
+      "item": [
+        {"name":"17.1 GET /api/account/profile","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"GET","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"}],"url":{"raw":"{{baseUrl}}/api/account/profile","host":["{{baseUrl}}"],"path":["api","account","profile"]}}},
+        {"name":"17.2 PUT /api/account/profile","event":[{"listen":"test","script":{"exec":["pm.test('200', () => pm.response.to.have.status(200));"],"type":"text/javascript"}}],"request":{"method":"PUT","header":[{"key":"Cookie","value":"sb-access-token={{accessToken}}"},{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"full_name\":\"Newman Admin\",\"bio\":\"Updated by Newman test suite\"}"},"url":{"raw":"{{baseUrl}}/api/account/profile","host":["{{baseUrl}}"],"path":["api","account","profile"]}}}
+      ]
+    }
+  ]
+}

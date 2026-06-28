@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as requestService from '@/lib/services/requestService';
 import { apiHandler } from '@/lib/middleware/apiHandler';
+import { sendAdminCustomRequestNotification, sendCustomerCustomRequestConfirmation } from '@/lib/utils/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,16 @@ export const POST = apiHandler(async (req: NextRequest) => {
         ...validatedData,
         id: validatedData.id || crypto.randomUUID(),
     });
+
+    // Send email notifications (non-blocking for response if we wanted, but we await to ensure delivery attempt)
+    // We ignore failures so the user still gets a success response if the DB inserted fine.
+    await Promise.allSettled([
+        sendAdminCustomRequestNotification({
+            id: newRequest.id,
+            ...validatedData,
+        }),
+        sendCustomerCustomRequestConfirmation(validatedData)
+    ]);
 
     return NextResponse.json({
         success: true,

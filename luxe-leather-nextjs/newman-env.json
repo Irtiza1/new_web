@@ -1,0 +1,29 @@
+{
+  "id": "luxe-env",
+  "name": "Luxe Leather Environment",
+  "values": [
+    { "key": "baseUrl",       "value": "http://localhost:3000",                          "enabled": true },
+    { "key": "supabaseUrl",   "value": "https://pgcprmhaalolzjvqfwyo.supabase.co",       "enabled": true },
+    { "key": "supabaseAnon",  "value": "sb_publishable_yGXDthhibr_RxNtLjtE_TA_7ZxE_Xri","enabled": true },
+    { "key": "adminEmail",    "value": "irtiza.s2918@gmail.com",                         "enabled": true },
+    { "key": "adminPassword", "value": "LuxeAdmin123!",                                  "enabled": true },
+    { "key": "accessToken",   "value": "",                                               "enabled": true },
+    { "key": "productId",     "value": "7a731568-e516-4ee7-a716-58790d4de62a",           "enabled": true },
+    { "key": "categoryId",    "value": "451e09ca-4841-4f79-acef-a638cd038894",           "enabled": true },
+    { "key": "customerId",    "value": "0a5642fa-54e3-45a6-8a96-2ad405f91463",           "enabled": true },
+    { "key": "couponCode",    "value": "FREESHIP",                                       "enabled": true },
+    { "key": "requestId",     "value": "431d9ec4-939b-4ae1-b230-e8dff4c3faae",           "enabled": true },
+    { "key": "shippingId",    "value": "dd52652b-d61d-4745-8dc2-4a41c1a11a8f",           "enabled": true },
+    { "key": "navId",         "value": "c9098e6c-f4ff-43df-a370-aa0f804b5acd",           "enabled": true },
+    { "key": "newCategoryId", "value": "",                                               "enabled": true },
+    { "key": "newOrderId",    "value": "",                                               "enabled": true },
+    { "key": "newCustomerId", "value": "",                                               "enabled": true },
+    { "key": "newCouponId",   "value": "",                                               "enabled": true },
+    { "key": "newReviewId",   "value": "",                                               "enabled": true },
+    { "key": "newShippingId", "value": "",                                               "enabled": true },
+    { "key": "newSizeGuideId","value": "",                                               "enabled": true },
+    { "key": "newNavId",      "value": "",                                               "enabled": true },
+    { "key": "newRequestId",  "value": "",                                               "enabled": true },
+    { "key": "newMsgId",      "value": "",                                               "enabled": true }
+  ]
+}

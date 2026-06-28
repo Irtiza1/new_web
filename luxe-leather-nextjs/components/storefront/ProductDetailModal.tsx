@@ -50,6 +50,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const [isCustomSize, setIsCustomSize] = useState(false);
     const [customMeasurements, setCustomMeasurements] = useState({ chest: '', waist: '', shoulders: '', length: '' });
     const [activeTab, setActiveTab] = useState('specs');
+    const [reviewsList, setReviewsList] = useState<any[]>([]);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isZoomed, setIsZoomed] = useState(false);
     const imgRef = useRef<HTMLDivElement>(null);
@@ -63,7 +64,23 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
         setIsCustomSize(false);
         setActiveTab('specs');
         setIsZoomed(false);
+        setReviewsList([]);
     }, [product?.id]);
+
+    useEffect(() => {
+        if (isOpen && product?.id) {
+            fetch(`/api/reviews?product_id=${product.id}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        // Filter for approved reviews on the frontend if the API returns all, or if the API already filters we just set it
+                        const approved = data.data.filter((r: any) => r.status === 'approved');
+                        setReviewsList(approved);
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [isOpen, product?.id]);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!imgRef.current) return;
@@ -142,6 +159,35 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         </div>
                     </div>
                 );
+            case 'reviews':
+                return (
+                    <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                        {reviewsList.length > 0 ? (
+                            reviewsList.map((review: any) => (
+                                <div key={review.id} className="border-b border-gray-100 dark:border-white/5 pb-3 last:border-0 last:pb-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-sm">{review.customer_name}</span>
+                                            {review.rating && (
+                                                <div className="flex text-[#cf1736]">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <span key={i} className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: i < review.rating ? "'FILL' 1" : "'FILL' 0" }}>star</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] text-gray-400">{new Date(review.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">{review.comment}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-6">
+                                <p className="text-sm text-gray-500">No reviews yet for this product.</p>
+                            </div>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -182,9 +228,11 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         {productImage ? (
                             <img
                                 alt={product.name}
-                                className={`object-cover w-full h-full transition-transform duration-500 ease-out ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
+                                className={`object-cover w-full h-full transition-transform duration-500 ease-out select-none pointer-events-none ${isZoomed ? 'scale-[2.5]' : 'scale-100'}`}
                                 src={productImage as string}
                                 style={isZoomed ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` } : {}}
+                                onContextMenu={(e) => e.preventDefault()}
+                                draggable={false}
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -220,7 +268,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                                     onClick={() => setSelectedImageIndex(idx)}
                                     className={`w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-[#cf1736] scale-105 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                 >
-                                    <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover" />
+                                    <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover select-none pointer-events-none" onContextMenu={(e) => e.preventDefault()} draggable={false} />
                                 </button>
                             ))}
                         </div>
@@ -230,7 +278,28 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                 {/* Right: Product Details */}
                 <div className="w-full md:w-1/2 h-full bg-[var(--color-background-light)] dark:bg-[var(--color-background-dark)] flex flex-col p-6 md:p-10 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col gap-2 mb-4">
-                        <h2 className="text-[#1b0e10] dark:text-white text-3xl md:text-4xl font-medium leading-tight tracking-tight">{product.name}</h2>
+                        <div className="flex items-start justify-between gap-4">
+                            <h2 className="text-[#1b0e10] dark:text-white text-3xl md:text-4xl font-medium leading-tight tracking-tight">{product.name}</h2>
+                            <button 
+                                onClick={() => {
+                                    if (typeof window !== 'undefined') {
+                                        const url = `${window.location.origin}/shop?search=${encodeURIComponent(product.name)}`;
+                                        navigator.clipboard.writeText(url);
+                                        const btn = document.getElementById('share-btn');
+                                        if (btn) {
+                                            const originalHTML = btn.innerHTML;
+                                            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span>';
+                                            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+                                        }
+                                    }
+                                }}
+                                id="share-btn"
+                                className="mt-1 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 transition-colors text-gray-500 hover:text-[#cf1736] shrink-0"
+                                title="Copy product link"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">share</span>
+                            </button>
+                        </div>
                         <div className="flex items-baseline justify-between">
                             <div className="flex items-baseline gap-2">
                                 <p className="text-2xl font-medium text-[#cf1736]">${displayPrice.toFixed(2)}</p>
@@ -254,7 +323,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
 
                     {/* Tabs Header */}
                     <div className="flex gap-6 border-b border-gray-100 dark:border-white/10 mb-6">
-                        {['specs', 'shipping'].map((tab) => (
+                        {['specs', 'shipping', 'reviews'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
