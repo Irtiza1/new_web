@@ -67,8 +67,7 @@ export default function AdminOrdersPage() {
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [fullOrder, setFullOrder] = useState<FullOrder | null>(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
     const [isMounted, setIsMounted] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -211,29 +210,7 @@ export default function AdminOrdersPage() {
 
 
 
-    const toggleSelectAll = () => {
-        const visibleIds = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(o => o.id);
-        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
 
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (allVisibleSelected) {
-                visibleIds.forEach(id => next.delete(id));
-            } else {
-                visibleIds.forEach(id => next.add(id));
-            }
-            return next;
-        });
-    };
-
-    const toggleSelect = (id: string) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
 
     const getStatusBadge = (status: Order['status']) => {
         const styles = {
@@ -393,19 +370,10 @@ export default function AdminOrdersPage() {
                     }}
                 />
             }
-            bulkActions={
-                <AdminBulkActionsBar
-                    selectedCount={selectedIds.size}
-                    onCancel={() => setSelectedIds(new Set())}
-                    onSelectAll={toggleSelectAll}
-                    isDeleting={isBulkDeleting}
-                />
-            }
+            bulkActions={null}
         >
             <AdminTable
                 headers={['Order', 'Customer', 'Items', 'Total', 'Status', 'Date', '']}
-                onSelectAll={toggleSelectAll}
-                isAllSelected={filteredOrders.length > 0 && filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(o => selectedIds.has(o.id))}
             >
                 {loading ? (
                     <tr>
@@ -424,15 +392,7 @@ export default function AdminOrdersPage() {
                     </tr>
                 ) : (
                     filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((order) => (
-                        <tr key={order.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(order.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
-                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
-                                    checked={selectedIds.has(order.id)}
-                                    onChange={() => toggleSelect(order.id)}
-                                />
-                            </td>
+                        <tr key={order.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="py-4 px-6">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-mono font-black text-[#d41132]" title={order.id}>{order.order_number}</span>

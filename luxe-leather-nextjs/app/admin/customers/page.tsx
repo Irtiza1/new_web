@@ -33,8 +33,7 @@ export default function AdminCustomersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [viewingCustomer, setViewingCustomer] = useState<CustomerWithStats | null>(null);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
     const [isMounted, setIsMounted] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -130,29 +129,7 @@ export default function AdminCustomersPage() {
         window.URL.revokeObjectURL(url);
     };
 
-    const toggleSelectAll = () => {
-        const visibleIds = filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(c => c.id);
-        const allVisibleSelected = visibleIds.every(id => selectedIds.has(id));
 
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (allVisibleSelected) {
-                visibleIds.forEach(id => next.delete(id));
-            } else {
-                visibleIds.forEach(id => next.add(id));
-            }
-            return next;
-        });
-    };
-
-    const toggleSelect = (id: string) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
 
     const handleCreateCustomer = async (data: pCustomer) => {
         try {
@@ -292,19 +269,10 @@ export default function AdminCustomersPage() {
                     }}
                 />
             }
-            bulkActions={
-                <AdminBulkActionsBar
-                    selectedCount={selectedIds.size}
-                    onCancel={() => setSelectedIds(new Set())}
-                    onSelectAll={toggleSelectAll}
-                    isDeleting={isBulkDeleting}
-                />
-            }
+            bulkActions={null}
         >
             <AdminTable
                 headers={['Customer', 'Contact', 'Location', 'Orders', 'Total Spent', 'Created', 'Actions']}
-                onSelectAll={toggleSelectAll}
-                isAllSelected={filteredCustomers.length > 0 && filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).every(c => selectedIds.has(c.id))}
             >
                 {loading ? (
                     <tr>
@@ -323,15 +291,7 @@ export default function AdminCustomersPage() {
                     </tr>
                 ) : (
                     filteredCustomers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((customer) => (
-                        <tr key={customer.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(customer.id) ? 'bg-[#d41132]/5 dark:bg-[#d41132]/10' : ''}`}>
-                            <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                    type="checkbox"
-                                    className="rounded border-slate-300 text-[#d41132] focus:ring-[#d41132] bg-transparent cursor-pointer"
-                                    checked={selectedIds.has(customer.id)}
-                                    onChange={() => toggleSelect(customer.id)}
-                                />
-                            </td>
+                        <tr key={customer.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td className="py-4 px-6">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-sm shrink-0 uppercase">
