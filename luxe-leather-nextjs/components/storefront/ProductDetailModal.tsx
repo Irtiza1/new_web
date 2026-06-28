@@ -223,6 +223,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         onMouseMove={handleMouseMove}
                         onMouseEnter={() => setIsZoomed(true)}
                         onMouseLeave={() => setIsZoomed(false)}
+                        onContextMenu={(e) => e.preventDefault()}
                         className="flex-1 w-full relative rounded-lg overflow-hidden shadow-inner group cursor-zoom-in"
                     >
                         {productImage ? (

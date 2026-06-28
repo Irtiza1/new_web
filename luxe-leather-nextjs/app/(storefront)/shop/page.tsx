@@ -223,7 +223,7 @@ function ShopContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
                         {visibleProducts.length > 0 ? (
                             visibleProducts.map(product => (
-                                <div key={product.id} className="group cursor-pointer" onClick={() => openModal(product)}>
+                                <div key={product.id} className="group cursor-pointer select-none" onClick={() => openModal(product)} onContextMenu={(e) => e.preventDefault()}>
                                     <div className="aspect-[4/5] bg-gray-100 rounded-xl overflow-hidden relative mb-4">
                                         <div className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 ${!product.image ? 'bg-gray-200 flex items-center justify-center' : ''}`} style={product.image ? { backgroundImage: `url('${product.image}')` } : {}}>
                                             {!product.image && <span className="material-symbols-outlined text-6xl text-gray-400">image</span>}
