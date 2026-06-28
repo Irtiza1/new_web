@@ -23,6 +23,7 @@ newman-e2e-report*.json
 
 # misc
 .DS_Store
+/archive
 *.pem
 
 # debug

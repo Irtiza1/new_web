@@ -212,7 +212,7 @@ export async function DELETE(request: Request) {
 
     if (namesToDelete.length === 0) return NextResponse.json({ success: false, message: 'File name(s) required' }, { status: 400 });
 
-    let defaultFolderName = searchParams.get('bucket');
+    const defaultFolderName = searchParams.get('bucket');
 
     const { data: fileRecords } = await supabaseAdmin.from('media_files')
         .select('filename, folder')

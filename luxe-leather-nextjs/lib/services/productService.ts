@@ -326,9 +326,7 @@ export const removeBulk = async (ids: string[]) => {
             await supabaseAdmin.storage.from('product-images').remove(Array.from(legacyFileNames));
         }
 
-        for (const id of safeToDeleteIds) {
-            await auditLog('products', id, 'DELETE');
-        }
+        await auditLogBulk('products', safeToDeleteIds, 'DELETE');
     }
 
     if (failedCount > 0) {

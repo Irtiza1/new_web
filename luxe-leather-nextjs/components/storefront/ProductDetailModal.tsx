@@ -79,12 +79,12 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const allImages = Array.from(new Set([product.image, ...(product.images || [])])).filter(Boolean);
     const productImage = allImages[selectedImageIndex % allImages.length];
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const p = product as any;
     const productDescription = p.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
     const displayPrice = isCustomSize ? (p.custom_sizing_price || p.customSizingPrice || p.price + 50) : p.price;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const productColors = (p.colors && p.colors.length > 0) ? p.colors.map((c: any) => ({ name: c.name, color: c.hex || c.color })) : fallbackColors;
     const allowCustomSizing = p.allow_custom_sizing ?? true; // Defaults to true if legacy, or false based on db? let's default to true for existing storefront compatibility
 

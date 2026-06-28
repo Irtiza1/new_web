@@ -19,51 +19,52 @@ const mockCustomer = {
 
 describe('CustomerViewDrawer', () => {
     it('renders customer name and email', () => {
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('Jane Smith')).toBeInTheDocument();
         expect(screen.getAllByText('jane@example.com').length).toBeGreaterThanOrEqual(1);
     });
 
     it('renders phone number', () => {
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('+1 555-0123')).toBeInTheDocument();
     });
 
     it('renders location', () => {
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('New York, USA')).toBeInTheDocument();
     });
 
     it('renders order stats', () => {
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('5')).toBeInTheDocument();
         expect(screen.getByText('$749.95')).toBeInTheDocument();
     });
 
     it('calls onClose when close button clicked', () => {
         const onClose = vi.fn();
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={onClose} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={onClose} onEdit={vi.fn()} />);
         fireEvent.click(screen.getByLabelText('Close drawer'));
         expect(onClose).toHaveBeenCalledOnce();
     });
 
     it('calls onEdit when edit button clicked', () => {
         const onEdit = vi.fn();
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={onEdit} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={onEdit} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={onEdit} />);
         fireEvent.click(screen.getByText('Edit Customer'));
         expect(onEdit).toHaveBeenCalledOnce();
     });
 
     it('calls onDelete when delete button clicked', () => {
         const onDelete = vi.fn();
-        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} onDelete={onDelete} />);
+        render(<CustomerViewDrawer customer={mockCustomer} onClose={vi.fn()} onEdit={vi.fn()} />);
         fireEvent.click(screen.getByText('Delete Customer'));
         expect(onDelete).toHaveBeenCalledOnce();
     });
 
     it('shows dash for missing location', () => {
         const noLocation = { ...mockCustomer, city: null, country: null };
-        render(<CustomerViewDrawer customer={noLocation} onClose={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+        render(<CustomerViewDrawer customer={noLocation} onClose={vi.fn()} onEdit={vi.fn()} />);
         expect(screen.getByText('—')).toBeInTheDocument();
     });
 });
