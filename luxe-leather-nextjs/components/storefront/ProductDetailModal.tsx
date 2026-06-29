@@ -98,7 +98,7 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
     const productSizes = (product.sizes && product.sizes.length > 0) ? product.sizes : ['S', 'M', 'L', 'XL'];
      
     const p = product as any;
-    const productDescription = p.description || 'Expertly crafted from full-grain vegetable-tanned leather. This piece features heavy-duty hardware and a design that breaks in beautifully over time, developing a unique patina personal to your journey.';
+    const productDescription = p.description || '';
     const displayPrice = isCustomSize ? (p.custom_sizing_price || p.customSizingPrice || p.price + 50) : p.price;
 
      
@@ -318,9 +318,11 @@ export default function ProductDetailModal({ isOpen, onClose, product }: Product
                         </div>
                     </div>
 
-                    <div className="mb-6">
-                        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 italic">{productDescription}</p>
-                    </div>
+                    {productDescription && (
+                        <div className="mb-6">
+                            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300 italic">{productDescription}</p>
+                        </div>
+                    )}
 
                     {/* Tabs Header */}
                     <div className="flex gap-6 border-b border-gray-100 dark:border-white/10 mb-6">
