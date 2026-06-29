@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/contexts/ToastContext';
+import FormSkeleton from '@/components/shared/FormSkeleton';
 
 export default function AdminSettingsPage() {
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettingsState] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     
     // For universal image uploading
     const [isUploading, setIsUploading] = useState<string | null>(null);
@@ -25,6 +27,8 @@ export default function AdminSettingsPage() {
                 }
             } catch (err) {
                 console.error('Failed to load settings:', err);
+            } finally {
+                setIsLoading(false);
             }
         }
         load();
@@ -198,8 +202,12 @@ export default function AdminSettingsPage() {
                         {/* Settings Content Area */}
                         <div className="flex-1 w-full">
                             
-                            {/* General */}
-                            {activeTab === 'general' && (
+                            {isLoading ? (
+                                <FormSkeleton fields={3} />
+                            ) : (
+                                <>
+                                    {/* General */}
+                                    {activeTab === 'general' && (
                                 <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                                     <section className="bg-white dark:bg-[#1a2632] rounded-2xl shadow-sm border border-[#e5e7eb] dark:border-[#2d3b4a] overflow-hidden">
                                         <div className="px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3b4a]">
@@ -411,7 +419,8 @@ export default function AdminSettingsPage() {
                                     </section>
                                 </div>
                             )}
-
+                            </>
+                        )}
                         </div>
                     </div>
                 </main>

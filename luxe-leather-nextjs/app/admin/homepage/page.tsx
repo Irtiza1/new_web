@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { contentService } from '@/lib/services/contentService';
 import AdminPageLayout from '@/components/admin/shared/AdminPageLayout';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
+import FormSkeleton from '@/components/shared/FormSkeleton';
 
 const sections = [
     {
@@ -103,9 +104,7 @@ export default function AdminHomepagePage() {
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-20 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
-                        <span className="material-symbols-outlined animate-spin text-4xl text-[#d41132]">progress_activity</span>
-                    </div>
+                    <FormSkeleton fields={activeFields.length || 3} />
                 ) : (
                     <div className="grid grid-cols-1 gap-6">
                         {activeFields.map(field => (

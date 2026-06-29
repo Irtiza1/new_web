@@ -515,9 +515,41 @@ export default function AdminOrdersPage() {
                         {/* Scrollable Body */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             {loadingDetail ? (
-                                <div className="flex items-center justify-center gap-3 py-12">
-                                    <span className="material-symbols-outlined animate-spin text-[#d41132] text-3xl">progress_activity</span>
-                                    <span className="text-slate-500 font-medium">Loading order details...</span>
+                                <div className="space-y-6 animate-pulse">
+                                    {/* Customer Skeleton */}
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+                                        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24 mb-3" />
+                                        <div className="flex gap-3">
+                                            <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0" />
+                                            <div className="space-y-2 flex-1">
+                                                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3" />
+                                                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Items Skeleton */}
+                                    <div>
+                                        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-32 mb-3" />
+                                        <div className="space-y-2">
+                                            {[1, 2].map((i) => (
+                                                <div key={i} className="flex gap-4 p-3 bg-white dark:bg-[#101922] rounded-xl border border-slate-100 dark:border-slate-700">
+                                                    <div className="size-10 rounded-lg bg-slate-200 dark:bg-slate-800 shrink-0" />
+                                                    <div className="space-y-2 flex-1">
+                                                        <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                                                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {/* Summary Skeleton */}
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+                                        <div className="space-y-3">
+                                            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+                                            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+                                            <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+                                        </div>
+                                    </div>
                                 </div>
                             ) : fullOrder ? (
                                 <>

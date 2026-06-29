@@ -7,6 +7,7 @@ import AdminPagination from '@/components/admin/shared/AdminPagination';
 import AdminBulkActionsBar from '@/components/admin/shared/AdminBulkActionsBar';
 import AdminFilterTabs from '@/components/admin/shared/AdminFilterTabs';
 import ConfirmModal from '@/components/admin/ConfirmModal';
+import TableSkeleton from '@/components/shared/TableSkeleton';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
 
@@ -308,11 +309,8 @@ export default function AdminMessagesPage() {
             >
                 {loading ? (
                     <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-500 dark:text-slate-400 font-bold">
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined animate-spin text-2xl text-[#d41132]">progress_activity</span>
-                                Loading messages...
-                            </div>
+                        <td colSpan={7} className="p-0">
+                            <TableSkeleton rows={5} columns={6} />
                         </td>
                     </tr>
                 ) : error ? (

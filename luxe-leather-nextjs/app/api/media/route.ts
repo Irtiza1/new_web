@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 
 const BUCKET = 'media';
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif']);
 
 function safeFolderName(value: FormDataEntryValue | null): string {
     const raw = typeof value === 'string' && value.trim() ? value : 'platform-images';
@@ -135,11 +135,16 @@ export async function POST(request: Request) {
 
     const results = [];
 
-    // Process files sequentially to avoid overwhelming memory with Sharp conversions
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!ALLOWED_IMAGE_TYPES.has(file.type)) continue;
-        if (file.size > MAX_UPLOAD_BYTES) continue;
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+            console.warn(`[Media API] Skipped unsupported file type: ${file.type}`);
+            continue;
+        }
+        if (file.size > MAX_UPLOAD_BYTES) {
+            console.warn(`[Media API] Skipped file too large: ${file.size} bytes`);
+            continue;
+        }
 
         const customName = customNames[i] || '';
         let baseName = customName || file.name.replace(/\.[^/.]+$/, "");
@@ -149,37 +154,42 @@ export async function POST(request: Request) {
         const filename = `${baseName || 'image'}-${shortId}.webp`;
         const filePath = `${folderName}/${filename}`;
 
-        const arrayBuffer = await file.arrayBuffer();
-        const inputBuffer = Buffer.from(arrayBuffer);
-        const buffer = await sharp(inputBuffer, { animated: false })
-            .rotate()
-            .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 84, effort: 4 })
-            .toBuffer();
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const inputBuffer = Buffer.from(arrayBuffer);
+            const buffer = await sharp(inputBuffer, { animated: false })
+                .rotate()
+                .resize({ width: 2200, height: 2200, fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 84, effort: 4 })
+                .toBuffer();
 
-        const { error } = await supabaseAdmin.storage.from(BUCKET).upload(filePath, buffer, {
-            contentType: 'image/webp',
-            upsert: false
-        });
+            const { error } = await supabaseAdmin.storage.from(BUCKET).upload(filePath, buffer, {
+                contentType: 'image/webp',
+                upsert: false
+            });
 
-        if (error) {
-            console.error('Storage upload error:', error);
+            if (error) {
+                console.error('Storage upload error:', error);
+                continue;
+            }
+
+            const url = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
+
+            await supabaseAdmin.from('media_files').insert({
+                filename,
+                url,
+                size: buffer.length,
+                content_type: 'image/webp',
+                folder: folderName
+            });
+
+            await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
+            
+            results.push({ name: filename, url, content_type: 'image/webp', size: buffer.length });
+        } catch (err) {
+            console.error('[Media API] Processing error for file', file.name, err);
             continue;
         }
-
-        const url = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
-
-        await supabaseAdmin.from('media_files').insert({
-            filename,
-            url,
-            size: buffer.length,
-            content_type: 'image/webp',
-            folder: folderName
-        });
-
-        await auditLog('media', filePath, 'CREATE', { url: { from: null, to: url } });
-        
-        results.push({ name: filename, url, content_type: 'image/webp', size: buffer.length });
     }
 
     if (results.length === 0) {

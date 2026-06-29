@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { SVGProps } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import type { AnalyticsSummary, TopProduct, CustomerCountry, TrafficStats } from '@/lib/services/analyticsService';
+import DashboardSkeleton from '@/components/shared/DashboardSkeleton';
 
 const statusMeta: Record<string, { label: string; color: string; text: string }> = {
     PENDING: { label: 'Pending', color: '#f59e0b', text: 'text-amber-600' },
@@ -434,7 +435,9 @@ export default function AdminAnalyticsPage() {
                 {/* ─────────────────────────────────────────────────────────────────────────────
                     TAB: SALES OVERVIEW
                 ───────────────────────────────────────────────────────────────────────────── */}
-                {activeTab === 'sales' && (
+                {loading ? (
+                    <DashboardSkeleton />
+                ) : activeTab === 'sales' && (
                     <>
                         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <KpiCard label="Total revenue" value={formatCurrency(summary?.totalRevenue)} note="All paid order totals in analytics dataset" icon="payments" />
@@ -574,7 +577,7 @@ export default function AdminAnalyticsPage() {
                 {/* ─────────────────────────────────────────────────────────────────────────────
                     TAB: WEB TRAFFIC & BEHAVIOR
                 ───────────────────────────────────────────────────────────────────────────── */}
-                {activeTab === 'traffic' && (
+                {!loading && activeTab === 'traffic' && (
                     <>
                         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <KpiCard label="Page Views" value={String(trafficData?.pageViews ?? 0)} note="Total web pages viewed by visitors" icon="globe" />

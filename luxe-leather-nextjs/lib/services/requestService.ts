@@ -101,7 +101,7 @@ export const getById = async (id: string) => {
 export const create = async (request: Omit<CustomRequest, 'createdAt' | 'updatedAt' | 'status'>) => {
     const id = request.id || crypto.randomUUID();
     const now = new Date().toISOString();
-    const insertPayload = { ...request, id, status: 'NEW', isArchived: false, createdAt: now, updatedAt: now };
+    const insertPayload = { ...request, id, status: 'NEW', createdAt: now, updatedAt: now };
     
     const { data, error } = await supabase
         .from('custom_requests')
